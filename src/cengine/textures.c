@@ -1,15 +1,12 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
-#include "blackrock.h"
+#include "types/types.h"
 
 #include "game/camera.h"
 
 #include "cengine/renderer.h"
 #include "cengine/sprites.h"
-
-#include "utils/log.h"
-#include "utils/myUtils.h"
 
 /*** TEXTURE MANAGER ***/
 
@@ -24,7 +21,7 @@ SDL_Texture *texture_load (const char *filename, SDL_Renderer *renderer) {
             return texture;
         }
 
-        logMsg (stderr, ERROR, NO_TYPE, createString ("Failed to load asset: %s!", filename));
+        fprintf (stderr, "[Error] - Failed to load asset: %s!", filename);
     }
 
     return NULL;

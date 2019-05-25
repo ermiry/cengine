@@ -6,9 +6,6 @@
 
 #include "myos.h"
 
-#include "blackrock.h"
-
-#include "types/types.h"
 #include "types/string.h"
 
 #include "cengine/thread.h"

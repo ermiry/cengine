@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "blackrock.h"
+#include "types/types.h"
 #include "myos.h"
 
 #if defined OS_LINUX
