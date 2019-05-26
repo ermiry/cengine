@@ -5,8 +5,7 @@
 
 #include <SDL2/SDL.h>
 
-#include "game/game.h"
-
+#include "cengine/game/go.h"
 #include "cengine/game/vector2d.h"
 
 #define DEFAULT_CAM_ACCEL           1

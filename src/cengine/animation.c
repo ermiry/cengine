@@ -12,8 +12,7 @@
 #include "cengine/timer.h"
 #include "cengine/sprites.h"
 #include "cengine/animation.h"
-
-#include "game/game.h"
+#include "cengine/game/go.h"
 
 #include "collections/dlist.h"
 
