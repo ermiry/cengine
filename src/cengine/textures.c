@@ -3,10 +3,9 @@
 
 #include "types/types.h"
 
-#include "game/camera.h"
-
 #include "cengine/renderer.h"
 #include "cengine/sprites.h"
+#include "cengine/game/camera.h"
 
 /*** TEXTURE MANAGER ***/
 

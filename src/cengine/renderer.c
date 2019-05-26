@@ -4,12 +4,9 @@
 
 #include "types/types.h"
 
-#include "settings.h"
-
 #include "cengine/renderer.h"
 
 #include "game/game.h"
-#include "ui/ui.h"
 
 #ifdef DEV
 #include "utils/myUtils.h"

@@ -3,9 +3,7 @@
 
 #include <SDL2/SDL.h>
 
-#include "ui/ui.h"
-
-#include "game/vector2d.h"
+#include "cengine/game/vector2d.h"
 
 extern bool typing;
 
