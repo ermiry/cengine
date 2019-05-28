@@ -18,10 +18,7 @@
 
 #include "utils/file.h"
 #include "utils/json.h"
-
-#ifdef DEV
-    #include "utils/log.h"
-#endif
+#include "utils/log.h"
 
 static bool anim_init = false;
 
@@ -302,6 +299,7 @@ void animator_play_animation (Animator *animator, Animation *animation) {
 
 static pthread_t anim_thread;
 
+// FIXME:
 void *animations_update (void *data) {
 
     thread_set_name ("animation");
@@ -376,17 +374,13 @@ int animations_init (void) {
     if (animators) {
         if (!pthread_create (&anim_thread, NULL, animations_update, NULL)) anim_init = true;
         else {
-            #ifdef DEV
-            logMsg (stderr, ERROR, NO_TYPE, "Failed to create animations thread.");
-            #endif
+            cengine_log_msg (stderr, ERROR, NO_TYPE, "Failed to create animations thread.");
             errors = 1;
         }
     }
 
     else {
-        #ifdef DEV
-        logMsg (stderr, ERROR, NO_TYPE, "Failed to create animators list!");
-        #endif
+        cengine_log_msg (stderr, ERROR, NO_TYPE, "Failed to create animators list!");
         errors = 1;
     }
 

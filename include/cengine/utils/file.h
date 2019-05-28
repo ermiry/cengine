@@ -1,5 +1,5 @@
-#ifndef _FILE_H_
-#define _FILE_H_
+#ifndef _CENGINE_FILE_H_
+#define _CENGINE_FILE_H_
 
 #include <stdio.h>
 

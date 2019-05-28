@@ -27,8 +27,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _JSON_H
-#define _JSON_H
+#ifndef _CENGINE_JSON_H_
+#define _CENGINE_JSON_H_
 
 #ifndef json_char
    #define json_char char

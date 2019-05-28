@@ -9,7 +9,7 @@
 
 #include <unistd.h>
 
-#include "utils/myUtils.h"
+#include "utils/utils.h"
 #include "utils/log.h"
 #include "utils/json.h"
 
@@ -22,7 +22,7 @@ FILE *file_open (const char *filename, const char *modes, struct stat *filestatu
         if (!stat (filename, filestatus)) 
             fp = fopen (filename, modes);
 
-        else logMsg (stderr, ERROR, NO_TYPE, createString ("File %s not found!", filename));
+        else cengine_log_msg (stderr, ERROR, NO_TYPE, createString ("File %s not found!", filename));
     }
 
     return fp;
@@ -43,14 +43,14 @@ char *file_read (const char *filename, int *file_size) {
 
             // read the entire file into the buffer
             if (fread (file_contents, filestatus.st_size, 1, fp) != 1) {
-                logMsg (stderr, ERROR, NO_TYPE, "Failed to read file contents!");
+                cengine_log_msg (stderr, ERROR, NO_TYPE, "Failed to read file contents!");
                 free (file_contents);
             }
 
             fclose (fp);
         }
 
-        else logMsg (stderr, ERROR, NO_TYPE, createString ("Unable to open file %s", filename));
+        else cengine_log_msg (stderr, ERROR, NO_TYPE, createString ("Unable to open file %s", filename));
     }
 
     return file_contents;
