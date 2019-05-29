@@ -1,6 +1,6 @@
 #include <math.h>
 
-#include "cengine/game/vector2d.h"
+#include "cengine/types/vector2d.h"
 
 const Vector2D zeroVector = { 0, 0 };
 
