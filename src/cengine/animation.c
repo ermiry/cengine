@@ -13,12 +13,11 @@
 #include "cengine/sprites.h"
 #include "cengine/animation.h"
 #include "cengine/game/go.h"
+#include "cengine/utils/utils.h"
+#include "cengine/utils/file.h"
+#include "cengine/utils/json.h"
 
-#include "collections/dlist.h"
-
-#include "utils/file.h"
-#include "utils/json.h"
-#include "utils/log.h"
+#include "cengine/collections/dlist.h"
 
 static bool anim_init = false;
 

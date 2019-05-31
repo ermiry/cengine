@@ -11,7 +11,7 @@
 
 #include "cengine/thread.h"
 
-#include "utils/log.h"
+#include "cengine/utils/log.h"
 
 // FIXME: handle portability
 // creates a custom detachable thread

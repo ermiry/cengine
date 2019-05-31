@@ -3,7 +3,7 @@
 
 #include <SDL2/SDL.h>
 
-#include "cengine/game/vector2d.h"
+#include "cengine/types/vector2d.h"
 
 extern bool typing;
 

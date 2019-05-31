@@ -9,9 +9,9 @@
 
 #include <unistd.h>
 
-#include "utils/utils.h"
-#include "utils/log.h"
-#include "utils/json.h"
+#include "cengine/utils/utils.h"
+#include "cengine/utils/log.h"
+#include "cengine/utils/json.h"
 
 FILE *file_open (const char *filename, const char *modes, struct stat *filestatus) {
 

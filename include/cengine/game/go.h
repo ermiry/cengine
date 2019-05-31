@@ -6,10 +6,10 @@
 #define COMP_COUNT      7
 
 #include "types/types.h"
-#include "collections/dlist.h"
+#include "cengine/collections/dlist.h"
 
 #include "cengine/sprites.h"
-#include "cengine/game/vector2d.h"
+#include "cengine/types/vector2d.h"
 
 // TODO: better tag management -> create a list for each tag?
 typedef struct GameObject {

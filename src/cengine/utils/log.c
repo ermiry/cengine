@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "utils/utils.h"
-#include "utils/log.h"
+#include "cengine/utils/utils.h"
+#include "cengine/utils/log.h"
 
 char *getMsgType (LogMsgType type) {
 

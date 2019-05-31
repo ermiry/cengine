@@ -7,7 +7,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "utils/json.h"
+#include "cengine/utils/json.h"
 
 // opens a file with the given modes and retur a file ptr
 extern FILE *file_open (const char *filename, const char *modes, struct stat *filestatus);

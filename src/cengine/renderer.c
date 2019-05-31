@@ -6,8 +6,8 @@
 
 #include "cengine/renderer.h"
 
-#include "utils/utils.h"
-#include "utils/log.h"
+#include "cengine/utils/utils.h"
+#include "cengine/utils/log.h"
 
 SDL_Window *main_window = NULL;
 SDL_Renderer *main_renderer = NULL;

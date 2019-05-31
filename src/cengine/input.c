@@ -4,7 +4,7 @@
 
 #include "types/types.h"
 
-#include "cengine/game/vector2d.h" 
+#include "cengine/types/vector2d.h" 
 
 #include "cengine/input.h"
 
