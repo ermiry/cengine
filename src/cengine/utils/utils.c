@@ -1,9 +1,9 @@
-#include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
+#include <stdlib.h>
 #include <stdarg.h>
+#include <string.h>
 
-char *str_create (const char *stringWithFormat, ...) {
+char *c_string_create (const char *stringWithFormat, ...) {
 
     char *fmt;
 

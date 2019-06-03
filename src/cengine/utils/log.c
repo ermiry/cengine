@@ -5,7 +5,7 @@
 #include "cengine/utils/utils.h"
 #include "cengine/utils/log.h"
 
-char *getMsgType (LogMsgType type) {
+static char *cengine_get_msg_type (LogMsgType type) {
 
     char temp[10];
 
@@ -29,21 +29,21 @@ char *getMsgType (LogMsgType type) {
 void cengine_log_msg (FILE *__restrict __stream, LogMsgType firstType, LogMsgType secondType,
     const char *msg) {
 
-    char *first = getMsgType (firstType);
+    char *first = cengine_get_msg_type (firstType);
     char *second = NULL;
     char *message = NULL;
 
     if (secondType != 0) {
-        second = getMsgType (secondType);
+        second = cengine_get_msg_type (secondType);
 
         if (firstType == DEBUG_MSG)
-            message = createString ("%s: %s\n", second, msg);
+            message = c_string_create ("%s: %s\n", second, msg);
         
-        else message = createString ("%s%s: %s\n", first, second, msg);
+        else message = c_string_create ("%s%s: %s\n", first, second, msg);
     }
 
     else if (firstType != DEBUG_MSG)
-        message = createString ("%s: %s\n", first, msg);
+        message = c_string_create ("%s: %s\n", first, msg);
 
     // log messages with color
     switch (firstType) {

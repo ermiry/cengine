@@ -1,106 +1,15 @@
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 
-#include "cengine/renderer.h"
-#include "cengine/textures.h"
-#include "cengine/animation.h"
+#include "cengine/types/types.h"
+#include "cengine/types/string.h"
 #include "cengine/game/go.h"
+#include "cengine/animation.h"
+#include "cengine/game/components/graphics.h"
+#include "cengine/game/components/transform.h"
 
 #pragma region Components
-
-static Transform *transform_new (u32 objectID) {
-
-    Transform *new_transform = (Transform *) malloc (sizeof (Transform));
-    if (new_transform) {
-        new_transform->goID = objectID;
-        new_transform->position.x = 0;
-        new_transform->position.y = 0;
-    }
-
-    return new_transform;
-
-}
-
-static void transform_destroy (Transform *transform) { if (transform) free (transform); }
-
-static Graphics *graphics_new (u32 objectID) {
-
-    Graphics *new_graphics = (Graphics *) malloc (sizeof (Graphics));
-    if (new_graphics) {
-        new_graphics->goID = objectID;
-        new_graphics->sprite = NULL;
-        new_graphics->spriteSheet = NULL;
-        new_graphics->refSprite = false;
-        new_graphics->multipleSprites = false;
-        new_graphics->x_sprite_offset = 0;
-        new_graphics->y_sprite_offset = 0;
-        new_graphics->layer = UNSET_LAYER;
-        new_graphics->flip = NO_FLIP;
-    }
-
-    return new_graphics;
-
-}
-
-static void graphics_destroy (Graphics *graphics) {
-
-    if (graphics) {
-        if (graphics->refSprite) {
-            graphics->sprite = NULL;
-            graphics->spriteSheet = NULL;
-        }
-
-        else {
-            if (graphics->sprite) sprite_destroy (graphics->sprite);
-            if (graphics->spriteSheet) sprite_sheet_destroy (graphics->spriteSheet);
-        }
-
-        free (graphics);
-    }
-
-}
-
-void graphics_set_sprite (Graphics *graphics, const char *filename) {
-
-    if (graphics && filename) {
-        graphics->sprite = sprite_load (filename, main_renderer);
-        graphics->spriteSheet = NULL;
-        graphics->multipleSprites = false;
-    }
-
-}
-
-void graphics_set_sprite_sheet (Graphics *graphics, const char *filename) {
-
-    if (graphics && filename) {
-        graphics->sprite = NULL;
-        graphics->spriteSheet = sprite_sheet_load (filename, main_renderer);
-        graphics->multipleSprites = true;
-    }
-
-}
-
-void graphics_ref_sprite (Graphics *graphics, Sprite *sprite) {
-
-    if (graphics && sprite) {
-        graphics->sprite = sprite;
-        graphics->spriteSheet = NULL;
-        graphics->multipleSprites = false;
-        graphics->refSprite = true;
-    }
-
-}
-
-void graphics_ref_sprite_sheet (Graphics *graphics, SpriteSheet *spriteSheet) {
-
-    if (graphics && spriteSheet) {
-        graphics->sprite = NULL;
-        graphics->spriteSheet = spriteSheet;
-        graphics->multipleSprites = true;
-        graphics->refSprite = true;
-    }
-
-}
 
 // FIXME: Add colliders logic!
 
@@ -137,10 +46,12 @@ static void collider_box_destroy (BoxCollider *box) { if (box) free (box); } */
 
 #pragma region Game Objects
 
-static GameObject **gameObjects;
-static u32 max_gos;
-static u32 curr_max_objs;
-static u32 new_go_id;
+GameObject **gameObjects = NULL;
+u32 max_gos = 0;
+u32 curr_max_objs = 0;
+u32 new_go_id = 0;
+
+static DoubleList *user_components;        // user defined components
 
 static bool game_objects_realloc (void) {
 
@@ -157,8 +68,111 @@ static bool game_objects_realloc (void) {
 
 }
 
+/*** Tags ***/
+
+static DoubleList *tags = NULL;
+
+static void game_object_destroy_dummy (void *ptr);
+static int game_object_comparator (void *one, void *two);
+
+static GameObjectTag *game_object_tag_new (const char *name) {
+
+    GameObjectTag *tag = (GameObjectTag *) malloc (sizeof (GameObjectTag));
+    if (tag) {
+        tag->name = str_new (name);
+        tag->gos = dlist_init (game_object_destroy_dummy, game_object_comparator);
+    }
+
+    return tag;
+
+}
+
+static void game_object_tag_delete (void *ptr) {
+
+    if (ptr) {
+        GameObjectTag *tag = (GameObjectTag *) ptr;
+        str_delete (tag->name);
+        dlist_destroy (tag->gos);
+
+        free (tag);
+    }
+
+}
+
+// create a new go tag with that name
+void game_object_tag_create (const char *name) {
+
+    if (name) {
+        GameObjectTag *tag = game_object_tag_new (name);
+        dlist_insert_after (tags, dlist_end (tags), tag);
+    }
+
+}
+
+GameObjectTag *game_object_tag_get_by_name (const char *tag_name) {
+
+    GameObjectTag *retval = NULL;
+
+    if (tag_name) {
+        GameObjectTag *tag = NULL;
+        for (ListElement *le = dlist_start (tags); le; le = le->next) {
+            tag = (GameObjectTag *) le->data;
+            if (!strcmp (tag_name, tag->name->str)) {
+                retval = tag;
+                break;
+            }
+        }
+    }
+
+    return retval;    
+
+}
+
+// adds a game object to a tag, returns 0 on success, 1 on error
+int game_object_add_to_tag (GameObject *go, const char *tag_name) {
+
+    int retval = 1;
+
+    if (go && tag_name) {
+        GameObjectTag *tag = game_object_tag_get_by_name (tag_name);
+        if (tag) {
+            dlist_insert_after (tag->gos, dlist_end (tag->gos), go);
+            retval = 0;
+        }
+    }
+
+    return retval;
+
+}
+
+// removes a game object from a tag, returns 0 on success, 1 on error
+int game_object_remove_from_tag (GameObject *go, const char *tag_name) {
+
+    int retval = 1;
+
+    if (go && tag_name) {
+        GameObjectTag *tag = game_object_tag_get_by_name (tag_name);
+        if (tag) {
+            // search the game object inside the tag
+            ListElement *le = dlist_get_element (tag->gos, go);
+            if (le) {
+                void *data = dlist_remove_element (tag->gos, le);
+                if (data) retval = 0;
+                
+            } 
+        }
+    }
+
+    return retval;
+
+}
+
+void user_component_delete (void *ptr);
+
 // init our game objects array
-static u8 game_objects_init_all (void) {
+u8 game_objects_init_all (void) {
+
+    u8 retval = 1;
 
     gameObjects = (GameObject **) calloc (DEFAULT_MAX_GOS, sizeof (GameObject *));
     if (gameObjects) {
@@ -168,10 +182,15 @@ static u8 game_objects_init_all (void) {
         curr_max_objs = 0;
         new_go_id = 0;
 
-        return 0;
+        tags = dlist_init (game_object_tag_delete, NULL);   // init gos tags
+
+        // init user defined components list
+        user_components = dlist_init (user_component_delete, NULL);
+
+        retval = 0;
     }
 
-    return 1;
+    return retval;
 
 }
 
@@ -209,6 +228,8 @@ static void game_object_init (GameObject *go, u32 id, const char *name, const ch
         go->children = NULL;
 
         go->update = NULL;
+
+        go->user_components = dlist_init (user_component_delete, NULL);
     }
 
 }
@@ -303,7 +324,8 @@ void game_object_destroy (GameObject *go) {
         graphics_destroy ((Graphics *) go->components[GRAPHICS_COMP]);
         animator_destroy ((Animator *) go->components[ANIMATOR_COMP]);
 
-        // player_comp_delete ((Player *) go->components[PLAYER_COMP]);
+        // destroy user defined components
+        dlist_destroy (go->user_components);
     }
 
 }
@@ -320,7 +342,8 @@ static void game_object_delete (GameObject *go) {
         graphics_destroy ((Graphics *) go->components[GRAPHICS_COMP]);
         animator_destroy ((Animator *) go->components[ANIMATOR_COMP]);
 
-        // player_comp_delete ((Player *) go->components[PLAYER_COMP]);
+        // destroy user defined components
+        dlist_destroy (go->user_components);
 
         if (go->name) free (go->name);
         if (go->tag) free (go->tag);
@@ -332,6 +355,12 @@ static void game_object_delete (GameObject *go) {
 
 // clean up game objects
 void game_object_destroy_all (void) {
+
+    // destroy gos tags
+    dlist_destroy (tags);
+
+    // destroy user defined components list
+    dlist_destroy (user_components);
 
     for (u32 i = 0; i < curr_max_objs; i++) 
         if (gameObjects[i])
@@ -353,6 +382,8 @@ void game_object_update_all (void) {
 
 }
 
+/*** Components ***/
+
 void *game_object_add_component (GameObject *go, GameComponent component) {
 
     void *retval = NULL;
@@ -368,15 +399,6 @@ void *game_object_add_component (GameObject *go, GameComponent component) {
             case ANIMATOR_COMP: 
                 retval = go->components[component] = animator_new (go->id); 
                 break;
-
-            // case PLAYER_COMP: 
-            //     retval = go->components[component] = player_comp_new (go->id); 
-            //     go->update = player_update;
-            //     break;
-            // case ENEMY_COMP:
-            //     retval = go->components[component] = enemy_create_comp (go->id);
-            //     go->update = enemy_update;
-            //     break;
 
             default: break;
         }
@@ -406,16 +428,118 @@ void game_object_remove_component (GameObject *go, GameComponent component) {
                 animator_destroy (go->components[component]);
                 break;
 
-            // case PLAYER_COMP: 
-            //     player_comp_delete (go->components[component]);
-            //     go->update = NULL;
-            //     break;
-            // case ENEMY_COMP:
-            //     enemy_destroy_comp (go->components[component]);
-            //     go->update = NULL;
-            //     break;
-
             default: break;
+        }
+    }
+
+}
+
+/*** User defined componets ***/
+
+// creates a new user component
+UserComponent *user_component_new (const char *name, 
+    void *(*add)(u32), void (*remove)(void *), void (*update)(void *)) {
+
+    UserComponent *user_comp = (UserComponent *) malloc (sizeof (UserComponent));
+    if (user_comp) {
+        user_comp->name = str_new (name);
+        user_comp->component = NULL;
+        user_comp->add = add;
+        user_comp->remove = remove;
+        user_comp->update = update;
+    }
+
+    return user_comp;
+
+}
+
+void user_component_delete (void *ptr) {
+
+    if (ptr) {
+        UserComponent *user_comp = (UserComponent *) ptr;
+        str_delete (user_comp->name);
+
+        if (user_comp->component && user_comp->remove) 
+            user_comp->remove (user_comp->component) ;
+
+        free (user_comp);
+    }
+
+}
+
+// registers a new user component, returns 0 on success, 1 on error
+int user_component_register (UserComponent *user_comp) {
+
+    int retval = 1;
+
+    if (user_comp) {
+        retval = dlist_insert_after (user_components, 
+            dlist_end (user_components), user_comp) == true ? 0 : 1;
+    }
+
+    return retval;
+
+}
+
+// gets a user defined component by name
+static UserComponent *user_component_get (DoubleList *components, const char *name) {
+
+    UserComponent *user_comp = NULL;
+
+    if (name) {
+        for (ListElement *le = dlist_start (components); le; le = le->next) {
+            user_comp = (UserComponent *) le->data;
+            if (!strcmp (name, user_comp->name->str)) break;
+        }
+    }
+
+    return user_comp;
+
+}
+
+// returns the component inside the user component for quick access
+void *game_object_add_user_component (GameObject *go, const char *component_name) {
+
+    void *retval = NULL;
+
+    if (go && component_name) {
+        // get the component by name
+        UserComponent *user_comp = user_component_get (user_components, component_name);
+        if (user_comp) {
+            // add the component to the game object
+            UserComponent *new_comp = user_component_new (user_comp->name->str, 
+                user_comp->add, user_comp->remove, user_comp->update);
+            retval = new_comp->component = new_comp->add (go->id);
+
+            go->update = new_comp->update;
+
+            // add the new user component to the game object
+            dlist_insert_after (go->user_components, dlist_end (go->user_components), new_comp);
+        }
+    }
+
+    return retval;
+
+}
+
+void *game_object_get_user_component (GameObject *go, const char *name) {
+
+    if (go && name) return (user_component_get (go->user_components, name))->component;
+        
+}
+
+void game_object_user_component_remove (GameObject *go, const char *name) {
+
+    if (go && name) {
+        ListElement *le = NULL;
+        UserComponent *user_comp = NULL;
+        for (le = dlist_start (user_components); le; le = le->next) {
+            user_comp = (UserComponent *) le->data;
+            if (!strcmp (name, user_comp->name->str)) {
+                dlist_remove_element (go->user_components, le);
+                user_component_delete (user_comp);
+                break;
+            }
         }
     }
 

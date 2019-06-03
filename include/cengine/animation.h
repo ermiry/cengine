@@ -3,13 +3,15 @@
 
 #include <stdbool.h>
 
-#include "types/types.h"
-#include "types/string.h"
+#include "blackrock.h"
+
+#include "cengine/types/types.h"
+#include "cengine/types/string.h"
 
 #include "cengine/timer.h"
 #include "cengine/sprites.h"
 
-#include "cengine/collections/dlist.h"
+#include "collections/dlist.h"
 
 #define DEFAULT_ANIM_SPEED      100
 

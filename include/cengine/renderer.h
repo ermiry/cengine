@@ -5,7 +5,7 @@
 
 #include <SDL2/SDL.h>
 
-#include "types/types.h"
+#include "cengine/types/types.h"
 
 extern SDL_Window *main_window;
 extern SDL_Renderer *main_renderer;

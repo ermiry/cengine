@@ -1,5 +1,5 @@
-#ifndef CAMERA_H
-#define CAMERA_H
+#ifndef _CENGINE_CAMERA_H_
+#define _CENGINE_CAMERA_H_
 
 #include <stdbool.h>
 

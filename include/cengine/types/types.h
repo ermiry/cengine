@@ -1,5 +1,5 @@
-#ifndef _MY_TYPES_H_
-#define _MY_TYPES_H_
+#ifndef _CENGINE_TYPES_H_
+#define _CENGINE_TYPES_H_
 
 #define EXIT_FAILURE    1
 

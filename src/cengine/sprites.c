@@ -2,8 +2,6 @@
 
 #include <SDL2/SDL.h>
 
-#include "types/types.h"
-
 #include "cengine/sprites.h"
 #include "cengine/textures.h"
 

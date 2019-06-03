@@ -1,26 +1,36 @@
 #ifndef _CENGINE_THREAD_H_
 #define _CENGINE_THREAD_H_
 
-#include "myos.h"
+#include <SDL2/SDL.h>
+
+#include "cengine/os.h"
 
 #if defined OS_LINUX
     #include <pthread.h>
 #endif
 
-// creates a custom detachable thread
-extern int pthread_create_detachable (void *(*work) (void *), void *args);
+#include "cengine/types/types.h"
+#include "cengine/types/string.h"
+
+#include "collections/dlist.h"
+
+#define THREAD_OK   0
+
+// creates a custom detachable thread (will go away on its own upon completion)
+// handle manually in linux, with no name
+// in any other platform, created with sdl api and you can pass a custom name
+// returns 0 on success, 1 on error
+extern u8 thread_create_detachable (void *(*work) (void *), void *args, const char *name);
 
 // sets thread name from inisde it
 extern int thread_set_name (const char *name);
 
 typedef struct HubWorker {
 
-    // FIXME: handle portability
-    #if defined     OS_LINUX
-        pthread_t thread;
-    #endif
+    pthread_t pthread;
+    SDL_Thread *thread;
 
-    const char *name;
+    String *name;
     void *(*job) (void *);
     void *args;
 
@@ -28,10 +38,8 @@ typedef struct HubWorker {
 
 typedef struct ThreadHub {
 
-    const char *name;           // thread hub name
-
-    unsigned int n_workers;
-    HubWorker **workers;
+    String *name;
+    DoubleList *threads;
 
 } ThreadHub;
 
@@ -40,9 +48,10 @@ extern ThreadHub *thread_hub_int (const char *name);
 
 // inits the global thread hub
 extern int thread_hub_init_global (void);
+extern void thread_hub_end_global (void);
 
 // ends a thread hub
-extern int thread_hub_end (ThreadHub *hub);
+extern void thread_hub_end (ThreadHub *hub);
 
 // adds a worker to the hub
 extern int thread_hub_add (ThreadHub *hub, void *(*work) (void *), void *args, const char *worker_name);

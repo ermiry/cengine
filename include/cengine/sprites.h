@@ -3,7 +3,15 @@
 
 #include <SDL2/SDL.h>
 
-#include "types/types.h"
+#include "cengine/types/types.h"
+
+typedef enum Flip {
+
+    NO_FLIP = 0x00000000,
+    FLIP_HORIZONTAL = 0x00000001,
+    FLIP_VERTICAL = 0x00000002
+
+} Flip;
 
 typedef struct Sprite {
 

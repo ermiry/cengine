@@ -1,5 +1,5 @@
-#ifndef _MY_OS_H_
-#define _MY_OS_H_
+#ifndef _CENGINE_OS_H_
+#define _CENGINE_OS_H_
 
     #ifdef          __linux__
     #define     OS_LINUX

@@ -1,5 +1,5 @@
-#ifndef _MY_STRING_H_
-#define _MY_STRING_H_
+#ifndef _CENGINE_STRING_H_
+#define _CENGINE_STRING_H_
 
 typedef struct String {
 

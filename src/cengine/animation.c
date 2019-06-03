@@ -4,20 +4,25 @@
 
 #include <SDL2/SDL.h>
 
-#include "myos.h"
+#include "cengine/os.h"
 
-#include "types/string.h"
+#include "cengine/types/types.h"
+#include "cengine/types/string.h"
 
 #include "cengine/thread.h"
 #include "cengine/timer.h"
 #include "cengine/sprites.h"
 #include "cengine/animation.h"
 #include "cengine/game/go.h"
-#include "cengine/utils/utils.h"
-#include "cengine/utils/file.h"
-#include "cengine/utils/json.h"
 
-#include "cengine/collections/dlist.h"
+#include "collections/dlist.h"
+
+#include "utils/file.h"
+#include "utils/json.h"
+
+#ifdef CENGINE_DEBUG
+    #include "cengine/utils/log.h"
+#endif
 
 static bool anim_init = false;
 
@@ -298,7 +303,6 @@ void animator_play_animation (Animator *animator, Animation *animation) {
 
 static pthread_t anim_thread;
 
-// FIXME:
 void *animations_update (void *data) {
 
     thread_set_name ("animation");
@@ -373,13 +377,17 @@ int animations_init (void) {
     if (animators) {
         if (!pthread_create (&anim_thread, NULL, animations_update, NULL)) anim_init = true;
         else {
+            #ifdef CENGINE_DEBUG
             cengine_log_msg (stderr, ERROR, NO_TYPE, "Failed to create animations thread.");
+            #endif
             errors = 1;
         }
     }
 
     else {
+        #ifdef CENGINE_DEBUG
         cengine_log_msg (stderr, ERROR, NO_TYPE, "Failed to create animators list!");
+        #endif
         errors = 1;
     }
 

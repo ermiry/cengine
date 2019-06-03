@@ -1,11 +1,11 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
-#include "types/types.h"
-
 #include "cengine/renderer.h"
 #include "cengine/sprites.h"
 #include "cengine/game/camera.h"
+#include "cengine/utils/log.h"
+#include "cengine/utils/utils.h"
 
 /*** TEXTURE MANAGER ***/
 
@@ -20,7 +20,7 @@ SDL_Texture *texture_load (const char *filename, SDL_Renderer *renderer) {
             return texture;
         }
 
-        fprintf (stderr, "[Error] - Failed to load asset: %s!", filename);
+        cengine_log_msg (stderr, ERROR, NO_TYPE, c_string_create ("Failed to load asset: %s!", filename));
     }
 
     return NULL;
