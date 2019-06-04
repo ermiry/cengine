@@ -10,7 +10,7 @@
 #include "cengine/utils/log.h"
 #include "cengine/utils/utils.h"
 
-#include "collections/dlist.h"
+#include "cengine/collections/dlist.h"
 
 DoubleList *fonts = NULL;
 
@@ -318,7 +318,7 @@ static u8 glyph_upload_cache (Font *font, int cacheLevel, SDL_Surface *dataSurfa
             if (font->filter == FILTER_LINEAR) SDL_SetHint (SDL_HINT_RENDER_SCALE_QUALITY, "1");
             else SDL_SetHint (SDL_HINT_RENDER_SCALE_QUALITY, "0");
             
-            new_level = SDL_CreateTexture (main_renderer, dataSurface->format->format, 
+            new_level = SDL_CreateTexture (main_renderer->renderer, dataSurface->format->format, 
                 SDL_TEXTUREACCESS_TARGET, dataSurface->w, dataSurface->h);;
 
             SDL_SetTextureBlendMode (new_level, SDL_BLENDMODE_BLEND);
@@ -327,17 +327,17 @@ static u8 glyph_upload_cache (Font *font, int cacheLevel, SDL_Surface *dataSurfa
             SDL_SetHint (SDL_HINT_RENDER_SCALE_QUALITY, "0");
 
             u8 r, g, b, a;
-            SDL_Texture *temp = SDL_CreateTextureFromSurface (main_renderer, dataSurface);
+            SDL_Texture *temp = SDL_CreateTextureFromSurface (main_renderer->renderer, dataSurface);
             SDL_SetTextureBlendMode (temp, SDL_BLENDMODE_NONE);
-            SDL_SetRenderTarget (main_renderer, new_level);
+            SDL_SetRenderTarget (main_renderer->renderer, new_level);
 
-            SDL_GetRenderDrawColor (main_renderer, &r, &g, &b, &a);
-            SDL_SetRenderDrawColor (main_renderer, 0, 0, 0, 0);
-            SDL_RenderClear (main_renderer);
-            SDL_SetRenderDrawColor (main_renderer, r, g, b, a);
+            SDL_GetRenderDrawColor (main_renderer->renderer, &r, &g, &b, &a);
+            SDL_SetRenderDrawColor (main_renderer->renderer, 0, 0, 0, 0);
+            SDL_RenderClear (main_renderer->renderer);
+            SDL_SetRenderDrawColor (main_renderer->renderer, r, g, b, a);
 
-            SDL_RenderCopy (main_renderer, temp, NULL, NULL);
-            SDL_SetRenderTarget (main_renderer, NULL);
+            SDL_RenderCopy (main_renderer->renderer, temp, NULL, NULL);
+            SDL_SetRenderTarget (main_renderer->renderer, NULL);
 
             SDL_DestroyTexture (temp);
 
@@ -449,7 +449,7 @@ static u8 ui_font_load_from_ttf (Font *font, TTF_Font *ttf, RGBA_Color color) {
     // FC_ClearFont(font);
 
     SDL_RendererInfo info;
-    SDL_GetRendererInfo (main_renderer, &info);
+    SDL_GetRendererInfo (main_renderer->renderer, &info);
     has_render_target_support = (info.flags & SDL_RENDERER_TARGETTEXTURE);
 
     font->ttf_source = ttf;

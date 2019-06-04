@@ -9,12 +9,12 @@
 
 /*** TEXTURE MANAGER ***/
 
-SDL_Texture *texture_load (const char *filename, SDL_Renderer *renderer) {
+SDL_Texture *texture_load (const char *filename, Renderer *renderer) {
 
     if (filename && renderer) {
         SDL_Surface *tmpSurface = IMG_Load (filename);
         if (tmpSurface) {
-            SDL_Texture *texture = SDL_CreateTextureFromSurface (renderer, tmpSurface);
+            SDL_Texture *texture = SDL_CreateTextureFromSurface (renderer->renderer, tmpSurface);
             SDL_FreeSurface (tmpSurface);
 
             return texture;
@@ -41,7 +41,7 @@ void texture_draw (Camera *cam, Sprite *sprite, i32 x, i32 y, SDL_RendererFlip f
 
         CamRect screenRect = camera_world_to_screen (cam, sprite->dest_rect);
 
-        SDL_RenderCopyEx (main_renderer, sprite->texture, &sprite->src_rect, &screenRect, 
+        SDL_RenderCopyEx (main_renderer->renderer, sprite->texture, &sprite->src_rect, &screenRect, 
             0, 0, flip);    
     }
 
@@ -59,7 +59,7 @@ void texture_draw_frame (Camera *cam, SpriteSheet *spriteSheet,
 
         CamRect screenRect = camera_world_to_screen (cam, spriteSheet->dest_rect);
 
-        SDL_RenderCopyEx (main_renderer, spriteSheet->texture, 
+        SDL_RenderCopyEx (main_renderer->renderer, spriteSheet->texture, 
             &spriteSheet->src_rect, &screenRect,
             0, 0, flip);
     }

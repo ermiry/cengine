@@ -4,6 +4,7 @@
 #include <SDL2/SDL.h>
 
 #include "cengine/types/types.h"
+#include "cengine/renderer.h"
 
 typedef enum Flip {
 
@@ -47,10 +48,10 @@ typedef struct SpriteSheet {
 
 extern SpriteSheet *sprite_sheet_new (void);
 extern void sprite_destroy (Sprite *sprite);
-extern Sprite *sprite_load (const char *filename, SDL_Renderer *renderer);
+extern Sprite *sprite_load (const char *filename, Renderer *renderer);
 
 extern void sprite_sheet_destroy (SpriteSheet *spriteSheet);
-extern SpriteSheet *sprite_sheet_load (const char *filename, SDL_Renderer *renderer);
+extern SpriteSheet *sprite_sheet_load (const char *filename, Renderer *rendererr);
 extern void sprite_sheet_set_sprite_size (SpriteSheet *spriteSheet, u32 w, u32 h);
 extern void sprite_sheet_set_scale_factor (SpriteSheet *spriteSheet, i32 scaleFactor);
 extern void sprite_sheet_crop (SpriteSheet *spriteSheet);

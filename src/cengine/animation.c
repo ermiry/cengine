@@ -9,16 +9,17 @@
 #include "cengine/types/types.h"
 #include "cengine/types/string.h"
 
+#include "cengine/cengine.h"
 #include "cengine/thread.h"
 #include "cengine/timer.h"
 #include "cengine/sprites.h"
 #include "cengine/animation.h"
 #include "cengine/game/go.h"
 
-#include "collections/dlist.h"
+#include "cengine/collections/dlist.h"
 
-#include "utils/file.h"
-#include "utils/json.h"
+#include "cengine/utils/file.h"
+#include "cengine/utils/json.h"
 
 #ifdef CENGINE_DEBUG
     #include "cengine/utils/log.h"
@@ -307,7 +308,7 @@ void *animations_update (void *data) {
 
     thread_set_name ("animation");
 
-    u32 timePerFrame = 1000 / FPS_LIMIT;
+    u32 timePerFrame = 1000 / fps_limit;
     u32 frameStart = 0;
     i32 sleepTime = 0;
 

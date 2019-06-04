@@ -97,7 +97,7 @@ void ui_cursor_draw (Cursor *cursor) {
         cursor->sprite->dest_rect.x = mousePos.x;
         cursor->sprite->dest_rect.y = mousePos.y;
 
-        SDL_RenderCopyEx (main_renderer, cursor->sprite->texture, 
+        SDL_RenderCopyEx (main_renderer->renderer, cursor->sprite->texture, 
             &cursor->sprite->src_rect, &cursor->sprite->dest_rect, 
             0, 0, NO_FLIP);   
     }

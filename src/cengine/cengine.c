@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include <SDL2/SDL.h>
 
@@ -11,19 +12,22 @@
 #include "cengine/utils/log.h"
 #include "cengine/utils/utils.h"
 
-static unsigned int fps_limit = 30;
+bool running = false;
+
+unsigned int fps_limit = 30;
 
 unsigned int main_fps = 0;
 unsigned int update_fps = 0;
 
 // TODO: create a similar function to sdl init to pass what we want to init
-int cengine_init (const char *window_name) {
+int cengine_init (const char *window_title, WindowSize window_size, bool full_screen) {
 
     int errors = 0;
 
     if (!SDL_Init (SDL_INIT_AUDIO | SDL_INIT_EVENTS | SDL_INIT_VIDEO)) {
         errors = thread_hub_init_global ();
-        errors = video_init_main (window_name);
+        errors = renderer_init_main (SDL_RENDERER_SOFTWARE | SDL_RENDERER_ACCELERATED, 
+            window_title, window_size, full_screen);
         errors = animations_init ();
         errors = game_objects_init_all ();
         errors = ui_init ();
@@ -46,7 +50,7 @@ int cengine_end (void) {
     game_object_destroy_all ();
     animations_end ();
     ui_destroy ();
-    video_destroy_main ();
+    renderer_delete_main ();
     thread_hub_end_global ();
 
     SDL_Quit ();

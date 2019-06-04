@@ -11,7 +11,7 @@
 #include "cengine/game/components/graphics.h"
 #include "cengine/game/components/transform.h"
 
-#include "collections/dlist.h"
+#include "cengine/collections/dlist.h"
 
 typedef struct GameObject {
     

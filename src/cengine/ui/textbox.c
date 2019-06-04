@@ -33,7 +33,7 @@ void ui_textBox_set_text (TextBox *textBox, const char *newText) {
         if (!textBox->isVolatile) {
             if (textBox->texture) SDL_DestroyTexture (textBox->texture);
             SDL_Surface *surface = TTF_RenderText_Solid (textBox->font->ttf_source, newText, textBox->textColor);
-            textBox->texture = SDL_CreateTextureFromSurface (main_renderer, surface);
+            textBox->texture = SDL_CreateTextureFromSurface (main_renderer->renderer, surface);
        
             textBox->bgrect.w = surface->w;
             textBox->bgrect.h = surface->h;
@@ -53,7 +53,7 @@ void ui_textBox_set_text_color (TextBox *textBox, RGBA_Color newColor) {
         if (!textBox->isVolatile) {
             SDL_Surface *surface = TTF_RenderText_Solid (textBox->font->ttf_source, 
                 textBox->text, textBox->textColor);
-            textBox->texture = SDL_CreateTextureFromSurface (main_renderer, surface);
+            textBox->texture = SDL_CreateTextureFromSurface (main_renderer->renderer, surface);
     
             textBox->bgrect.w = surface->w;
             textBox->bgrect.h = surface->h;
@@ -124,7 +124,7 @@ TextBox *ui_textBox_create_static (u32 x, u32 y, RGBA_Color bgColor,
     TextBox *textBox = ui_textBox_new (x, y, bgColor, text, textColor, font, isPassword);
     if (textBox) {
         SDL_Surface *surface = TTF_RenderText_Solid (textBox->font->ttf_source, text, textColor);
-        textBox->texture = SDL_CreateTextureFromSurface (main_renderer, surface);
+        textBox->texture = SDL_CreateTextureFromSurface (main_renderer->renderer, surface);
 
         textBox->bgrect.x = x;
         textBox->bgrect.y = y;        
@@ -175,7 +175,7 @@ UIRect ui_rect_render (SDL_Texture *srcTexture, UIRect *srcRect, u32 x, u32 y) {
     SDL_RendererFlip flip = SDL_FLIP_NONE;
     UIRect r = *srcRect;
     UIRect dr = { x, y, r.w, r.h };
-    SDL_RenderCopyEx (main_renderer, srcTexture, &r, &dr, 0, NULL, flip);
+    SDL_RenderCopyEx (main_renderer->renderer, srcTexture, &r, &dr, 0, NULL, flip);
 
     retval.x = x;
     retval.y = y;

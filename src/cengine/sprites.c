@@ -7,7 +7,7 @@
 
 /*** SPRITES ***/
 
-Sprite *sprite_load (const char *filename, SDL_Renderer *renderer) {
+Sprite *sprite_load (const char *filename, Renderer *renderer) {
 
     if (filename && renderer) {
         Sprite *new_sprite = (Sprite *) malloc (sizeof (Sprite));
@@ -81,7 +81,7 @@ void sprite_sheet_destroy (SpriteSheet *spriteSheet) {
 
 }
 
-SpriteSheet *sprite_sheet_load (const char *filename, SDL_Renderer *renderer) {
+SpriteSheet *sprite_sheet_load (const char *filename, Renderer *renderer) {
 
     if (filename && renderer) {
         SpriteSheet *new_sprite_sheet = sprite_sheet_new ();

@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "collections/dlist.h"
+#include "cengine/collections/dlist.h"
 
 void dlist_set_compare (DoubleList *list, int (*compare)(void *one, void *two)) { if (list) list->compare = compare; }
 
