@@ -46,6 +46,8 @@ struct _Camera {
 
 typedef struct _Camera Camera;
 
+extern Camera *main_camera;
+
 extern Camera *camera_new (u32 windowWidth, u32 windowHeight);
 extern void camera_destroy (Camera *cam);
 

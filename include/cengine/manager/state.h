@@ -15,13 +15,10 @@ typedef enum StateType {
 
 typedef struct State {
 
-    // StateType state;
-
-    void (*update)(void);
-    void (*render)(void);
-
     void (*onEnter)(void);
     void (*onExit)(void);
+
+    void (*update)(void);
 
 } State;
 

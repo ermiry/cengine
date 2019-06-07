@@ -8,11 +8,12 @@
 #include "cengine/renderer.h"
 #include "cengine/thread.h"
 #include "cengine/game/go.h"
+#include "cengine/game/camera.h"
 #include "cengine/manager/manager.h"
 #include "cengine/utils/log.h"
 #include "cengine/utils/utils.h"
 
-bool running = false;
+bool running = true;
 
 unsigned int fps_limit = 30;
 
@@ -26,11 +27,15 @@ int cengine_init (const char *window_title, WindowSize window_size, bool full_sc
 
     if (!SDL_Init (SDL_INIT_AUDIO | SDL_INIT_EVENTS | SDL_INIT_VIDEO)) {
         errors = thread_hub_init_global ();
+        errors = animations_init ();
         errors = renderer_init_main (SDL_RENDERER_SOFTWARE | SDL_RENDERER_ACCELERATED, 
             window_title, window_size, full_screen);
-        errors = animations_init ();
+        layers_init ();
         errors = game_objects_init_all ();
         errors = ui_init ();
+
+        main_camera = camera_new (main_renderer->window_size.width, main_renderer->window_size.height);
+        errors = main_camera ? 0 : 1;
     }
 
     else {
@@ -47,10 +52,12 @@ int cengine_init (const char *window_title, WindowSize window_size, bool full_sc
 
 int cengine_end (void) {
 
+    camera_destroy (main_camera);
+    ui_destroy ();
+    layers_end ();
+    renderer_delete_main ();
     game_object_destroy_all ();
     animations_end ();
-    ui_destroy ();
-    renderer_delete_main ();
     thread_hub_end_global ();
 
     SDL_Quit ();

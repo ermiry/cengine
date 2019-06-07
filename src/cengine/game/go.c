@@ -6,45 +6,10 @@
 #include "cengine/types/string.h"
 #include "cengine/game/go.h"
 #include "cengine/animation.h"
+
 #include "cengine/game/components/graphics.h"
 #include "cengine/game/components/transform.h"
-
-#pragma region Components
-
-// FIXME: Add colliders logic!
-
-/* static BoxCollider *collider_box_new (u32 objectID) {
-
-    BoxCollider *new_collider = (BoxCollider *) malloc (sizeof (BoxCollider));
-    if (new_collider) {
-        new_collider->x = new_collider->y = 0;
-        new_collider->w = new_collider->h = 0;
-    }
-
-    return new_collider;
-
-}
-
-void collider_box_init (u32 x, u32 y, u32 w, u32 h) {}
-
-bool collider_box_collision (const BoxCollider *a, const BoxCollider *b) {
-
-    if (a && b) 
-        if (a->x + a->w >= b->x &&
-            b->x + b->w >= a->x &&
-            a->y + a->h >= b->y &&
-            b->y + b->h >= a->y)
-                return true;
-
-    return false;
-
-}
-
-static void collider_box_destroy (BoxCollider *box) { if (box) free (box); } */
-
-#pragma endregion
-
-#pragma region Game Objects
+#include "cengine/game/components/collider.h"
 
 GameObject **gameObjects = NULL;
 u32 max_gos = 0;
@@ -72,8 +37,8 @@ static bool game_objects_realloc (void) {
 
 static DoubleList *tags = NULL;
 
-static void game_object_destroy_dummy (void *ptr);
-static int game_object_comparator (void *one, void *two);
+void game_object_destroy_dummy (void *ptr);
+int game_object_comparator (void *one, void *two);
 
 static GameObjectTag *game_object_tag_new (const char *name) {
 
@@ -230,6 +195,9 @@ static void game_object_init (GameObject *go, u32 id, const char *name, const ch
         go->update = NULL;
 
         go->user_components = dlist_init (user_component_delete, NULL);
+
+        // all game objects are added to the dafult layer when they are initialized
+        layer_add_object ("default", go);
     }
 
 }
@@ -264,9 +232,9 @@ GameObject *game_object_new (const char *name, const char *tag) {
 }
 
 // this is used to avoid go destruction when destroying go's children
-static void game_object_destroy_dummy (void *ptr) {}
+void game_object_destroy_dummy (void *ptr) {}
 
-static int game_object_comparator (void *one, void *two) {
+int game_object_comparator (void *one, void *two) {
 
     if (one && two) {
         GameObject *go_one = (GameObject *) one;
@@ -319,6 +287,8 @@ void game_object_destroy (GameObject *go) {
 
         if (go->children) free (go->children);
 
+        layer_remove_object (go->layer->name->str, go);
+
         // individually destroy each component
         transform_destroy ((Transform *) go->components[TRANSFORM_COMP]);
         graphics_destroy ((Graphics *) go->components[GRAPHICS_COMP]);
@@ -344,6 +314,8 @@ static void game_object_delete (GameObject *go) {
 
         // destroy user defined components
         dlist_destroy (go->user_components);
+
+        // layer_remove_object (go->layer->name->str, go);
 
         if (go->name) free (go->name);
         if (go->tag) free (go->tag);
@@ -545,4 +517,10 @@ void game_object_user_component_remove (GameObject *go, const char *name) {
 
 }
 
-#pragma endregion
+/*** Layers ***/
+
+int game_object_set_layer (GameObject *go, const char *layer) {
+
+    return layer_add_object (layer, go);
+
+}

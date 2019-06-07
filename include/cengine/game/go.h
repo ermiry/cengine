@@ -8,6 +8,8 @@
 #include "cengine/types/types.h"
 #include "cengine/types/string.h"
 
+#include "cengine/renderer.h"
+
 #include "cengine/game/components/graphics.h"
 #include "cengine/game/components/transform.h"
 
@@ -19,10 +21,14 @@ typedef struct GameObject {
 
     char *name;
     char *tag;      // FIXME: change this when adding to tags!!
+
+    Layer *layer;
+
     void *components[COMP_COUNT];
     DoubleList *user_components;
 
     DoubleList *children;
+
     void (*update)(void *data);
 
 } GameObject;
@@ -39,6 +45,11 @@ extern GameObject *game_object_new (const char *name, const char *tag);
 extern void game_object_destroy (GameObject *go);
 extern void game_object_destroy_ref (void *data);
 
+// this is used to avoid go destruction when destroying go's children
+extern void game_object_destroy_dummy (void *ptr);
+
+extern int game_object_comparator (void *one, void *two);
+
 extern void game_object_add_child (GameObject *parent, GameObject *child);
 extern GameObject *game_object_remove_child (GameObject *parent, GameObject *child);
 
@@ -49,6 +60,9 @@ extern void game_object_destroy_all (void);
 
 // update every game object
 extern void game_object_update_all (void);
+
+// add a game object into a layer
+extern int game_object_set_layer (GameObject *go, const char *layer);
 
 /*** Tags ***/
 

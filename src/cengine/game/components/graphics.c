@@ -17,7 +17,6 @@ Graphics *graphics_new (u32 objectID) {
         new_graphics->multipleSprites = false;
         new_graphics->x_sprite_offset = 0;
         new_graphics->y_sprite_offset = 0;
-        new_graphics->layer = UNSET_LAYER;
         new_graphics->flip = NO_FLIP;
     }
 

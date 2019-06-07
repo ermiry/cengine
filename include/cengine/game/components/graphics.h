@@ -6,16 +6,6 @@
 #include "cengine/types/types.h"
 #include "cengine/sprites.h"
 
-typedef enum Layer {
-
-    UNSET_LAYER = 0,
-    GROUND_LAYER = 1,
-    LOWER_LAYER = 2,
-    MID_LAYER = 3,
-    TOP_LAYER = 4,
-
-} Layer;
-
 typedef struct Graphics {
 
     u32 goID;
@@ -26,7 +16,6 @@ typedef struct Graphics {
 
     u32 x_sprite_offset, y_sprite_offset;
     bool multipleSprites;
-    Layer layer; 
     Flip flip;
     bool hasBeenSeen;
     bool visibleOutsideFov;

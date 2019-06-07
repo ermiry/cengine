@@ -5,6 +5,8 @@
 #include "cengine/game/camera.h"
 #include "cengine/types/vector2d.h"
 
+Camera *main_camera = NULL;
+
 static void camera_init (Camera *cam, u32 windowWidth, u32 windowHeight);
 
 // camera constructor

@@ -7,6 +7,7 @@
 
 #include "cengine/types/types.h"
 #include "cengine/types/string.h"
+#include "cengine/collections/dlist.h"
 
 typedef struct WindowSize {
 
@@ -60,6 +61,35 @@ extern int renderer_init_main (Uint32 flags,
     const char *window_title, WindowSize window_size, bool full_screen);
 
 extern void renderer_delete_main (void);
+
+/*** Layers ***/
+
+typedef struct Layer {
+
+    String *name;
+    u8 pos;
+    DoubleList *gos;
+
+} Layer;
+
+// creates a new layer; 
+// takes the layer name and the layer pos, -1 for last layer
+// pos 0 renders first
+// returns 0 on success, 1 on error
+extern int layer_create (const char *name, int pos);
+
+// add a game object into a layer
+// returns 0 on succes, 1 on error
+extern int layer_add_object (const char *layer_name, void *ptr);
+
+// removes a game object from a layer
+// returns 0 on succes, 1 on error
+extern int layer_remove_object (const char *layer_name, void *ptr);
+
+// inits cengine render layers
+extern void layers_init (void);
+
+extern void layers_end (void);
 
 /*** Render func ***/
 

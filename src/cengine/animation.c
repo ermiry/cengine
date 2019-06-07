@@ -20,10 +20,7 @@
 
 #include "cengine/utils/file.h"
 #include "cengine/utils/json.h"
-
-#ifdef CENGINE_DEBUG
-    #include "cengine/utils/log.h"
-#endif
+#include "cengine/utils/log.h"
 
 static bool anim_init = false;
 
@@ -300,9 +297,7 @@ void animator_play_animation (Animator *animator, Animation *animation) {
 
 }
 
-/*** ANIM THREAD ***/
-
-static pthread_t anim_thread;
+/*** Anim Thread ***/
 
 void *animations_update (void *data) {
 
@@ -326,7 +321,6 @@ void *animations_update (void *data) {
             for (ListElement *le = dlist_start (animators); le != NULL; le = le->next) {
                 animator = (Animator *) le->data;
                 graphics = (Graphics *) game_object_get_component (game_object_get_by_id (animator->goID), GRAPHICS_COMP);
-
                 animator->currFrame = (int) (((animator->timer->ticks / animator->currAnimation->speed) %
                         animator->currAnimation->n_frames));
 
@@ -370,17 +364,16 @@ void *animations_update (void *data) {
 
 }
 
+/*** Public ***/
+
 int animations_init (void) {
 
     int errors = 0;
 
     animators = dlist_init (animator_destroy_ref, animator_comparator);
     if (animators) {
-        if (!pthread_create (&anim_thread, NULL, animations_update, NULL)) anim_init = true;
-        else {
-            #ifdef CENGINE_DEBUG
-            cengine_log_msg (stderr, ERROR, NO_TYPE, "Failed to create animations thread.");
-            #endif
+        if (thread_create_detachable (animations_update, NULL, "animations")) {
+            cengine_log_msg (stderr, ERROR, NO_TYPE, "Failed to create animations thread!");
             errors = 1;
         }
     }
@@ -399,7 +392,5 @@ int animations_init (void) {
 void animations_end (void) {
 
     dlist_destroy (animators);
-
-    if (anim_init) pthread_join (anim_thread, NULL);
 
 }
