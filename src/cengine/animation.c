@@ -10,9 +10,9 @@
 #include "cengine/types/string.h"
 
 #include "cengine/cengine.h"
-#include "cengine/thread.h"
 #include "cengine/timer.h"
 #include "cengine/sprites.h"
+#include "cengine/threads/thread.h"
 #include "cengine/animation.h"
 #include "cengine/game/go.h"
 

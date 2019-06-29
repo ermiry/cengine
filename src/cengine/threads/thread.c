@@ -11,7 +11,7 @@
 #endif
 
 #include "cengine/types/types.h"
-#include "cengine/thread.h"
+#include "cengine/threads/thread.h"
 #include "cengine/utils/log.h"
 #include "cengine/utils/utils.h"
 

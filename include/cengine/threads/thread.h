@@ -12,7 +12,7 @@
 #include "cengine/types/types.h"
 #include "cengine/types/string.h"
 
-#include "collections/dlist.h"
+#include "cengine/collections/dlist.h"
 
 #define THREAD_OK   0
 

@@ -6,7 +6,7 @@
 #include "cengine/animation.h"
 #include "cengine/input.h"
 #include "cengine/renderer.h"
-#include "cengine/thread.h"
+#include "cengine/threads/thread.h"
 #include "cengine/game/go.h"
 #include "cengine/game/camera.h"
 #include "cengine/manager/manager.h"
