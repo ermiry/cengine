@@ -166,26 +166,6 @@ void ui_textBox_destroy (TextBox *textbox) {
 
 }
 
-// FIXME: move this form here!
-// FC_Default_RenderCallback
-UIRect ui_rect_render (SDL_Texture *srcTexture, UIRect *srcRect, u32 x, u32 y) {
-
-    UIRect retval;
-
-    SDL_RendererFlip flip = SDL_FLIP_NONE;
-    UIRect r = *srcRect;
-    UIRect dr = { x, y, r.w, r.h };
-    SDL_RenderCopyEx (main_renderer->renderer, srcTexture, &r, &dr, 0, NULL, flip);
-
-    retval.x = x;
-    retval.y = y;
-    retval.w = srcRect->w;
-    retval.h = srcRect->h;
-
-    return retval;
-
-}
-
 // FIXME: handle text color change
 // FIXME: handle password logic
 // TODO: maybe add scale

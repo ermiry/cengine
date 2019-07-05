@@ -347,7 +347,7 @@ static u8 glyph_upload_cache (Font *font, int cacheLevel, SDL_Surface *dataSurfa
         if (!glyph_set_cache_level (font, cacheLevel, new_level)) return 0;   // success
         
         #ifdef CENGINE_DEBUG
-        cengine_log_msg (stderr, ERROR, NO_TYPE, "Font cache ran out of packing space "
+        cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Font cache ran out of packing space "
             "and could not add another cache level!");
         #else
         SDL_DestroyTexture (new_level);
@@ -497,10 +497,10 @@ static u8 ui_font_load_from_ttf (Font *font, TTF_Font *ttf, RGBA_Color color) {
             if (num_surfaces >= FONT_LOAD_MAX_SURFACES) {
                 // FIXME: better handle this error - also set a retval
                 #ifdef CENGINE_DEBUG
-                cengine_log_msg (stderr, ERROR, NO_TYPE, "Font cache error - Could not create"
+                cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Font cache error - Could not create"
                     "enough cache surfaces to fit all of the loading string!");
                 #else
-                cengine_log_msg (stderr, ERROR, NO_TYPE, "Failed to create font cache!");
+                cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to create font cache!");
                 #endif
 
                 SDL_FreeSurface (glyph_surf);
@@ -543,7 +543,7 @@ static u8 ui_font_load_rw (Font *font, SDL_RWops *file_rwops_ttf,
 
     TTF_Font *ttf = TTF_OpenFontRW (file_rwops_ttf, own_rwops, pointSize);
     if (!ttf) {
-        cengine_log_msg (stderr, ERROR, NO_TYPE, "Failed to load ttf!");
+        cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to load ttf!");
         return 1;
     }
 
@@ -572,7 +572,7 @@ u8 ui_font_load (Font *font, u32 pointSize, RGBA_Color color, int style) {
     if (font) {
         SDL_RWops *rwops = SDL_RWFromFile (font->filename->str, "rb");
         if (rwops) return ui_font_load_rw (font, rwops, 1, pointSize, color, style);
-        else cengine_log_msg (stderr, ERROR, NO_TYPE, 
+        else cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, 
             c_string_create ("Failed to open font file: %s", font->filename));
     }
 

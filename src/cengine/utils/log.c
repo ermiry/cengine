@@ -7,14 +7,14 @@
 
 static char *cengine_get_msg_type (LogMsgType type) {
 
-    char temp[10];
+    char temp[15];
 
     switch (type) {
-        case ERROR: strcpy (temp, "[ERROR]"); break;
-        case WARNING: strcpy (temp, "[WARNING]"); break;
-        case SUCCESS: strcpy (temp, "[SUCCESS]"); break;
-        case DEBUG_MSG: strcpy (temp, "[DEBUG]"); break;
-        case TEST: strcpy (temp, "[TEST]"); break;
+        case LOG_ERROR: strcpy (temp, "[LOG_ERROR]"); break;
+        case LOG_WARNING: strcpy (temp, "[LOG_WARNING]"); break;
+        case LOG_SUCCESS: strcpy (temp, "[LOG_SUCCESS]"); break;
+        case LOG_DEBUG: strcpy (temp, "[DEBUG]"); break;
+        case LOG_TEST: strcpy (temp, "[TEST]"); break;
 
         default: break;
     }
@@ -36,23 +36,23 @@ void cengine_log_msg (FILE *__restrict __stream, LogMsgType firstType, LogMsgTyp
     if (secondType != 0) {
         second = cengine_get_msg_type (secondType);
 
-        if (firstType == DEBUG_MSG)
+        if (firstType == LOG_DEBUG)
             message = c_string_create ("%s: %s\n", second, msg);
         
         else message = c_string_create ("%s%s: %s\n", first, second, msg);
     }
 
-    else if (firstType != DEBUG_MSG)
+    else if (firstType != LOG_DEBUG)
         message = c_string_create ("%s: %s\n", first, msg);
 
     // log messages with color
     switch (firstType) {
-        case DEBUG_MSG: 
+        case LOG_DEBUG: 
             fprintf (__stream, COLOR_MAGENTA "%s: " COLOR_RESET "%s\n", first, msg); break;
 
-        case ERROR: fprintf (__stream, COLOR_RED "%s" COLOR_RESET, message); break;
-        case WARNING: fprintf (__stream, COLOR_YELLOW "%s" COLOR_RESET, message); break;
-        case SUCCESS: fprintf (__stream, COLOR_GREEN "%s" COLOR_RESET, message); break;
+        case LOG_ERROR: fprintf (__stream, COLOR_RED "%s" COLOR_RESET, message); break;
+        case LOG_WARNING: fprintf (__stream, COLOR_YELLOW "%s" COLOR_RESET, message); break;
+        case LOG_SUCCESS: fprintf (__stream, COLOR_GREEN "%s" COLOR_RESET, message); break;
 
         default: fprintf (__stream, "%s", message); break;
     }

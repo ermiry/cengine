@@ -53,6 +53,7 @@ typedef SDL_Rect UIRect;
 
 extern UIRect ui_rect_create (u32 x, u32 y, u32 w, u32 h);
 extern UIRect ui_rect_union (UIRect a, UIRect b);
+extern UIRect ui_rect_render (SDL_Texture *srcTexture, UIRect *srcRect, u32 x, u32 y);
 
 extern RGBA_Color ui_rgba_color_create (u8 r, u8 g, u8 b, u8 a);
 

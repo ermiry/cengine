@@ -20,7 +20,7 @@ SDL_Texture *texture_load (const char *filename, Renderer *renderer) {
             return texture;
         }
 
-        cengine_log_msg (stderr, ERROR, NO_TYPE, c_string_create ("Failed to load asset: %s!", filename));
+        cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, c_string_create ("Failed to load asset: %s!", filename));
     }
 
     return NULL;

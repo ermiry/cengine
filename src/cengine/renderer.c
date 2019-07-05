@@ -23,7 +23,7 @@ int window_get_size (SDL_Window *window, WindowSize *window_size) {
     if (window) {
         SDL_GetWindowSize (window, &window_size->width, &window_size->height);
         #ifdef CENGINE_DEBUG
-        cengine_log_msg (stdout, DEBUG_MSG, NO_TYPE, 
+        cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, 
             c_string_create ("Window size: %dx%dpx.", window_size->width, window_size->height));
         #endif
         retval = 0;
@@ -131,7 +131,7 @@ Renderer *render_create_renderer (const char *renderer_name, Uint32 flags, int d
     renderer->display_index = display_index;
     if (!SDL_GetCurrentDisplayMode (display_index, &renderer->display_mode)) {
         #ifdef CENGINE_DEBUG
-        cengine_log_msg (stdout, DEBUG_MSG, NO_TYPE,
+        cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE,
             c_string_create ("Display with idx %i mode is %dx%dpx @ %dhz.",
             renderer->display_index, 
             renderer->display_mode.w, renderer->display_mode.h, 
@@ -159,24 +159,24 @@ Renderer *render_create_renderer (const char *renderer_name, Uint32 flags, int d
             }
 
             else {
-                cengine_log_msg (stderr, ERROR, NO_TYPE, "Failed to create renderer!"); 
+                cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to create renderer!"); 
                 renderer_delete (renderer);
                 renderer = NULL;
             }
         }
 
         else {
-            cengine_log_msg (stderr, ERROR, NO_TYPE, "Failed to create window!"); 
+            cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to create window!"); 
             renderer_delete (renderer);
             renderer = NULL;
         }
     }
 
     else {
-        cengine_log_msg (stderr, ERROR, NO_TYPE, 
+        cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, 
             c_string_create ("Failed to get display mode for display with idx %i", display_index));
         #ifdef CENGINE_DEBUG
-        cengine_log_msg (stderr, ERROR, NO_TYPE, SDL_GetError ());
+        cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, SDL_GetError ());
         #endif
         renderer_delete (renderer);
         renderer = NULL;

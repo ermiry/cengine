@@ -11,7 +11,7 @@
 
 struct _Cerver;
 
-typedef struct Connection {
+struct _Connection {
 
     String *name;
 
@@ -37,7 +37,9 @@ typedef struct Connection {
     Action success_auth_action;     // what happens if the authentication was successfull
     void *success_auth_args;        // passed to the success auth method
 
-} Connection;
+};
+
+typedef struct _Connection Connection;
 
 extern Connection *connection_new (void);
 extern void connection_delete (void *ptr);

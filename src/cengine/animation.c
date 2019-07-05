@@ -373,14 +373,14 @@ int animations_init (void) {
     animators = dlist_init (animator_destroy_ref, animator_comparator);
     if (animators) {
         if (thread_create_detachable (animations_update, NULL, "animations")) {
-            cengine_log_msg (stderr, ERROR, NO_TYPE, "Failed to create animations thread!");
+            cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to create animations thread!");
             errors = 1;
         }
     }
 
     else {
         #ifdef CENGINE_DEBUG
-        cengine_log_msg (stderr, ERROR, NO_TYPE, "Failed to create animators list!");
+        cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to create animators list!");
         #endif
         errors = 1;
     }

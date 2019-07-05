@@ -13,13 +13,13 @@
 
 typedef enum LogMsgType {
 
-	NO_TYPE = 0,
+	LOG_NO_TYPE = 0,
 
-    ERROR = 1,
-    WARNING,
-    SUCCESS,
-    DEBUG_MSG,
-    TEST
+    LOG_ERROR = 1,
+    LOG_WARNING,
+    LOG_SUCCESS,
+    LOG_DEBUG,
+    LOG_TEST
 
 } LogMsgType;
 

@@ -47,7 +47,7 @@ Cursor *ui_cursor_create (const char *sprite, const char *sprite_sheet, int w, i
         if (sprite) {
             c->sprite = sprite_load (sprite, main_renderer);
             if (!c->sprite) {
-                cengine_log_msg (stderr, ERROR, NO_TYPE, "Failed to load cursor sprite!");
+                cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to load cursor sprite!");
                 ui_cursor_delete (c);
                 return NULL;
             } 
@@ -58,7 +58,7 @@ Cursor *ui_cursor_create (const char *sprite, const char *sprite_sheet, int w, i
         else if (sprite_sheet) {
             c->sprite_sheet = sprite_sheet_load (sprite_sheet, main_renderer);
             if (!c->sprite_sheet) {
-                cengine_log_msg (stderr, ERROR, NO_TYPE, "Failed to load cursor sprite sheet!");
+                cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to load cursor sprite sheet!");
                 ui_cursor_delete (c);
                 return NULL;
             }

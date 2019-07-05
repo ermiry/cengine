@@ -8,6 +8,8 @@
 
 #include "cengine/cerver/connection.h"
 
+struct _Connection;
+
 typedef u32 ProtocolID;
 
 extern void packets_set_protocol_id (ProtocolID protocol_id);
@@ -87,7 +89,7 @@ typedef struct RequestData {
 struct _Packet {
 
     // the connection the packet belongs to
-    Connection *connection;
+    struct _Connection *connection;
 
     PacketType packet_type;
     String *custom_type;
@@ -119,7 +121,7 @@ extern u8 packet_send_tcp (i32 socket_fd, const void *packet, size_t packet_size
 extern u8 packet_send_udp (const void *packet, size_t packet_size);
 
 // sends a packet in the connection
-extern u8 packet_send (Connection *connection, Packet *packet, int flags);
+extern u8 packet_send (struct _Connection *connection, Packet *packet, int flags);
 
 // check for packets with bad size, protocol, version, etc
 extern u8 packet_check (Packet *packet);

@@ -149,7 +149,7 @@ u8 packet_check (Packet *packet) {
 
     /*if (packetSize < sizeof (PacketHeader)) {
         #ifdef CLIENT_DEBUG
-        cengine_log_msg (stderr, WARNING, NO_TYPE, "Recieved a to small packet!");
+        cengine_log_msg (stderr, LOG_WARNING, LOG_NO_TYPE, "Recieved a to small packet!");
         #endif
         return 1;
     } 
@@ -158,7 +158,7 @@ u8 packet_check (Packet *packet) {
 
     if (header->protocolID != PROTOCOL_ID) {
         #ifdef CLIENT_DEBUG
-        logMsg (stdout, WARNING, PACKET, "Packet with unknown protocol ID.");
+        cengine_log_msg (stdout, LOG_WARNING, PACKET, "Packet with unknown protocol ID.");
         #endif
         return 1;
     }
@@ -166,7 +166,7 @@ u8 packet_check (Packet *packet) {
     Version version = header->protocolVersion;
     if (version.major != PROTOCOL_VERSION.major) {
         #ifdef CLIENT_DEBUG
-        logMsg (stdout, WARNING, PACKET, "Packet with incompatible version.");
+        cengine_log_msg (stdout, LOG_WARNING, PACKET, "Packet with incompatible version.");
         #endif
         return 1;
     }
@@ -175,7 +175,7 @@ u8 packet_check (Packet *packet) {
     // that the client created 
     if (packetSize != header->packetSize) {
         #ifdef CLIENT_DEBUG
-        logMsg (stdout, WARNING, PACKET, "Recv packet size doesn't match header size.");
+        cengine_log_msg (stdout, LOG_WARNING, PACKET, "Recv packet size doesn't match header size.");
         #endif
         return 1;
     } 
@@ -184,7 +184,7 @@ u8 packet_check (Packet *packet) {
         // check if the packet is of the expected type
         if (header->packetType != expectedType) {
             #ifdef CLIENT_DEBUG
-            logMsg (stdout, WARNING, PACKET, "Packet doesn't match expected type.");
+            cengine_log_msg (stdout, LOG_WARNING, PACKET, "Packet doesn't match expected type.");
             #endif
             return 1;
         }

@@ -30,7 +30,7 @@ u8 thread_create_detachable (void *(*work) (void *), void *args, const char *nam
         rc = pthread_attr_setdetachstate (&attr, PTHREAD_CREATE_DETACHED);
 
         if (pthread_create (&thread, &attr, work, args) != THREAD_OK)
-            cengine_log_msg (stderr, ERROR, NO_TYPE, "Failed to create detachable thread!");
+            cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to create detachable thread!");
         else retval = 0;
     #else
         SDL_Thread *thread = SDL_CreateThread ((int (*) (void *)) work, name, args);
@@ -56,7 +56,7 @@ int thread_set_name (const char *name) {
         #elif defined   OS_MACOS
             retval = pthread_setname_np (name);
         #elif defined   CENGINE_DEBUG
-            cengine_log_msg (stdout, WARNING, NO_TYPE, "pthread_setname_np is not supported on this system.");
+            cengine_log_msg (stdout, LOG_WARNING, LOG_NO_TYPE, "pthread_setname_np is not supported on this system.");
         #endif
     }
 
@@ -94,10 +94,10 @@ static void hub_worker_destroy (void *ptr) {
 
         #ifdef OS_LINUX
             if (pthread_join (worker->pthread, NULL)) {
-                if (worker->name) cengine_log_msg (stderr, ERROR, NO_TYPE, 
+                if (worker->name) cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, 
                     c_string_create ("Failed to join thread %s!", worker->name->str));
 
-                else cengine_log_msg (stderr, ERROR, NO_TYPE, "Failed to join thread!");
+                else cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to join thread!");
             }
                 
         #else

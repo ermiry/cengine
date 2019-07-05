@@ -36,7 +36,7 @@ struct _Client {
     u16 n_fds;                  // n of active fds in the pollfd array
     u32 poll_timeout;   
 
-    threadpool thpool;
+    threadpool *thpool;
 
     // only used in a game server
     bool in_lobby;               // is the client inside a lobby?

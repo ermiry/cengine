@@ -39,9 +39,9 @@ int cengine_init (const char *window_title, WindowSize window_size, bool full_sc
     }
 
     else {
-        cengine_log_msg (stderr, ERROR, NO_TYPE, "Failed to init SDL!");
+        cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to init SDL!");
         #ifdef CENGINE_DEBUG
-        cengine_log_msg (stderr, ERROR, NO_TYPE, c_string_create ("%s", SDL_GetError ()));
+        cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, c_string_create ("%s", SDL_GetError ()));
         #endif
         errors = 1;
     }
@@ -148,7 +148,7 @@ int cengine_start (int fps) {
     fps_limit = fps > 0 ? fps : 30;
 
     if (thread_create_detachable (cengine_update, NULL, "update")) {
-        cengine_log_msg (stderr, ERROR, NO_TYPE, "Failed to create update thread!");
+        cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to create update thread!");
         running = false;
     }
 

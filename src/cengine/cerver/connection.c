@@ -140,7 +140,7 @@ static u8 connection_init (Connection *connection) {
                 connection->sock_fd = socket ((connection->use_ipv6 == 1 ? AF_INET6 : AF_INET), SOCK_DGRAM, 0);
                 break;
 
-            default: cengine_log_msg (stderr, ERROR, NO_TYPE, "Unkonw protocol type!"); return 1;
+            default: cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Unkonw protocol type!"); return 1;
         }
 
         if (connection->sock_fd > 0) {
@@ -159,7 +159,7 @@ static u8 connection_init (Connection *connection) {
                     else {
                         struct sockaddr_in *addr = (struct sockaddr_in *) &connection->address;
                         addr->sin_family = AF_INET;
-                        addr->sin_addr.s_addr = inet_addr (connection->ip);
+                        addr->sin_addr.s_addr = inet_addr (connection->ip->str);
                         addr->sin_port = htons (connection->port);
                     }
 
@@ -168,7 +168,7 @@ static u8 connection_init (Connection *connection) {
 
                 else {
                     #ifdef CLIENT_DEBUG
-                    cengine_log_msg (stderr, ERROR, NO_TYPE, 
+                    cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, 
                         "Failed to set the socket to non blocking mode!");
                     #endif
                     close (connection->sock_fd);
@@ -176,7 +176,7 @@ static u8 connection_init (Connection *connection) {
             }
         }
 
-        else cengine_log_msg (stderr, ERROR, NO_TYPE, "Failed to create new socket!");
+        else cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to create new socket!");
     }
 
     return retval;
@@ -205,7 +205,7 @@ Connection *connection_create (const char *name,
             // set up the new connection to be ready to be started
             if (connection_init (connection)) {
                 #ifdef CLIENT_DEBUG
-                cengine_log_msg (stderr, ERROR, NO_TYPE, "Failed to set up the new connection!");
+                cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to set up the new connection!");
                 #endif
                 connection_delete (connection);
                 connection = NULL;
