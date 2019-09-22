@@ -7,8 +7,6 @@
 #include "cengine/utils/log.h"
 #include "cengine/utils/utils.h"
 
-/*** TEXTURE MANAGER ***/
-
 SDL_Texture *texture_load (const char *filename, Renderer *renderer) {
 
     if (filename && renderer) {

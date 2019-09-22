@@ -10,7 +10,7 @@ Graphics *graphics_new (u32 objectID) {
 
     Graphics *new_graphics = (Graphics *) malloc (sizeof (Graphics));
     if (new_graphics) {
-        new_graphics->goID = objectID;
+        new_graphics->go_id = objectID;
         new_graphics->sprite = NULL;
         new_graphics->spriteSheet = NULL;
         new_graphics->refSprite = false;

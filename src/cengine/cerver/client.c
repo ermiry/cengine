@@ -2,30 +2,86 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <fcntl.h>
-#include <unistd.h>
+#include <time.h>
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
-#include <errno.h>
+#include "cengine/types/types.h"
+#include "cengine/types/string.h"
 
 #include "cengine/cerver/network.h"
 #include "cengine/cerver/packets.h"
 #include "cengine/cerver/events.h"
 #include "cengine/cerver/errors.h"
 #include "cengine/cerver/client.h"
+#include "cengine/cerver/handler.h"
 #include "cengine/cerver/cerver.h"
 #include "cengine/cerver/connection.h"
+#include "cengine/cerver/game.h"
 
 #include "cengine/collections/dlist.h"
+
+#include "cengine/threads/thread.h"
 
 #include "cengine/utils/log.h"
 #include "cengine/utils/utils.h"
 
-static Connection *client_connection_get_by_socket (Client *client, i32 sock_fd);
+int client_connection_end (Client *client, Connection *connection);
+Connection *client_connection_get_by_socket (Client *client, i32 sock_fd);
+
+static ClientStats *client_stats_new (void) {
+
+    ClientStats *client_stats = (ClientStats *) malloc (sizeof (ClientStats));
+    if (client_stats) {
+        memset (client_stats, 0, sizeof (ClientStats));
+        client_stats->received_packets = packets_per_type_new ();
+        client_stats->sent_packets = packets_per_type_new ();
+    } 
+
+    return client_stats;
+
+}
+
+static inline void client_stats_delete (ClientStats *client_stats) { 
+    
+    if (client_stats) {
+        packets_per_type_delete (client_stats->received_packets);
+        packets_per_type_delete (client_stats->sent_packets);
+
+        free (client_stats); 
+    } 
+    
+}
+
+void client_stats_print (Client *client) {
+
+    if (client) {
+        if (client->stats) {
+            printf ("\nClient's stats: ");
+            printf ("\nThreshold time:            %ld\n", client->stats->threshold_time);
+            printf ("N packets received:        %ld\n", client->stats->n_packets_received);
+            printf ("N receives done:           %ld\n", client->stats->n_receives_done);
+            printf ("Total bytes received:      %ld\n", client->stats->total_bytes_received);
+            printf ("N packets sent:            %ld\n", client->stats->n_packets_sent);
+            printf ("Total bytes sent:          %ld\n", client->stats->total_bytes_sent);
+
+            printf ("\nReceived packets:\n");
+            packets_per_type_print (client->stats->received_packets);
+
+            printf ("\nSent packets:\n");
+            packets_per_type_print (client->stats->sent_packets);
+        }
+
+        else {
+            cengine_log_msg (stderr, LOG_ERROR, LOG_CLIENT, 
+                "Client does not have a reference to a client stats!");
+        }
+    }
+
+    else {
+        cengine_log_msg (stderr, LOG_WARNING, LOG_CLIENT, 
+            "Can't get stats of a NULL client!");
+    }
+
+}
 
 static Client *client_new (void) {
 
@@ -33,15 +89,15 @@ static Client *client_new (void) {
     if (client) {
         memset (client, 0, sizeof (Client));
 
+        client->running = false;
         client->connections = NULL;
-
-        memset (client->fds, 0, sizeof (client->fds));
-        for (u8 i = 0; i < DEFAULT_MAX_CONNECTIONS; i++)    
-            client->fds[i].fd = -1;
-
-        client->thpool = NULL;
-
         client->registered_actions = NULL;
+
+        client->app_packet_handler = NULL;
+        client->app_error_packet_handler = NULL;
+        client->custom_packet_handler = NULL;
+
+        client->stats = NULL;
     }
 
     return client;
@@ -51,36 +107,75 @@ static Client *client_new (void) {
 static void client_delete (Client *client) {
 
     if (client) {
-        dlist_destroy (client->connections);
-        // TODO: check with new thpool code --- 14/06/2019
-        if (client->thpool) thpool_destroy (client->thpool);
+        dlist_delete (client->connections);
 
         client_events_end (client);
+
+        client_stats_delete (client->stats);
 
         free (client);
     }
 
 }
 
+// sets a cutom app packet hanlder and a custom app error packet handler
+void client_set_app_handlers (Client *client, Action app_handler, Action app_error_handler) {
+
+    if (client) {
+        client->app_packet_handler = app_handler;
+        client->app_error_packet_handler = app_error_handler;
+    }
+
+}
+
+// sets a custom packet handler
+void client_set_custom_handler (Client *client, Action custom_handler) {
+
+    if (client) client->custom_packet_handler = custom_handler;
+
+}
+
+// inits client with default values
+static u8 client_init (Client *client) {
+
+    u8 retval = 1;
+
+    if (client) {
+        client->connections = dlist_init (connection_delete, NULL);
+        client_events_init (client);
+        client->stats = client_stats_new ();
+
+        client->running = false;
+    }
+
+    return retval;
+
+}
+
 Client *client_create (void) {
 
     Client *client = client_new ();
+    if (client) client_init (client);
+
+    return client;
+
+}
+
+// start the client thpool and adds client_poll () to it
+static u8 client_start (Client *client) {
+
+    u8 retval = 1;
+
     if (client) {
-        client->connections = dlist_init (connection_delete, NULL);
-        client->poll_timeout = DEFAULT_POLL_TIMEOUT;
-        client->running = false;
-        client->in_lobby = false;
-        client->owner = false;
-        client_events_init (client);
-        client->thpool = thpool_create ("client", DEFAULT_THPOOL_INIT);
-        if (!client->thpool) {
-            #ifdef CLIENT_DEBUG
-            cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to init client thpool!");
-            #endif
+        // check if we walready have the client poll running
+        if (!client->running) {
+            time (&client->time_started);
+            client->running = true;
+            retval = 0;
         }
     }
 
-    return client;
+    return retval;
 
 }
 
@@ -90,28 +185,13 @@ u8 client_teardown (Client *client) {
     u8 retval = 1;
 
     if (client) {
-        client->running = false;
-
         // end any ongoing connection
         for (ListElement *le = dlist_start (client->connections); le; le = le->next) {
-            connection_end ((Connection *) le->data);
+            connection_end (client, (Connection *) le->data);
             le->data = NULL;
         }
 
-        if (client->thpool) {
-            #ifdef CLIENT_DEBUG
-                cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE,
-                    c_string_create ("Active threads in thpool: %i", 
-                    thpool_num_threads_working (client->thpool)));
-            #endif
-
-            thpool_destroy (client->thpool);
-            #ifdef CLIENT_DEBUG
-                cengine_log_msg (stdout, LOG_SUCCESS, LOG_NO_TYPE, "Client thpool got destroyed!");
-            #endif
-
-            client->thpool = NULL;
-        } 
+        client->running = false;
 
         client_delete (client);
 
@@ -119,270 +199,6 @@ u8 client_teardown (Client *client) {
     }
 
     return retval;
-
-}
-
-// FIXME: create a way to register to different events such as success auth, to avoid creating
-// an specific placeholder for every action we might wanna need to trigger when something happens
-static void client_auth_packet_handler (Packet *packet) {
-
-    if (packet) {
-        if (packet->packet_size >= (sizeof (PacketHeader) + sizeof (RequestData))) {
-            char *end = packet->packet;
-            RequestData *req = (RequestData *) (end += sizeof (PacketHeader));
-
-            switch (req->type) {
-                // we recieve a token from the cerver to use in sessions
-                case CLIENT_AUTH_DATA:
-                    break;
-
-                // we have successfully authenticated with the server
-                case SUCCESS_AUTH:
-                    break;
-
-                default: 
-                    cengine_log_msg (stderr, LOG_WARNING, LOG_NO_TYPE, "Unknown authentication request.");
-                    break;
-            }
-        }
-    }
-
-}
-
-// FIXME: 
-void auth_packet_handler (Packet *packet) {
-
-    // char *end = pack_info->packetData;
-    // RequestData *reqdata = (RequestData *) (end += sizeof (PacketHeader));
-
-    // switch (reqdata->type) {
-    //     case CLIENT_AUTH_DATA: {
-    //         Token *tokenData = (Token *) (end += sizeof (RequestData));
-    //         #ifdef CLIENT_DEBUG 
-    //         cengine_log_msg (stdout, LOG_DEBUG, CLIENT,
-    //             c_string_create ("Token recieved from server: %s", tokenData->token));
-    //         #endif  
-    //         Token *token_data = (Token *) malloc (sizeof (Token));
-    //         memcpy (token_data->token, tokenData->token, sizeof (token_data->token));
-    //         pack_info->connection->server->token_data = token_data;
-    //     } break;
-    //     case SUCCESS_AUTH: {
-    //         cengine_log_msg (stdout, LOG_SUCCESS, CLIENT, "Client authenticated successfully to server!");
-    //         if (pack_info->connection->successAuthAction)
-    //             pack_info->connection->successAuthAction (pack_info->connection->successAuthArgs);  
-    //     } break;
-    //     default: break;
-    // }
-    // break;
-
-}
-
-// the client handles a packet based on its type
-static void client_packet_handler (void *data) {
-
-    if (data) {
-        Packet *packet = (Packet *) data;
-
-        if (!packet_check (packet)) {
-            switch (packet->header->packet_type) {
-                // handles cerver type packets
-                case SERVER_PACKET: cerver_packet_handler (packet); break;
-
-                // handles an error from the server
-                case ERROR_PACKET: error_packet_handler (packet); break;
-
-                // handles authentication packets
-                case AUTH_PACKET: auth_packet_handler (packet); break;
-
-                // handles a request made from the server
-                case REQUEST_PACKET: break;
-
-                // handle a game packet sent from the server
-                case GAME_PACKET: break;
-
-                // FIXME:
-                // user set handler to handle app specific errors
-                case APP_ERROR_PACKET: 
-                    // if (pack_info->client->appErrorHandler)  
-                    //     pack_info->client->appErrorHandler (pack_info);
-                    break;
-
-                // FIXME:
-                // user set handler to handler app specific packets
-                case APP_PACKET:
-                    // if (pack_info->client->appPacketHandler)
-                    //     pack_info->client->appPacketHandler (pack_info);
-                    break;
-
-                // custom packet hanlder
-                case CUSTOM_PACKET: break;
-
-                // FIXME:
-                // handles test packets
-                case TEST_PACKET: break;
-
-                default:
-                    #ifdef CLIENT_DEBUG
-                    cengine_log_msg (stdout, LOG_WARNING, LOG_NO_TYPE, "Got a packet of unknown type.");
-                    #endif
-                    break;
-            }
-        }
-
-        packet_delete (packet);
-    }
-
-}
-
-// splits the entry buffer in packets of the correct size
-static void client_handle_recieve_buffer (Client *client, i32 socket_fd, 
-    char *buffer, size_t total_size) {
-
-    if (buffer && (total_size > 0)) {
-        u32 buffer_idx = 0;
-        char *end = buffer;
-
-        PacketHeader *header = NULL;
-        u32 packet_size;
-        char *packet_data = NULL;
-
-        while (buffer_idx < total_size) {
-            header = (PacketHeader *) end;
-
-            // check the packet size
-            packet_size = header->packet_size;
-            if (packet_size > 0) {
-                // copy the content of the packet from the buffer
-                packet_data = (char *) calloc (packet_size, sizeof (char));
-                for (u32 i = 0; i < packet_size; i++, buffer_idx++) 
-                    packet_data[i] = buffer[buffer_idx];
-
-                Packet *packet = packet_new ();
-                if (packet) {
-                    packet->connection = client_connection_get_by_socket (client, socket_fd);
-                    packet->header = header;
-                    packet->packet_size = packet_size;
-                    packet->packet = packet_data;
-
-                    thpool_add_work (client->thpool, (void *) client_packet_handler, packet);
-                }
-
-                end += packet_size;
-            }
-
-            else break;
-        }
-    }
-
-}
-
-// FIXME: correctly end server connection
-// TODO: add support for handling large files transmissions
-static void client_recieve (Client *client, i32 fd) {
-
-    ssize_t rc;
-    char packet_buffer[MAX_UDP_PACKET_SIZE];
-    memset (packet_buffer, 0, MAX_UDP_PACKET_SIZE);
-
-    // do {
-        rc = recv (fd, packet_buffer, sizeof (packet_buffer), 0);
-        
-        if (rc < 0) {
-            if (errno != EWOULDBLOCK) {     // no more data to read 
-                #ifdef CLIENT_DEBUG 
-                cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Client recv failed!");
-                perror ("Error ");
-                #endif
-            }
-
-            // /break;
-        }
-
-        if (rc == 0) {
-            // man recv -> steam socket perfomed an orderly shutdown
-            // but in dgram it might mean something?
-            #ifdef CLIENT_DEBUG
-            cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "client_recieve () - rc == 0");
-            #endif
-            // break;
-        }
-
-        char *buffer_data = (char *) calloc (MAX_UDP_PACKET_SIZE, sizeof (char));
-        if (buffer_data) {
-            memcpy (buffer_data, packet_buffer, rc);
-            client_handle_recieve_buffer (client, fd, buffer_data, rc);
-        }
-        
-    // } while (true);
-
-}
-
-void client_set_poll_timeout (Client *client, unsigned int timeout) { 
-    
-    if (client) client->poll_timeout = timeout; 
-    
-}
-
-static u8 client_get_free_poll_idx (Client *client) {
-
-    for (u8 i = 0; i < DEFAULT_MAX_CONNECTIONS; i++)
-        if (client->fds[i].fd == -1)
-            return i;
-
-    return -1;
-
-}
-
-static u8 client_poll (void *data) {
-
-    if (!data) {
-        #ifdef CLIENT_DEBUG
-        cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Can't poll on a NULL client!");
-        #endif
-        return 1;
-    }
-
-    Client *client = (Client *) data;
-
-    int poll_retval;    
-
-    #ifdef CLIENT_DEBUG
-        cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Client poll has started!");
-    #endif
-
-    while (client->running) {
-        poll_retval = poll (client->fds, client->n_fds, client->poll_timeout);
-
-        // poll failed
-        if (poll_retval < 0) {
-            #ifdef CLIENT_DEBUG
-            cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Client poll failed!");
-            perror ("Error");
-            #endif
-            // FIXME: close all of our active connections...
-            break;
-        }
-
-        // if poll has timed out, just continue to the next loop... 
-        if (poll_retval == 0) {
-            // #ifdef CLIENT_DEBUG
-            //     cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Poll timeout.");
-            // #endif
-            continue;
-        }
-
-        // one or more fd(s) are readable, need to determine which ones they are
-        for (u8 i = 0; i < client->n_fds; i++) {
-            if (client->fds[i].revents == 0) continue;
-            if (client->fds[i].revents != POLLIN) continue;
-
-            client_recieve (client, client->fds[i].fd);
-        }
-    }
-
-    #ifdef CLIENT_DEBUG
-        cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Client poll has ended!");
-    #endif
 
 }
 
@@ -407,7 +223,7 @@ Connection *client_connection_get_by_name (Client *client, const char *name) {
 }
 
 // returns a connection assocaited with a socket
-static Connection *client_connection_get_by_socket (Client *client, i32 sock_fd) {
+Connection *client_connection_get_by_socket (Client *client, i32 sock_fd) {
 
     Connection *retval = NULL;
 
@@ -430,13 +246,13 @@ static Connection *client_connection_get_by_socket (Client *client, i32 sock_fd)
 // the connection should be ready to be started
 // returns 0 on success, 1 on error
 int client_connection_create (Client *client, const char *name,
-    const char *ip_address, u16 port, u8 protocol, bool use_ipv6, bool async) {
+    const char *ip_address, u16 port, Protocol protocol, bool use_ipv6) {
 
     int retval = 1;
 
     if (client) {
         if (ip_address) {
-            Connection *connection = connection_create (name, ip_address, port, protocol, use_ipv6, async);
+            Connection *connection = connection_create (name, ip_address, port, protocol, use_ipv6);
             if (connection) {
                 dlist_insert_after (client->connections, dlist_end (client->connections), connection);
                 retval = 0;
@@ -468,7 +284,6 @@ int client_connection_register (Client *client, Connection *connection) {
 
 }
 
-// FIXME: end connections on errors!!
 // starts a client connection
 // returns 0 on success, 1 on error
 int client_connection_start (Client *client, Connection *connection) {
@@ -477,34 +292,17 @@ int client_connection_start (Client *client, Connection *connection) {
 
     if (client && connection) {
         if (!connection_start (connection)) {
-            if (connection->async) {
-                // add the new socket to the poll structure
-                u8 idx = client_get_free_poll_idx (client);
-
-                if (idx >= 0) {
-                    client->fds[idx].fd = connection->sock_fd;
-                    client->fds[idx].events = POLLIN;
-                    client->n_fds++;
-
-                    // check if we walready have the client poll running
-                    if (!client->running) {
-                        if (!thpool_add_work (client->thpool, (void *) client_poll, client)) {
-                            client->running = true;
-                            retval = 0;
-                        }
-
-                        else {
-                            cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, 
-                                "Failed to add client_poll () to client thpool!");
-                        } 
-                    }
-                }     
-
-                else cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to get free client poll idx!");
-            }
-
-            else retval = 1;
+            client_event_trigger (client, EVENT_CONNECTED);
+            connection->connected = true;
+            thread_create_detachable ((void *(*)(void *)) client_connection_update, 
+                client_connection_aux_new (client, connection));
+            client_start (client);
+            retval = 0;
         }
+
+        else {
+            client_event_trigger (client, EVENT_CONNECTION_FAILED);
+        } 
     }
 
     return retval;
@@ -518,17 +316,122 @@ int client_connection_end (Client *client, Connection *connection) {
     int retval = 1;
 
     if (client && connection) {
-        // end the connection
-        if (!connection_end (connection)) {
-            // remove the connection from the client
-            for (u8 i = 0; i < client->n_fds; i++) 
-                if (client->fds[i].fd == connection->sock_fd)
-                    client->fds[i].fd = -1;
+        connection_end (client, connection);
 
-            connection_delete (dlist_remove_element (client->connections, 
-                dlist_get_element (client->connections, connection)));
+        connection_delete (dlist_remove_element (client->connections, 
+            dlist_get_element (client->connections, connection)));
 
-            retval = 0;
+        retval = 0;
+    }
+
+    return retval;
+
+}
+
+/*** Files ***/
+
+#pragma region Files
+
+// requests a file from the server
+// filename: the name of the file to request
+// file complete event will be sent when the file is finished
+// appropiate error is set on bad filename or error in file transmission
+// returns 0 on success sending request, 1 on failed to send request
+u8 client_file_get (Client *client, Connection *connection, const char *filename) {
+
+    u8 retval = 1;
+
+    if (client && connection) {
+        // request the file from the cerver
+        // set our file tray for incoming files
+    }
+
+    return retval;
+
+}
+
+// sends a file to the server
+// filename: the name of the file the cerver will receive
+// file is opened using the filename
+// when file is completly sent, event is set appropriately
+// appropiate error is sent on cerver error or on bad file transmission
+// returns 0 on success sending request, 1 on failed to send request
+u8 client_file_send (Client *client, Connection *connection, const char *filename) {
+
+    u8 retval = 1;
+
+    if (client && connection) {
+        // request the cerver for a file transmission
+        // open the file
+        // send file header
+        // send file in packets
+    }
+
+    return retval;
+
+}
+
+#pragma endregion
+
+/*** Game ***/
+
+#pragma region Game
+
+// requets the cerver to create a new lobby
+// game type: is the type of game to create the lobby, the configuration must exist in the cerver
+// returns 0 on success sending request, 1 on failed to send request
+u8 client_game_create_lobby (Client *owner, Connection *connection,
+    const char *game_type) {
+
+    u8 retval = 1;
+
+    if (owner && connection && game_type) {
+        String *type = str_new (game_type);
+        void *stype = str_serialize (type, SS_SMALL);
+
+        Packet *packet = packet_generate_request (GAME_PACKET, GAME_LOBBY_CREATE, 
+            stype, sizeof (SStringS));
+        if (packet) {
+            packet_set_network_values (packet, owner, connection);
+            retval = packet_send (packet, 0, NULL);
+            packet_delete (packet);
+        }
+
+        str_delete (type);
+        free (stype);
+    }
+
+    return retval;
+
+}
+
+// requests the cerver to join a lobby
+// game type: is the type of game to create the lobby, the configuration must exist in the cerver
+// lobby id: if you know the id of the lobby to join to, if not, the cerver witll search one for you
+// returns 0 on success sending request, 1 on failed to send request
+u8 client_game_join_lobby (Client *client, Connection *connection,
+    const char *game_type, const char *lobby_id) {
+
+    u8 retval = 1;
+
+    if (client && connection) {
+        LobbyJoin lobby_join = { 0 };
+        if (game_type) {
+            lobby_join.game_type.len = strlen (game_type);
+            strcpy (lobby_join.game_type.string, game_type);
+        }
+
+        if (lobby_id) {
+            lobby_join.lobby_id.len = strlen (lobby_id);
+            strcpy (lobby_join.lobby_id.string, lobby_id);
+        }
+
+        Packet *packet = packet_generate_request (GAME_PACKET, GAME_LOBBY_JOIN,
+            &lobby_join, sizeof (LobbyJoin));
+        if (packet) {
+            packet_set_network_values (packet, client, connection);
+            retval = packet_send (packet, 0, NULL);
+            packet_delete (packet);
         }
     }
 
@@ -536,247 +439,68 @@ int client_connection_end (Client *client, Connection *connection) {
 
 }
 
-/*** REQUESTS ***/
+// request the cerver to leave the current lobby
+// returns 0 on success sending request, 1 on failed to send request
+u8 client_game_leave_lobby (Client *client, Connection *connection,
+    const char *lobby_id) {
 
-// These are the requests that we send to the server and we expect a response 
+    u8 retval = 1;
 
-// void *generateRequest (PacketType packetType, RequestType reqType) {
+    if (client && connection && lobby_id) {
+        SStringS id = { 0 };
+        id.len = strlen (lobby_id);
+        strcpy (id.string, lobby_id);
 
-//     size_t packetSize = sizeof (PacketHeader) + sizeof (RequestData);
-//     void *begin = client_generatePacket (packetType, packetSize);
-//     char *end = begin;
+        Packet *packet = packet_generate_request (GAME_PACKET, GAME_LOBBY_LEAVE, 
+            &id, sizeof (SStringS));
+        if (packet) {
+            packet_set_network_values (packet, client, connection);
+            retval = packet_send (packet, 0, NULL);
+            packet_delete (packet);
+        }
+    }
 
-//     RequestData *reqdata = (RequestData *) (end += sizeof (PacketHeader));
-//     reqdata->type = reqType;
-
-//     return begin;
-
-// }
-
-// u8 client_makeTestRequest (Client *client, Connection *connection) {
-
-//     // if (client && connection) {
-//     //     size_t packetSize = sizeof (PacketHeader);
-//     //     void *req = client_generatePacket (TEST_PACKET, packetSize);
-//     //     if (req) {
-//     //         if (client_sendPacket (connection, req, packetSize) < 0) 
-//     //             cengine_log_msg (stderr, LOG_ERROR, PACKET, "Failed to send test packet!");
-
-//     //         else cengine_log_msg (stdout, TEST, PACKET, "Sent test packet to server.");
-
-//     //         free (req);
-
-//     //         return 0;
-//     //     }
-//     // }
-
-//     // return 1;
-
-// }
-
-#pragma endregion
-
-/*** FILE SERVER ***/
-
-#pragma region FILE SERVER
-
-// TODO:
-// request a file from the server
-i8 client_file_get (Client *client, Connection *connection, const char *filename) {
-
-    if (client && connection) {}
+    return retval;
 
 }
 
-// TODO:
-// send a file to the server
-i8 client_file_send (Client *client, Connection *connection, const char *filename) {
+// requests the cerver to start the game in the current lobby
+// returns 0 on success sending request, 1 on failed to send request
+u8 client_game_start_lobby (Client *client, Connection *connection,
+    const char *lobby_id) {
 
-    if (client && connection) {}
+    u8 retval = 1;
+
+    if (client && connection && lobby_id) {
+        SStringS id = { 0 };
+        id.len = strlen (lobby_id);
+        strcpy (id.string, lobby_id);
+
+        Packet *packet = packet_generate_request (GAME_PACKET, GAME_START,
+            &id, sizeof (SStringS));
+        if (packet) {
+            packet_set_network_values (packet, client, connection);
+            retval = packet_send (packet, 0, NULL);
+            packet_delete (packet);
+        }
+    }
+
+    return retval;
 
 }
 
-#pragma endregion
+/*** aux ***/
 
-/*** GAME SERVER ***/
+ClientConnection *client_connection_aux_new (Client *client, Connection *connection) {
 
-#pragma region GAME SERVER
+    ClientConnection *cc = (ClientConnection *) malloc (sizeof (ClientConnection));
+    if (cc) {
+        cc->client = client;
+        cc->connection = connection;
+    }
 
-// request to create a new multiplayer game
-// void *client_game_createLobby (Client *owner, Connection *connection, GameType gameType) {
+    return cc;
 
-//     Lobby *new_lobby = NULL;
+}
 
-//     // create a new connection
-//     Connection *new_con = client_make_new_connection (owner, connection->cerver->ip, 
-//         connection->cerver->port, false);
-
-//     if (new_con) {
-//         char buffer[1024];
-//         memset (buffer, 0, 1024);
-//         int rc = read (new_con->sock_fd, buffer, 1024);
-
-//         if (rc > 0) {
-//             char *end = buffer;
-//             PacketHeader *header = (PacketHeader *) end;
-//             #ifdef CLIENT_DEBUG
-//                 if (header->packetType == SERVER_PACKET)
-//                     cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "New connection - got a server packet.");
-//             #endif
-
-//             // authenticate using our server token
-//             size_t token_packet_size = sizeof (PacketHeader) + sizeof (RequestData) + sizeof (Token);
-//             void *token_packet = client_generatePacket (AUTHENTICATION, token_packet_size);
-//             if (token_packet) {
-//                 char *end = token_packet;
-//                 RequestData *req = (RequestData *) (end += sizeof (PacketHeader));
-//                 req->type = CLIENT_AUTH_DATA;
-
-//                 Token *tok = (Token *) (end += sizeof (RequestData));
-//                 memcpy (tok->token, connection->server->token_data->token, sizeof (tok->token));
-
-//                 client_sendPacket (new_con, token_packet, token_packet_size);
-//                 free (token_packet);
-//             }
-
-//             else {
-//                 // cengine_log_msg (stderr, LOG_ERROR, CLIENT, "New connection - failed to create auth packet!");
-//                 client_end_connection (owner, new_con);
-//                 return NULL;
-//             }
-
-//             memset (buffer, 0, 1024);
-//             rc = read (new_con->sock_fd, buffer, 1024);
-
-//             if (rc > 0) {
-//                 end = buffer;
-//                 RequestData *reqdata = (RequestData *) (end + sizeof (PacketHeader));
-//                 if (reqdata->type == SUCCESS_AUTH) {
-//                     #ifdef CLIENT_DEBUG
-//                         cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, 
-//                             "New connection - authenticated to server.");
-//                     #endif
-
-//                     sleep (1);
-
-//                     // make the create lobby request
-//                     size_t create_packet_size = sizeof (PacketHeader) + sizeof (RequestData);
-//                     void *lobby_req = generateRequest (GAME_PACKET, LOBBY_CREATE);
-//                     if (lobby_req) {
-//                         client_sendPacket (new_con, lobby_req, create_packet_size);
-//                         free (lobby_req);
-//                     }
-
-//                     else {
-//                         cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, 
-//                             "New connection - failed to create lobby packet!");
-//                         client_end_connection (owner, new_con);
-//                         return NULL;
-//                     }
-                    
-//                     memset (buffer, 0, 1024);
-//                     rc = read (new_con->sock_fd, buffer, 1024);
-
-//                     if (rc > 0) {
-//                         end = buffer;
-//                         RequestData *reqdata = (RequestData *) (end += sizeof (PacketHeader));
-//                         if (reqdata->type == LOBBY_UPDATE) {
-//                             SLobby *got_lobby = (SLobby *) (end += sizeof (RequestData));
-//                             new_lobby = (Lobby *) malloc (sizeof (SLobby));
-//                             memcpy (new_lobby, got_lobby, sizeof (SLobby));
-//                         }
-//                     }
-//                 }
-                   
-//             }
-//         }
-
-//         client_end_connection (owner, new_con);
-//     }
-
-//     return new_lobby;
-
-// }
-
-// // FIXME: send game type to server
-// // request to join an on going game
-// void *client_game_joinLobby (Client *client, Connection *connection, GameType gameType) {
-
-//     if (client && connection) {
-//         // create & send a join lobby req packet to the server
-//         size_t packetSize = sizeof (PacketHeader) + sizeof (RequestData);
-//         void *req = generateRequest (GAME_PACKET, LOBBY_JOIN);
-
-//         if (req) {
-//             i8 retval = client_sendPacket (connection, req, packetSize);
-//             free (req);
-//             // return retval;
-//         }
-//     }
-
-//     return NULL;
-
-// }
-
-// // request the server to leave the lobby
-// i8 client_game_leaveLobby (Client *client, Connection *connection) {
-
-//     if (client && connection) {
-//         if (client->in_lobby) {
-//             // create & send a leave lobby req packet to the server
-//             size_t packetSize = sizeof (PacketHeader) + sizeof (RequestData);
-//             void *req = generateRequest (GAME_PACKET, LOBBY_LEAVE);
-
-//             if (req) {
-//                 i8 retval = client_sendPacket (connection, req, packetSize);
-//                 free (req);
-//                 return retval;
-//             }
-//         }
-//     }
-
-//     return -1;
-
-// }
-
-// // request to destroy the current lobby, only if the client is the owner
-// i8 client_game_destroyLobby (Client *client, Connection *connection) {
-
-//     if (client && connection) {
-//         if (client->in_lobby) {
-//             // create & send a leave lobby req packet to the server
-//             size_t packetSize = sizeof (PacketHeader) + sizeof (RequestData);
-//             void *req = generateRequest (GAME_PACKET, LOBBY_DESTROY);
-
-//             if (req) {
-//                 i8 retval = client_sendPacket (connection, req, packetSize);
-//                 free (req);
-//                 return retval;
-//             }
-//         }
-//     }
-
-//     return -1;
-
-// }
-
-// // the owner of the lobby can request to init the game
-// i8 client_game_startGame (Client *client, Connection *connection) {
-
-//     if (client && connection) {
-//         if (client->in_lobby) {
-//             // create & send a leave lobby req packet to the server
-//             size_t packetSize = sizeof (PacketHeader) + sizeof (RequestData);
-//             void *req = generateRequest (GAME_PACKET, GAME_INIT);
-
-//             if (req) {
-//                 i8 retval = client_sendPacket (connection, req, packetSize);
-//                 free (req);
-//                 return retval;
-//             }
-//         }
-//     }
-
-//     return -1;
-
-// }
+void client_connection_aux_delete (void *ptr) { if (ptr) free (ptr); }

@@ -6,7 +6,7 @@
 
 typedef struct Transform {
 
-    u32 goID;
+    u32 go_id;
     Vector2D position;
     // Layer layer;
 

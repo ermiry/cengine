@@ -1,10 +1,6 @@
 #ifndef _CENGINE_GAME_OBJECT_H_
 #define _CENGINE_GAME_OBJECT_H_
 
-#define DEFAULT_MAX_GOS     200
-
-#define COMP_COUNT      4
-
 #include "cengine/types/types.h"
 #include "cengine/types/string.h"
 
@@ -15,12 +11,16 @@
 
 #include "cengine/collections/dlist.h"
 
+#define DEFAULT_MAX_GOS     200
+
+#define COMP_COUNT          4
+
 typedef struct GameObject {
     
     i32 id;
 
-    char *name;
-    char *tag;      // FIXME: change this when adding to tags!!
+    String *name;
+    String *tag;
 
     Layer *layer;
 
@@ -48,7 +48,7 @@ extern void game_object_destroy_ref (void *data);
 // this is used to avoid go destruction when destroying go's children
 extern void game_object_destroy_dummy (void *ptr);
 
-extern int game_object_comparator (void *one, void *two);
+extern int game_object_comparator (const void *one, const void *two);
 
 extern void game_object_add_child (GameObject *parent, GameObject *child);
 extern GameObject *game_object_remove_child (GameObject *parent, GameObject *child);
@@ -61,8 +61,17 @@ extern void game_object_destroy_all (void);
 // update every game object
 extern void game_object_update_all (void);
 
-// add a game object into a layer
-extern int game_object_set_layer (GameObject *go, const char *layer);
+extern void game_object_set_name (GameObject *go, const char *name);
+
+// sets the tag for the gameobject
+// removes it from the one it is now and adds it to the new one
+// returns 0 on success, 1 on error
+extern int game_object_set_tag (GameObject *go, const char *tag_name);
+
+// sets the render layer of the game object
+// removes it from the one it is now and adds it to the new one
+// returns 0 on success, 1 on error
+extern int game_object_set_layer (GameObject *go, const char *layer_name);
 
 /*** Tags ***/
 
@@ -80,6 +89,7 @@ extern GameObjectTag *game_object_tag_get_by_name (const char *tag_name);
 
 // adds a game object to a tag, returns 0 on success, 1 on error
 extern int game_object_add_to_tag (GameObject *go, const char *tag_name);
+
 // removes a game object from a tag, returns 0 on success, 1 on error
 extern int game_object_remove_from_tag (GameObject *go, const char *tag_name);
 

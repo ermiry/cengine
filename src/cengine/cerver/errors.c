@@ -36,7 +36,7 @@ void error_packet_handler (Packet *packet) {
 
     if (packet) {
         if (packet->packet_size >= (sizeof (PacketHeader) + sizeof (SError))) {
-            char *end = packet->packet;
+            char *end = (char *) packet->packet;
             SError *s_error = (SError *) (end += sizeof (PacketHeader));
 
             switch (s_error->error_type) {

@@ -3,51 +3,69 @@
 
 #include <stdbool.h>
 
-#include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <fcntl.h>
-#include <arpa/inet.h>
-
-#include <poll.h>
-
 #include "cengine/types/types.h"
-#include "cengine/threads/thpool.h"
+#include "cengine/collections/dlist.h"
+
+#include "cengine/cerver/network.h"
 #include "cengine/cerver/events.h"
 #include "cengine/cerver/errors.h"
 #include "cengine/cerver/connection.h"
-#include "cengine/collections/dlist.h"
+#include "cengine/cerver/packets.h"
 
-#define MAX_UDP_PACKET_SIZE             65515
+struct _Client;
+struct _Connection;
+struct _PacketsPerType;
 
-#define DEFAULT_MAX_CONNECTIONS         10
-#define DEFAULT_POLL_TIMEOUT            2000
-#define DEFAULT_PACKET_POOL_INIT        4
+typedef struct ClientStats {
 
-#define DEFAULT_THPOOL_INIT             4
+    time_t threshold_time;                          // every time we want to reset cerver stats (like packets), defaults 24hrs
+    u64 n_packets_received;                         // total number of packets received (packet header + data)
+    u64 n_receives_done;                            // total amount of actual calls to recv ()
+    u64 total_bytes_received;                       // total amount of bytes received in the cerver
+    u64 n_packets_sent;                             // total number of packets sent
+    u64 total_bytes_sent;                           // total amount of bytes sent by the cerver
+
+    struct _PacketsPerType *received_packets;
+    struct _PacketsPerType *sent_packets;
+
+} ClientStats;
+
+extern void client_stats_print (struct _Client *client);
 
 struct _Client {
 
     DoubleList *connections;
 
-    bool running;               // client poll is running
-
-    struct pollfd fds[DEFAULT_MAX_CONNECTIONS];
-    u16 n_fds;                  // n of active fds in the pollfd array
-    u32 poll_timeout;   
-
-    threadpool *thpool;
-
-    // only used in a game server
-    bool in_lobby;               // is the client inside a lobby?
-    bool owner;                  // is the client the owner of the lobby?
+    bool running;                   // any connection is active
 
     // all the actions that have been registered to a client
     DoubleList *registered_actions;
 
+    // custom packet hanlders
+    Action app_packet_handler;
+    Action app_error_packet_handler;
+    Action custom_packet_handler;
+
+    time_t time_started;
+    u64 uptime;
+
+    ClientStats *stats;
+
 };
 
 typedef struct _Client Client;
+
+// sets the client's poll timeout
+extern void client_set_poll_timeout (Client *client, u32 timeout);
+
+// sets the clients's thpool number of threads
+extern void client_set_thpool_n_threads (Client *client, u16 n_threads);
+
+// sets a cutom app packet hanlder and a custom app error packet handler
+extern void client_set_app_handlers (Client *client, Action app_handler, Action app_error_handler);
+
+// sets a custom packet handler
+extern void client_set_custom_handler (Client *client, Action custom_handler);
 
 // creates a new client, whcih may be used to create connections
 extern Client *client_create (void);
@@ -55,60 +73,86 @@ extern Client *client_create (void);
 // stops any activae connection and destroys a client
 extern u8 client_teardown (Client *client);
 
-extern void client_set_poll_timeout (Client *client, unsigned int timeout);
+// returns a connection assocaited with a socket
+extern struct _Connection *client_connection_get_by_socket (Client *client, i32 sock_fd);
 
 // returns a connection (registered to a client) by its name
-extern Connection *client_connection_get_by_name (Client *client, const char *name);
+extern struct _Connection *client_connection_get_by_name (Client *client, const char *name);
 
 // creates a new connection and registers it to the specified client;
 // the connection should be ready to be started
 // returns 0 on success, 1 on error
 extern int client_connection_create (Client *client, const char *name,
-    const char *ip_address, u16 port, u8 protocol, bool use_ipv6, bool async);
+    const char *ip_address, u16 port, Protocol protocol, bool use_ipv6);
 
 // registers an existing connection to a client
 // retuns 0 on success, 1 on error
-extern int client_connection_register (Client *client, Connection *connection);
+extern int client_connection_register (Client *client, struct _Connection *connection);
 
 // starts a client connection
 // returns 0 on success, 1 on error
-extern int client_connection_start (Client *client, Connection *connection);
+extern int client_connection_start (Client *client, struct _Connection *connection);
 
 // terminates and destroy a connection registered to a client
 // returns 0 on success, 1 on error
-extern int client_connection_end (Client *client, Connection *connection);
+extern int client_connection_end (Client *client, struct _Connection *connection);
 
-#pragma region GAME
+/*** Files ***/
 
-// this is the same as in cerver
-typedef enum GameType {
+// requests a file from the server
+// filename: the name of the file to request
+// file complete event will be sent when the file is finished
+// appropiate error is set on bad filename or error in file transmission
+// returns 0 on success sending request, 1 on failed to send request
+extern u8 client_file_get (Client *client, struct _Connection *connection, const char *filename);
 
-	ARCADE = 1,
+// sends a file to the server
+// filename: the name of the file the cerver will receive
+// file is opened using the filename
+// when file is completly sent, event is set appropriately
+// appropiate error is sent on cerver error or on bad file transmission
+// returns 0 on success sending request, 1 on failed to send request
+extern u8 client_file_send (Client *client, struct _Connection *connection, const char *filename);
 
-} GameType;
+/*** Game ***/
 
-typedef struct GameReqData {
+// requets the cerver to create a new lobby
+// game type: is the type of game to create the lobby, the configuration must exist in the cerver
+// returns 0 on success sending request, 1 on failed to send request
+extern u8 client_game_create_lobby (Client *owner, struct _Connection *connection,
+    const char *game_type);
+
+// requests the cerver to join a lobby
+// game type: is the type of game to create the lobby, the configuration must exist in the cerver
+// lobby id: if you know the id of the lobby to join to, if not, the cerver witll search one for you
+// returns 0 on success sending request, 1 on failed to send request
+extern u8 client_game_join_lobby (Client *client, struct _Connection *connection,
+    const char *game_type, const char *lobby_id);
+
+// request the cerver to leave the currect lobby
+// returns 0 on success sending request, 1 on failed to send request
+extern u8 client_game_leave_lobby (Client *client, struct _Connection *connection,
+    const char *lobby_id);
+
+// requests the cerver to start the game in the current lobby
+// returns 0 on success sending request, 1 on failed to send request
+extern u8 client_game_start_lobby (Client *client, struct _Connection *connection,
+    const char *lobby_id);
+
+/*** aux ***/
+
+typedef struct ClientConnection {
 
     Client *client;
-    Connection *connection;
+    struct _Connection *connection;
 
-    GameType game_type;
+} ClientConnection;
 
-} GameReqData;
+extern ClientConnection *client_connection_aux_new (Client *client, struct _Connection *connection);
 
-extern void *client_game_createLobby (Client *owner, Connection *connection, GameType gameType);
-extern void *client_game_joinLobby (Client *client, Connection *connection, GameType gameType);
-extern i8 client_game_leaveLobby (Client *client, Connection *connection);
-extern i8 client_game_destroyLobby (Client *client, Connection *connection);
+extern void client_connection_aux_delete (void *ptr);
 
-extern i8 client_game_startGame (Client *client, Connection *connection);
-
-#pragma endregion
-
-/*** SERIALIZATION ***/
-
-// cerver framework serialized data
-#pragma region SERIALIZATION
+/*** Serialization ***/
 
 // session id - token
 struct _Token {
@@ -118,48 +162,5 @@ struct _Token {
 };
 
 typedef struct _Token Token;
-
-typedef struct GameSettings {
-
-	GameType gameType;
-
-	u8 playerTimeout; 	// in seconds.
-	u8 fps;
-
-	u8 minPlayers;
-	u8 maxPlayers;
-
-} GameSettings;
-
-// info that we need to send to the client about the players
-typedef struct Splayer {
-
-	// TODO:
-	// char name[64];
-
-	// TODO: 
-	// we need a way to add info about the players info for specific game
-	// such as their race or level in blackrock
-
-	bool owner;
-
-} SPlayer;
-
-// FIXME: players and a reference to the owner
-// info that we need to send to the client about the lobby he is in
-typedef struct SLobby {
-
-    GameSettings settings;
-    bool inGame;
-
-    // FIXME: how do we want to send this info?
-    // Player owner;               // how do we want to send which is the owner
-    // Vector players;             // ecah client also needs to keep track of other players in the lobby
-
-} SLobby;
-
-typedef SLobby Lobby;
-
-#pragma endregion
 
 #endif

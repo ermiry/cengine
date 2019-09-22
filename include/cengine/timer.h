@@ -4,6 +4,22 @@
 #include <stdbool.h>
 
 #include "cengine/types/types.h"
+#include "cengine/types/string.h"
+
+extern struct tm *timer_get_gmt_time (void);
+extern struct tm *timer_get_local_time (void);
+
+// returns a string representing the 24h time 
+extern String *timer_time_to_string (struct tm *timeinfo);
+
+// returns a string with day/month/year
+extern String *timer_date_to_string (struct tm *timeinfo);
+
+// returns a string with day/month/year - 24h time
+extern String *timer_date_and_time_to_string (struct tm *timeinfo);
+
+// returns a string representing the time with custom format
+extern String *timer_time_to_string_custom (struct tm *timeinfo, const char *format);
 
 typedef struct Timer {
 
@@ -25,6 +41,6 @@ extern void timer_stop (Timer *timer);
 extern void timer_pause (Timer *timer);
 extern void timer_unpause (Timer *timer);
 
-extern u32 timer_getTicks (Timer *timer);
+extern u32 timer_get_ticks (Timer *timer);
 
 #endif

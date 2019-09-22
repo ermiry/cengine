@@ -1,8 +1,31 @@
+#include <stdlib.h>
 #include <math.h>
 
 #include "cengine/types/vector2d.h"
 
-const Vector2D zeroVector = { 0, 0 };
+const Vector2D zero_vector = { 0, 0 };
+
+Vector2D *vector_new (void) {
+
+    Vector2D *vector = (Vector2D *) malloc (sizeof (Vector2D));
+    if (vector) vector->x = vector->y = 0;
+    return vector;
+
+}
+
+Vector2D *vector_create (float x, float y) {
+
+    Vector2D *vector = (Vector2D *) malloc (sizeof (Vector2D));
+    if (vector) {
+        vector->x = x;
+        vector->y = y;
+    }
+
+    return vector;
+
+}
+
+void vector_delete (void *vector_ptr) { if (vector_ptr) free (vector_ptr); }
 
 float vector_magnitude (Vector2D v) { return sqrtf (v.x * v.x + v.y * v.y); }
 
@@ -14,7 +37,7 @@ Vector2D vector_normalize (Vector2D vector) {
 
     float magnitude = vector_magnitude (vector);
     if (magnitude > Epsilon) return vector_divide (vector, magnitude);
-    else return zeroVector;
+    else return zero_vector;
 
 }
 
@@ -90,7 +113,7 @@ Vector2D rotate_vector (Vector2D v, float radian) {
 
 }
 
-/*** UNITY LIKE FUNCS ***/
+/*** Unity like functions ***/
 
 // returns a copy of (vector) with its magnitude clamped to (maxLength)
 Vector2D vector_clamp_magnitude (Vector2D vector, float maxLength) {

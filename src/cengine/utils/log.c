@@ -10,10 +10,11 @@ static char *cengine_get_msg_type (LogMsgType type) {
     char temp[15];
 
     switch (type) {
-        case LOG_ERROR: strcpy (temp, "[LOG_ERROR]"); break;
-        case LOG_WARNING: strcpy (temp, "[LOG_WARNING]"); break;
-        case LOG_SUCCESS: strcpy (temp, "[LOG_SUCCESS]"); break;
+        case LOG_ERROR: strcpy (temp, "[ERROR]"); break;
+        case LOG_WARNING: strcpy (temp, "[WARNING]"); break;
+        case LOG_SUCCESS: strcpy (temp, "[SUCCESS]"); break;
         case LOG_DEBUG: strcpy (temp, "[DEBUG]"); break;
+        case LOG_CLIENT: strcpy (temp, "[CLIENT]"); break;
         case LOG_TEST: strcpy (temp, "[TEST]"); break;
 
         default: break;

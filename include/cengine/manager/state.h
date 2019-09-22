@@ -15,8 +15,8 @@ typedef enum StateType {
 
 typedef struct State {
 
-    void (*onEnter)(void);
-    void (*onExit)(void);
+    void (*on_enter)(void);
+    void (*on_exit)(void);
 
     void (*update)(void);
 

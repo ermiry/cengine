@@ -45,7 +45,7 @@ extern Animation *animation_get_by_name (DoubleList *animations, const char *nam
 
 typedef struct Animator {
 
-    u32 goID;
+    u32 go_id;
     bool start;
     bool playing;
     u8 currFrame;

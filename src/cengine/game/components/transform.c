@@ -8,7 +8,7 @@ Transform *transform_new (u32 objectID) {
 
     Transform *new_transform = (Transform *) malloc (sizeof (Transform));
     if (new_transform) {
-        new_transform->goID = objectID;
+        new_transform->go_id = objectID;
         new_transform->position.x = 0;
         new_transform->position.y = 0;
         // new_transform->layer = UNSET_LAYER;

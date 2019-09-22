@@ -1,229 +1,226 @@
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
+
+#include <SDL2/SDL_rect.h>
+#include <SDL2/SDL_render.h>
 
 #include "cengine/types/types.h"
+#include "cengine/types/string.h"
+
 #include "cengine/renderer.h"
+
 #include "cengine/ui/ui.h"
 #include "cengine/ui/font.h"
 #include "cengine/ui/textbox.h"
+#include "cengine/ui/components/transform.h"
+#include "cengine/ui/components/text.h"
 
-void ui_textBox_set_text (TextBox *textBox, const char *newText) {
+static TextBox *ui_textbox_new (void) {
 
-    if (textBox) {
-        if (textBox->text) free (textBox->text);
-        if (textBox->pswd) free (textBox->pswd);
-
-        if (newText) {
-            if (textBox->ispassword) {
-                textBox->pswd = (char *) calloc (strlen (newText) + 1, sizeof (char));
-                strcpy (textBox->pswd, newText);
-                u32 len = strlen (newText);
-                for (u8 i = 0; i < len; i++) textBox->text[i] = '*';
-            }
-
-            else {
-                textBox->text = (char *) calloc (strlen (newText) + 1, sizeof (char));
-                strcpy (textBox->text, newText);
-                textBox->pswd = NULL;
-            }
-        }
-
-        else textBox->text = textBox->pswd = NULL;
-
-        if (!textBox->isVolatile) {
-            if (textBox->texture) SDL_DestroyTexture (textBox->texture);
-            SDL_Surface *surface = TTF_RenderText_Solid (textBox->font->ttf_source, newText, textBox->textColor);
-            textBox->texture = SDL_CreateTextureFromSurface (main_renderer->renderer, surface);
-       
-            textBox->bgrect.w = surface->w;
-            textBox->bgrect.h = surface->h;
-
-            SDL_FreeSurface(surface);
-        }
-
-    }
-
-}
-
-void ui_textBox_set_text_color (TextBox *textBox, RGBA_Color newColor) {
-
-    if (textBox) {
-        textBox->textColor = newColor;
-
-        if (!textBox->isVolatile) {
-            SDL_Surface *surface = TTF_RenderText_Solid (textBox->font->ttf_source, 
-                textBox->text, textBox->textColor);
-            textBox->texture = SDL_CreateTextureFromSurface (main_renderer->renderer, surface);
-    
-            textBox->bgrect.w = surface->w;
-            textBox->bgrect.h = surface->h;
-
-            SDL_FreeSurface(surface);
-        }
-    }
-
-}
-
-void ui_textBox_set_bg_color (TextBox *textBox, RGBA_Color newColor) {
-
-    if (textBox) textBox->bgcolor = newColor;
-
-}
-
-static TextBox *ui_textBox_new (u32 x, u32 y, RGBA_Color bgColor,
-    const char *text, RGBA_Color textColor, Font *font, bool isPassword) {
-
-    UIElement *ui_element = ui_element_new (UI_TEXTBOX);
-    if (ui_element) {
-        TextBox *textBox = (TextBox *) malloc (sizeof (TextBox));
-        if (textBox) {
-            textBox->texture = NULL;
-            textBox->font = font;
-
-            textBox->bgrect.x = x;
-            textBox->bgrect.y = y;
-            textBox->bgrect.w = textBox->bgrect.h = 0;
-            textBox->bgcolor = bgColor;
-
-            textBox->textColor = textColor;
-
-            textBox->ispassword = isPassword;
-
-            if (text) {
-                if (isPassword) {
-                    textBox->pswd = (char *) calloc (strlen (text) + 1, sizeof (char));
-                    strcpy (textBox->pswd, text);
-                    u32 len = strlen (text);
-                    for (u8 i = 0; i < len; i++) textBox->text[i] = '*';
-                }
-
-                else {
-                    textBox->text = (char *) calloc (strlen (text) + 1, sizeof (char));
-                    strcpy (textBox->text, text);
-                    textBox->pswd = NULL;
-                }
-            }
-
-            else textBox->text = textBox->pswd = NULL;
-
-            ui_element->element = textBox;
-
-            return textBox;
-        }
-    }
-
-    return NULL;
-
-}
-
-// TODO: generate a smoother text like with the volatile ones
-// TODO: handle password logic
-TextBox *ui_textBox_create_static (u32 x, u32 y, RGBA_Color bgColor,
-    const char *text, RGBA_Color textColor, Font *font, bool isPassword) {
-
-    TextBox *textBox = ui_textBox_new (x, y, bgColor, text, textColor, font, isPassword);
-    if (textBox) {
-        SDL_Surface *surface = TTF_RenderText_Solid (textBox->font->ttf_source, text, textColor);
-        textBox->texture = SDL_CreateTextureFromSurface (main_renderer->renderer, surface);
-
-        textBox->bgrect.x = x;
-        textBox->bgrect.y = y;        
-        textBox->bgrect.w = surface->w;
-        textBox->bgrect.h = surface->h;
-
-        SDL_FreeSurface(surface);
-
-        textBox->isVolatile = false;
-    }
-
-    return textBox;
-
-}
-
-TextBox *ui_textBox_create_volatile (u32 x, u32 y, RGBA_Color bgColor,
-    const char *text, RGBA_Color textColor, Font *font, bool isPassword) {
-
-    TextBox *textBox = ui_textBox_new (x, y, bgColor, text, textColor, font, isPassword);
-    if (textBox) {
-        textBox->texture = NULL;
-        textBox->isVolatile = true;
-    }
-
-    return textBox;
-
-}
-
-void ui_textBox_destroy (TextBox *textbox) {
-
+    TextBox *textbox = (TextBox *) malloc (sizeof (TextBox));
     if (textbox) {
-        textbox->font = NULL;
-        if (textbox->texture) SDL_DestroyTexture (textbox->texture);
-        if (textbox->text) free (textbox->text);
-        if (textbox->pswd) free (textbox->pswd);
+        memset (textbox, 0, sizeof (TextBox));
+        textbox->ui_element = NULL;
+        textbox->transform = NULL;
+        textbox->colour = false;
+        textbox->bg_texture = NULL;
+        textbox->text = NULL;
+    }
+
+    return textbox;
+
+}
+
+void ui_textbox_delete (void *textbox_ptr) {
+
+    if (textbox_ptr) {
+        TextBox *textbox = (TextBox *) textbox_ptr;
+
+        textbox->ui_element = NULL;
+        ui_transform_component_delete (textbox->transform);
+        if (textbox->bg_texture) SDL_DestroyTexture (textbox->bg_texture);
+        ui_text_component_delete (textbox->text);
 
         free (textbox);
     }
 
 }
 
-// FIXME: handle text color change
-// FIXME: handle password logic
-// TODO: maybe add scale
-// TODO: we need a better way for selecting font sizes!!
-// this was FC_RenderLeft...
+// returns the string representing the text in the textbox
+String *ui_textbox_get_text (TextBox *textbox) {
+
+    if (textbox) return textbox->text->text;
+
+}
+
+// sets the textbox's text with options
+void ui_textbox_set_text (TextBox *textbox, const char *text, 
+    Font *font, u32 size, RGBA_Color color, bool adjust_to_text) {
+
+    if (textbox) {
+        if (textbox->text) ui_text_component_delete (textbox->text);
+
+        textbox->text = text ? ui_text_component_new () : NULL;
+        if (textbox->text) {
+            ui_text_component_init (textbox->text,
+                font, size, color, text);
+
+            // set the text position inside the textbox
+            textbox->text->transform->rect.x = textbox->transform->rect.x;
+            textbox->text->transform->rect.y = textbox->transform->rect.y;
+
+            ui_text_component_draw (textbox->text);
+
+            if (adjust_to_text) {
+                textbox->transform->rect.w = textbox->text->transform->rect.w;
+                textbox->transform->rect.h = textbox->text->transform->rect.h;
+                ui_position_update (textbox->transform, NULL, true);
+            }
+        }
+    }
+
+}
+
+// updates the textbox's text
+void ui_textbox_update_text (TextBox *textbox, const char *text) {
+
+    if (textbox) {
+        if (textbox->text) {
+            ui_text_component_update (textbox->text, text);
+            ui_text_component_draw (textbox->text);
+            // ui_transform_component_set_pos (textbox->text->transform, 
+            //     &textbox->transform->rect, textbox->text->transform->pos, true);
+        }
+    }
+
+}
+
+// sets the textbox's text position
+void ui_textbox_set_text_pos (TextBox *textbox, UIPosition pos) {
+
+    if (textbox) {
+        if (textbox->text) {}
+            ui_transform_component_set_pos (textbox->text->transform, &textbox->transform->rect, pos, true);
+    }
+
+}
+
+// sets the textbox font
+void ui_textbox_set_font (TextBox *textbox, Font *font) {
+
+    if (textbox) {
+        textbox->text->font = font;
+        ui_text_component_draw (textbox->text);
+    }
+
+}
+
+// sets the textbox's text color
+void ui_textbox_set_text_color (TextBox *textbox, RGBA_Color color) {
+
+    if (textbox) {
+        if (textbox->text) {
+            textbox->text->text_color = color;
+            ui_text_component_draw (textbox->text);
+        }
+    }
+
+}
+
+// sets the textbox's outline colour
+void ui_textbox_set_ouline_colour (TextBox *textbox, RGBA_Color colour) {
+
+    if (textbox) {
+        textbox->outline = true;
+        textbox->outline_colour = colour;
+    }
+
+}
+
+// removes the ouline form the textbox
+void ui_textbox_remove_outline (TextBox *textbox) {
+
+    if (textbox) {
+        memset (&textbox->outline_colour, 0, sizeof (RGBA_Color));
+        textbox->outline = false;
+    }
+
+}
+
+// sets the textbox's background color
+void ui_textbox_set_bg_color (TextBox *textbox, RGBA_Color color) {
+
+    if (textbox) {
+        textbox->bg_colour = color;
+        if (color.a < 255) {
+            textbox->bg_texture = render_complex_transparent_rect (&textbox->transform->rect, color);
+            textbox->bg_texture_rect.w = textbox->transform->rect.w;
+            textbox->bg_texture_rect.h = textbox->transform->rect.h;
+        }
+
+        textbox->colour = true;
+    } 
+
+}
+
+// removes the background from the textbox
+void ui_textbox_remove_background (TextBox *textbox) {
+
+    if (textbox) {
+        if (textbox->bg_texture) {
+            SDL_DestroyTexture (textbox->bg_texture);
+            textbox->bg_texture = NULL;
+        }
+
+        memset (&textbox->bg_colour, 0, sizeof (RGBA_Color));
+        textbox->colour = false;
+    }
+
+}
+
+// creates a new textbox
+TextBox *ui_textbox_create (i32 x, i32 y, u32 w, u32 h, UIPosition pos) {
+
+    TextBox *textbox = NULL;
+
+    UIElement *ui_element = ui_element_new (UI_TEXTBOX);
+    if (ui_element) {
+        textbox = ui_textbox_new ();
+        if (textbox) {
+            textbox->ui_element = ui_element;
+            textbox->transform = ui_transform_component_create (x, y, w, h);
+            ui_transform_component_set_pos (textbox->transform, NULL, pos, true);
+            ui_element->element = textbox;
+        }
+
+        else ui_element_delete (ui_element);
+    }
+
+    return textbox;
+
+}
+
+// draws the textbox
 void ui_textbox_draw (TextBox *textbox) {
 
     if (textbox) {
-        const char *c = textbox->text;
-
-        // TODO: do we want this inside the textbox?
-        UIRect srcRect, destRect, 
-            dirtyRect = ui_rect_create (textbox->bgrect.x, textbox->bgrect.y, 0, 0);
-
-        GlyphData glyph;
-        u32 codepoint;
-
-        u32 destX = textbox->bgrect.x;
-        u32 destY = textbox->bgrect.y;
-        float destH, destLineSpacing, destLetterSpacing;
-
-        // TODO: add scale here!
-        destH = textbox->font->height;
-        destLineSpacing = textbox->font->lineSpacing;
-        destLetterSpacing = textbox->font->letterSpacing;
-
-        int newLineX = textbox->bgrect.x;
-
-        for (; *c != '\0'; c++) {
-            if (*c == '\n') {
-                destX = newLineX;
-                destY += destH + destLineSpacing;
-                continue;
-            }
-
-            codepoint = get_code_point_from_UTF8 (&c, 1);
-            if (glyph_get_data (textbox->font, &glyph, codepoint)) {
-                // FIXME: handle bas caharcters
-            }
-
-            if (codepoint == ' ') {
-                destX += glyph.rect.w + destLetterSpacing;
-                continue;
-            }
-
-            srcRect = glyph.rect;
-
-            destRect = ui_rect_render (glyph_get_cache_level (textbox->font, glyph.cacheLevel),
-                &srcRect, destX, destY);
-
-            if (dirtyRect.w == 0 || dirtyRect.h == 0) dirtyRect = destRect;
-            else dirtyRect = ui_rect_union (dirtyRect, destRect);
-
-            destX += glyph.rect.w + destLetterSpacing;
+        // render the background
+        if (textbox->bg_texture) {
+            SDL_RenderCopyEx (main_renderer->renderer, textbox->bg_texture, 
+                &textbox->bg_texture_rect, &textbox->transform->rect, 
+                0, 0, SDL_FLIP_NONE);
         }
 
-        // FIXME:
-        // return dirtyRect;
+        else if (textbox->colour) 
+            render_basic_filled_rect (&textbox->transform->rect, textbox->bg_colour);
+
+        // render the outline border
+        if (textbox->outline) 
+            render_basic_outline_rect (&textbox->transform->rect, textbox->outline_colour);
+
+        // render the text
+        ui_text_component_render (textbox->text);
     }
 
 }

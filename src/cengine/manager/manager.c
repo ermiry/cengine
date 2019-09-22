@@ -11,8 +11,8 @@ Manager *manager_new (State *init_state) {
         if (init_state) {
             new_manager->curr_state = init_state;
         
-            if (new_manager->curr_state->onEnter)
-                new_manager->curr_state->onEnter ();
+            if (new_manager->curr_state->on_enter)
+                new_manager->curr_state->on_enter ();
         }
 
         else new_manager->curr_state = NULL;
@@ -33,13 +33,13 @@ void manager_delete (Manager *manager) {
 
 State *manager_state_get_current (void) { return manager->curr_state; }
 
-void manger_state_change_state (State *new_state) { 
+void manager_state_change_state (State *new_state) { 
     
-    if (manager->curr_state->onExit)
-        manager->curr_state->onExit ();
+    if (manager->curr_state->on_exit)
+        manager->curr_state->on_exit ();
 
     manager->curr_state = new_state; 
-    if (manager->curr_state->onEnter)
-        manager->curr_state->onEnter ();
+    if (manager->curr_state->on_enter)
+        manager->curr_state->on_enter ();
     
 }

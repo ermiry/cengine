@@ -40,7 +40,7 @@ static AnimData *anim_data_new (void) {
 void anim_data_delete (AnimData *data) { 
     
     if (data) {
-        dlist_destroy (data->animations);
+        dlist_delete (data->animations);
         free (data); 
     } 
     
@@ -216,7 +216,7 @@ Animator *animator_new (u32 objectID) {
 
     Animator *new_animator = (Animator *) malloc (sizeof (Animator));
     if (new_animator) {
-        new_animator->goID = objectID;
+        new_animator->go_id = objectID;
         new_animator->start = true;
         new_animator->playing = false;
         new_animator->defaultAnimation = NULL;
@@ -259,14 +259,14 @@ static void animator_destroy_ref (void *data) {
     
 }
 
-static int animator_comparator (void *one, void *two) {
+static int animator_comparator (const void *one, const void *two) {
 
     if (one && two) {
         Animator *anim_one = (Animator *) one;
         Animator *anim_two = (Animator *) two;
 
-        if (anim_one->goID < anim_two->goID) return -1;
-        else if (anim_one->goID == anim_two->goID) return 0;
+        if (anim_one->go_id < anim_two->go_id) return -1;
+        else if (anim_one->go_id == anim_two->go_id) return 0;
         else return 1;
     }
 }
@@ -303,16 +303,16 @@ void *animations_update (void *data) {
 
     thread_set_name ("animation");
 
-    u32 timePerFrame = 1000 / fps_limit;
-    u32 frameStart = 0;
-    i32 sleepTime = 0;
+    u32 time_per_frame = 1000 / fps_limit;
+    u32 frame_start = 0;
+    i32 sleep_time = 0;
 
-    float deltaTime = 0;
-    u32 deltaTicks = 0;
+    float delta_time = 0;
+    u32 delta_ticks = 0;
     u32 fps = 0;
 
     while (running) {
-        frameStart = SDL_GetTicks ();
+        frame_start = SDL_GetTicks ();
 
         if (dlist_size (animators) > 0) {
              // update all animations
@@ -320,7 +320,7 @@ void *animations_update (void *data) {
             Graphics *graphics = NULL;
             for (ListElement *le = dlist_start (animators); le != NULL; le = le->next) {
                 animator = (Animator *) le->data;
-                graphics = (Graphics *) game_object_get_component (game_object_get_by_id (animator->goID), GRAPHICS_COMP);
+                graphics = (Graphics *) game_object_get_component (game_object_get_by_id (animator->go_id), GRAPHICS_COMP);
                 animator->currFrame = (int) (((animator->timer->ticks / animator->currAnimation->speed) %
                         animator->currAnimation->n_frames));
 
@@ -339,8 +339,8 @@ void *animations_update (void *data) {
         }
 
         // limit the FPS
-        sleepTime = timePerFrame - (SDL_GetTicks () - frameStart);
-        if (sleepTime > 0) SDL_Delay (sleepTime);
+        sleep_time = time_per_frame - (SDL_GetTicks () - frame_start);
+        if (sleep_time > 0) SDL_Delay (sleep_time);
 
         // update animators timers
         if (dlist_size (animators) > 0) {
@@ -352,12 +352,12 @@ void *animations_update (void *data) {
         }
 
         // count fps
-        deltaTime = SDL_GetTicks () - frameStart;
-        deltaTicks += deltaTime;
+        delta_time = SDL_GetTicks () - frame_start;
+        delta_ticks += delta_time;
         fps++;
-        if (deltaTicks >= 1000) {
+        if (delta_ticks >= 1000) {
             // printf ("anim fps: %i\n", fps);
-            deltaTicks = 0;
+            delta_ticks = 0;
             fps = 0;
         }
     }
@@ -372,7 +372,7 @@ int animations_init (void) {
 
     animators = dlist_init (animator_destroy_ref, animator_comparator);
     if (animators) {
-        if (thread_create_detachable (animations_update, NULL, "animations")) {
+        if (thread_create_detachable (animations_update, NULL)) {
             cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to create animations thread!");
             errors = 1;
         }
@@ -391,6 +391,6 @@ int animations_init (void) {
 
 void animations_end (void) {
 
-    dlist_destroy (animators);
+    dlist_delete (animators);
 
 }

@@ -11,13 +11,14 @@
 
 struct _Packet;
 
-typedef enum ServerType {
+typedef enum CerverType {
 
-    FILE_SERVER = 1,
-    WEB_SERVER, 
-    GAME_SERVER
+    CUSTOM_CERVER = 0,
+    FILE_CERVER,
+    GAME_CERVER,
+    WEB_CERVER, 
 
-} ServerType;
+} CerverType;
 
 struct _Token;
 
@@ -29,7 +30,7 @@ struct _Cerver {
     String *ip;
 
     String *name;
-    ServerType type;
+    CerverType type;
     bool auth_required;
 
     bool uses_sessions;
@@ -53,7 +54,7 @@ typedef struct SCerver {
     u16 port; 
 
     char name[32];
-    ServerType type;
+    CerverType type;
     bool auth_required;
 
     bool uses_sessions;

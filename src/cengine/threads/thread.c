@@ -18,7 +18,7 @@
 // creates a custom detachable thread (will go away on its own upon completion)
 // handle manually in linux, with no name
 // in any other platform, created with sdl api and you can pass a custom name
-u8 thread_create_detachable (void *(*work) (void *), void *args, const char *name) {
+u8 thread_create_detachable (void *(*work) (void *), void *args) {
 
     u8 retval = 1;
 
@@ -33,7 +33,7 @@ u8 thread_create_detachable (void *(*work) (void *), void *args, const char *nam
             cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to create detachable thread!");
         else retval = 0;
     #else
-        SDL_Thread *thread = SDL_CreateThread ((int (*) (void *)) work, name, args);
+        SDL_Thread *thread = SDL_CreateThread ((int (*) (void *)) work, NULL, args);
         if (thread) {
             SDL_DetachThread (thread);  // will go away on its own upon completion
             retval = 0;
@@ -161,7 +161,7 @@ void thread_hub_end (ThreadHub *hub) {
 
     if (hub) {
         str_delete (hub->name);
-        dlist_destroy (hub->threads);
+        dlist_delete (hub->threads);
 
         free (hub);
     }

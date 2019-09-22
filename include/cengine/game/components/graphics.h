@@ -8,7 +8,7 @@
 
 typedef struct Graphics {
 
-    u32 goID;
+    u32 go_id;
 
     Sprite *sprite;
     SpriteSheet *spriteSheet;

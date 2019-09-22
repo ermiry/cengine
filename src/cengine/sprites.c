@@ -52,31 +52,31 @@ SpriteSheet *sprite_sheet_new (void) {
     if (sp) {
         memset (sp, 0, sizeof (SpriteSheet));
         sp->texture = NULL;
-        sp->individualSprites = NULL;
+        sp->individual_sprites = NULL;
     }
 
     return sp;
 
 }
 
-void sprite_sheet_destroy (SpriteSheet *spriteSheet) {
+void sprite_sheet_destroy (SpriteSheet *sprite_sheet) {
 
-    if (spriteSheet) {
-        if (spriteSheet->individualSprites) {
-            u8 x_num_sprites = spriteSheet->w / spriteSheet->sprite_w;
-            u8 y_num_sprites = spriteSheet->h / spriteSheet->sprite_h;
+    if (sprite_sheet) {
+        if (sprite_sheet->individual_sprites) {
+            u8 x_num_sprites = sprite_sheet->w / sprite_sheet->sprite_w;
+            u8 y_num_sprites = sprite_sheet->h / sprite_sheet->sprite_h;
 
             for (u8 i = 0; i < x_num_sprites; i++)
                 for (u8 j = 0; j < y_num_sprites; j++)
-                    if (spriteSheet->individualSprites[i][j])
-                        free (spriteSheet->individualSprites[i][j]);
+                    if (sprite_sheet->individual_sprites[i][j])
+                        free (sprite_sheet->individual_sprites[i][j]);
 
-            free (spriteSheet->individualSprites);
+            free (sprite_sheet->individual_sprites);
         }
 
-        if (spriteSheet->texture) SDL_DestroyTexture (spriteSheet->texture);
+        if (sprite_sheet->texture) SDL_DestroyTexture (sprite_sheet->texture);
 
-        free (spriteSheet);
+        free (sprite_sheet);
     }
 
 }
@@ -108,47 +108,47 @@ SpriteSheet *sprite_sheet_load (const char *filename, Renderer *renderer) {
 
 }
 
-void sprite_sheet_set_sprite_size (SpriteSheet *spriteSheet, u32 w, u32 h) {
+void sprite_sheet_set_sprite_size (SpriteSheet *sprite_sheet, u32 w, u32 h) {
 
-    if (spriteSheet) {
-        spriteSheet->sprite_w = w;
-        spriteSheet->sprite_h = h;
+    if (sprite_sheet) {
+        sprite_sheet->sprite_w = w;
+        sprite_sheet->sprite_h = h;
 
-        spriteSheet->src_rect.w = spriteSheet->sprite_w;
-        spriteSheet->src_rect.h = spriteSheet->sprite_h;
+        sprite_sheet->src_rect.w = sprite_sheet->sprite_w;
+        sprite_sheet->src_rect.h = sprite_sheet->sprite_h;
     }
 
 }
 
-void sprite_sheet_set_scale_factor (SpriteSheet *spriteSheet, i32 scaleFactor) {
+void sprite_sheet_set_scale_factor (SpriteSheet *sprite_sheet, i32 scale_factor) {
 
-    if (spriteSheet) {
-        spriteSheet->scaleFactor = scaleFactor;
+    if (sprite_sheet) {
+        sprite_sheet->scale_factor = scale_factor;
 
-        spriteSheet->dest_rect.w = spriteSheet->src_rect.w * spriteSheet->scaleFactor;
-        spriteSheet->dest_rect.h = spriteSheet->src_rect.h * spriteSheet->scaleFactor;
+        sprite_sheet->dest_rect.w = sprite_sheet->src_rect.w * sprite_sheet->scale_factor;
+        sprite_sheet->dest_rect.h = sprite_sheet->src_rect.h * sprite_sheet->scale_factor;
     } 
 
 }
 
-void sprite_sheet_crop (SpriteSheet *spriteSheet) {
+void sprite_sheet_crop (SpriteSheet *sprite_sheet) {
 
-    if (spriteSheet) {
-        u8 x_num_sprites = spriteSheet->w / spriteSheet->sprite_w;
-        u8 y_num_sprites = spriteSheet->h / spriteSheet->sprite_h;
+    if (sprite_sheet) {
+        u8 x_num_sprites = sprite_sheet->w / sprite_sheet->sprite_w;
+        u8 y_num_sprites = sprite_sheet->h / sprite_sheet->sprite_h;
 
         u32 max_sprites_expected = x_num_sprites * y_num_sprites;
 
-        spriteSheet->individualSprites = (IndividualSprite ***) calloc (x_num_sprites, sizeof (Sprite **));
+        sprite_sheet->individual_sprites = (IndividualSprite ***) calloc (x_num_sprites, sizeof (Sprite **));
         for (u8 i = 0; i < x_num_sprites; i++)
-            spriteSheet->individualSprites[i] = (IndividualSprite **) calloc (y_num_sprites, sizeof (Sprite *));
+            sprite_sheet->individual_sprites[i] = (IndividualSprite **) calloc (y_num_sprites, sizeof (Sprite *));
 
         for (u8 y = 0; y < y_num_sprites; y++) {
             for (u8 x = 0; x < x_num_sprites; x++) {
                 IndividualSprite *new_sprite = (IndividualSprite *) malloc (sizeof (Sprite));
                 new_sprite->col = x;
                 new_sprite->row = y;
-                spriteSheet->individualSprites[x][y] = new_sprite;
+                sprite_sheet->individual_sprites[x][y] = new_sprite;
             }
         }
     }

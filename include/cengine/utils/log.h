@@ -19,7 +19,11 @@ typedef enum LogMsgType {
     LOG_WARNING,
     LOG_SUCCESS,
     LOG_DEBUG,
-    LOG_TEST
+
+    LOG_CLIENT,
+
+    LOG_TEST,
+
 
 } LogMsgType;
 

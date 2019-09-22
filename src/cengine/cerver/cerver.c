@@ -7,8 +7,10 @@
 #include "cengine/types/string.h"
 
 #include "cengine/cerver/cerver.h"
+#include "cengine/cerver/connection.h"
 #include "cengine/cerver/packets.h"
 
+#include "cengine/utils/utils.h"
 #include "cengine/utils/log.h"
 
 Cerver *cerver_new (void) {
@@ -68,7 +70,8 @@ static u8 cerver_check_info (Cerver *cerver, Connection *connection) {
 
     if (cerver && connection) {
         #ifdef CLIENT_DEBUG
-        cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Connected to cerver...");
+        cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, 
+            c_string_create ("Connected to cerver %s.", cerver->name->str));
         switch (cerver->protocol) {
             case PROTOCOL_TCP: 
                 cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Cerver using TCP protocol."); 
@@ -87,19 +90,21 @@ static u8 cerver_check_info (Cerver *cerver, Connection *connection) {
             #ifdef CLIENT_DEBUG
             cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Cerver is configured to use ipv6");
             #endif
-            // TODO: modify the connection to use ipv6
         }
 
         #ifdef CLIENT_DEBUG
         switch (cerver->type) {
-            case FILE_SERVER:
-                cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Cerver is of type: file server");
+            case CUSTOM_CERVER:
+                cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Cerver is of type: custom cerver");
                 break;
-            case WEB_SERVER:
-                cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Cerver is of type: web server");
+            case FILE_CERVER:
+                cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Cerver is of type: file cerver");
                 break;
-            case GAME_SERVER:
-                cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Cerver is of type: game server");
+            case WEB_CERVER:
+                cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Cerver is of type: web cerver");
+                break;
+            case GAME_CERVER:
+                cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Cerver is of type: game cerver");
                 break;
 
             default: 
@@ -112,26 +117,28 @@ static u8 cerver_check_info (Cerver *cerver, Connection *connection) {
             #ifdef CLIENT_DEBUG
             cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Cerver requires authentication.");
             #endif
-            if (connection->auth_action) {
+            if (connection->auth_data) {
                 #ifdef CLIENT_DEBUG
                 cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Sending auth data to cerver...");
                 #endif
-                connection->auth_action (connection->auth_data);
+
+                if (!connection->auth_packet) connection_generate_auth_packet (connection);
+
+                if (packet_send (connection->auth_packet, 0, NULL)) {
+                    cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to send connection auth packet!");
+                }
+
                 retval = 0;
             }
-
-            else {
-                cengine_log_msg (stderr, LOG_WARNING, LOG_NO_TYPE, 
-                    "Can't authenticate with server --- no auth action neither auth data have been setup");
-            } 
         }
 
         else {
             #ifdef CLIENT_DEBUG
             cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Cerver does not requires authentication.");
             #endif
-            retval = 0;
         }
+        
+        retval = 0;
     }
 
     return retval;
@@ -142,12 +149,12 @@ static u8 cerver_check_info (Cerver *cerver, Connection *connection) {
 void cerver_packet_handler (Packet *packet) {
 
     if (packet) {
-        if (packet->packet_size >= (sizeof (PacketHeader) + sizeof (RequestData))) {
-            char *end = packet->packet;
-            RequestData *req = (RequestData *) (end += sizeof (PacketHeader));
+        if (packet->data_size >= sizeof (RequestData)) {
+            char *end = (char *) packet->data;
+            RequestData *req = (RequestData *) (end);
 
             switch (req->type) {
-                case SERVER_INFO: {
+                case CERVER_INFO: {
                     #ifdef CLIENT_DEBUG
                     cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Recieved a cerver info packet.");
                     #endif
@@ -156,9 +163,19 @@ void cerver_packet_handler (Packet *packet) {
                         cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to correctly check cerver info!");
                 } break;
 
-                // TODO:
-                case SERVER_TEARDOWN:
-                    cengine_log_msg (stdout, LOG_WARNING, LOG_NO_TYPE, "\n---> Server teardown!! <---\n");
+                // the cerves is going to be teardown, we have to disconnect
+                case CERVER_TEARDOWN:
+                    #ifdef CLIENT_DEBUG
+                    cengine_log_msg (stdout, LOG_WARNING, LOG_NO_TYPE, "---> Server teardown! <---");
+                    #endif
+                    client_connection_end (packet->client, packet->connection);
+                    client_event_trigger (packet->client, EVENT_DISCONNECTED);
+                    break;
+
+                case CERVER_INFO_STATS:
+                    break;
+
+                case CERVER_GAME_STATS:
                     break;
 
                 default: 

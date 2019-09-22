@@ -1,15 +1,24 @@
+#include <stdlib.h>
 #include <stdbool.h>
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_render.h>
+#include <SDL2/SDL_rect.h>
+#include <SDL2/SDL_surface.h>
 
 #include "cengine/types/types.h"
 #include "cengine/types/string.h"
+
 #include "cengine/renderer.h"
 #include "cengine/textures.h"
+
 #include "cengine/manager/manager.h"
+
 #include "cengine/game/go.h"
 #include "cengine/game/camera.h"
+
 #include "cengine/ui/ui.h"
+
 #include "cengine/utils/utils.h"
 #include "cengine/utils/log.h"
 
@@ -202,10 +211,10 @@ void renderer_delete_main (void) { renderer_delete (main_renderer); }
 
 #pragma region Layers
 
-static DoubleList *layers = NULL;
-static u8 layer_pos = 0;
+DoubleList *gos_layers = NULL;              // render layers for the gameobjects
+DoubleList *ui_elements_layers = NULL;      // render layers for the ui elements
 
-static Layer *layer_get_by_pos (const int pos) {
+Layer *layer_get_by_pos (DoubleList *layers, int pos) {
 
     Layer *layer = NULL;
 
@@ -220,7 +229,7 @@ static Layer *layer_get_by_pos (const int pos) {
 
 }
 
-static Layer *layer_get_by_name (const char *name) {
+Layer *layer_get_by_name (DoubleList *layers, const char *name) {
 
     Layer *layer = NULL;
 
@@ -235,37 +244,36 @@ static Layer *layer_get_by_name (const char *name) {
 
 }
 
-static Layer *layer_new (const char *name, int pos) {
+static Layer *layer_new (DoubleList *layers, const char *name, int pos, bool gos) {
 
     Layer *layer = (Layer *) malloc (sizeof (Layer));
     if (layer) {
         if (name) layer->name = str_new (name);
         else layer->name = NULL;
 
-        layer->gos = dlist_init (game_object_destroy_dummy, game_object_comparator);
+        layer->elements = gos ? dlist_init (game_object_destroy_dummy, game_object_comparator) : 
+            dlist_init (ui_element_delete_dummy, ui_element_comparator);
 
         if (pos >= 0) {
             layer->pos = pos;
 
             // check for a layer with that pos
-            Layer *l = layer_get_by_pos (pos);
-            if (l) {
-                pos += 1;
-                l->pos = pos;
+            // Layer *l = layer_get_by_pos (layers, pos);
+            // if (l) {
+            //     printf ("hola!!\n");
+            //     pos += 1;
+            //     l->pos = pos;
 
-                // we need to update the other layers pos
-                Layer *update_layer = NULL;
-                do {
-                    update_layer = layer_get_by_pos (pos);
-                    update_layer->pos = pos;
-                    pos += 1;
-                } while (update_layer);
-            }
-        }
-
-        else {
-            layer->pos = layer_pos;
-            layer_pos++;
+            //     // we need to update the other layers pos
+            //     Layer *update_layer = NULL;
+            //     do {
+            //         update_layer = layer_get_by_pos (layers, pos);
+            //         if (update_layer) {
+            //             update_layer->pos = pos;
+            //             pos += 1;
+            //         }
+            //     } while (update_layer);
+            // }
         }
     }
 
@@ -278,14 +286,14 @@ static void layer_delete (void *ptr) {
     if (ptr) {
         Layer *layer = (Layer *) ptr;
         str_delete (layer->name);
-        dlist_destroy (layer->gos);
+        dlist_delete (layer->elements);
 
         free (layer);
     }
 
 }
 
-static int layer_comparator (void *one, void *two) {
+static int layer_comparator (const void *one, const void *two) {
 
     if (one && two) {
         Layer *layer_one = (Layer *) one;
@@ -302,12 +310,12 @@ static int layer_comparator (void *one, void *two) {
 // takes the layer name and the layer pos, -1 for last layer
 // pos 0 renders first
 // returns 0 on success, 1 on error
-int layer_create (const char *name, int pos) {
+int layer_create (DoubleList *layers, const char *name, int pos, bool gos) {
 
     int retval = 1;
 
     if (name) {
-        Layer *l = layer_new (name, pos);
+        Layer *l = layer_new (layers, name, pos, gos);
         dlist_insert_after (layers, dlist_end (layers), l);
 
         // after we have inserted a new layer, we want to sort the layers
@@ -319,64 +327,216 @@ int layer_create (const char *name, int pos) {
 
 }
 
-// add a game object into a layer
+// adds an element to a layer
 // returns 0 on succes, 1 on error
-int layer_add_object (const char *layer_name, void *ptr) {
+int layer_add_element (Layer *layer, void *ptr) {
+
+    int retval = 1;
+
+    if (layer && ptr) {
+        dlist_insert_after (layer->elements, dlist_end (layer->elements), ptr);
+        retval = 0;
+    }
+
+    return retval;
+
+}
+
+// adds an element to a layer that is gotten by its name 
+// returns 0 on succes, 1 on error
+int layer_add_element_by_name (DoubleList *layers, const char *layer_name, void *ptr) {
 
     int retval = 1;
 
     if (layer_name && ptr) {
-        Layer *layer = layer_get_by_name (layer_name);
-        if (layer) {
-            dlist_insert_after (layer->gos, dlist_end (layer->gos), ptr);
-            retval = 0;
-        }
+        Layer *layer = layer_get_by_name (layers, layer_name);
+        retval = layer_add_element (layer, ptr);
     }
 
     return retval;
 
 }
 
-// removes a game object from a layer
+// removes an element from a layer
 // returns 0 on succes, 1 on error
-int layer_remove_object (const char *layer_name, void *ptr) {
+int layer_remove_element (Layer *layer, void *ptr) {
+
+    int retval = 0;
+
+    if (layer && ptr) {
+        void *element = dlist_remove_element (layer->elements, dlist_get_element (layer->elements, ptr));
+        retval = element ? 0 : 1;
+    }
+
+    return retval;
+
+}
+
+// removes an element from a layer taht is gotten by its name
+// returns 0 on succes, 1 on error
+int layer_remove_element_by_name (DoubleList *layers, const char *layer_name, void *ptr) {
 
     int retval = 0;
 
     if (layer_name && ptr) {
-        Layer *layer = layer_get_by_name (layer_name);
-        if (layer) {
-            void *obj = dlist_remove_element (layer->gos, dlist_get_element (layer->gos, ptr));
-            retval = obj ? 0 : 1;
-        }
+        Layer *layer = layer_get_by_name (layers, layer_name);
+        retval = layer_remove_element (layer, ptr);
     }
 
     return retval;
 
 }
 
-void layers_init (void) {
+static u8 layers_init (void) {
 
-    layers = dlist_init (layer_delete, layer_comparator);
+    // ini the game objects layers
+    gos_layers = dlist_init (layer_delete, layer_comparator);
+    if (gos_layers) {
+        // add the default layer to the list
+        Layer *default_layer = layer_new (gos_layers, "default", 0, true);
+        dlist_insert_after (gos_layers, dlist_end (gos_layers), default_layer);
+    }
 
-    // add the default layer to the list
-    Layer *default_layer = layer_new ("default", 0);
-    dlist_insert_after (layers, dlist_end (layers), default_layer);
+    // init the ui elements layers
+    ui_elements_layers = dlist_init (layer_delete, layer_comparator);
+    if (ui_elements_layers) {
+        // add the default layers to the list
+        Layer *back_layer = layer_new (ui_elements_layers, "back", 0, false);
+        dlist_insert_after (ui_elements_layers, dlist_end (ui_elements_layers), back_layer);
+
+        Layer *middle_layer = layer_new (ui_elements_layers, "middle", 1, false);
+        dlist_insert_after (ui_elements_layers, dlist_end (ui_elements_layers), middle_layer);
+
+        Layer *top_layer = layer_new (ui_elements_layers, "top", 2, false);
+        dlist_insert_after (ui_elements_layers, dlist_end (ui_elements_layers), top_layer);
+    }
+
+    return (gos_layers && ui_elements_layers ? 0 : 1);
 
 }
 
-void layers_end (void) { 
+static void layers_end (void) { 
     
-    dlist_destroy (layers); 
-    layers = NULL;
+    dlist_delete (gos_layers);
+    gos_layers = NULL;
+
+    dlist_delete (ui_elements_layers);
+    ui_elements_layers = NULL;
     
 }
 
 #pragma endregion
 
+#pragma region Surfaces
+
+SDL_Surface *surface_create (int width, int height) {
+
+    uint32_t rmask , gmask , bmask , amask ;
+
+    /* SDL interprets each pixel as a 32-bit number, so our masks must depend
+       on the endianness (byte order) of the machine */
+    #if SDL_BYTEORDER == SDL_BIG_ENDIAN
+        rmask = 0xff000000;
+        gmask = 0x00ff0000;
+        bmask = 0x0000ff00;
+        amask = 0x000000ff;
+    #else
+        rmask = 0x000000ff;
+        gmask = 0x0000ff00;
+        bmask = 0x00ff0000;
+        amask = 0xff000000;
+    #endif
+
+    return SDL_CreateRGBSurface (0, width, height, 32, rmask, gmask, bmask, amask);
+
+}
+
+#pragma endregion
+
+#pragma region Basic
+
+// renders a dot
+void render_basic_dot (int x, int y, SDL_Color color) {
+
+    SDL_SetRenderDrawColor (main_renderer->renderer, color.r, color.g, color.b, color.a);
+    SDL_RenderDrawPoint (main_renderer->renderer, x ,y);
+
+}
+
+// renders a horizontal line of dots
+void render_basic_dot_line_horizontal (int start, int y, int length, int offset, SDL_Color color) {
+
+    SDL_SetRenderDrawColor (main_renderer->renderer, color.r, color.g, color.b, color.a);
+    for (unsigned int i = start; i < length; i += offset)
+        SDL_RenderDrawPoint (main_renderer->renderer, i, y);
+
+}
+
+// renders a vertical line of dots
+void render_basic_dot_line_vertical (int x, int start, int length, int offset, SDL_Color color) {
+
+    SDL_SetRenderDrawColor (main_renderer->renderer, color.r, color.g, color.b, color.a);
+    for (unsigned int i = start; i < length; i += offset)
+        SDL_RenderDrawPoint (main_renderer->renderer, x, i);
+
+}
+
+// renders a filled rect
+void render_basic_filled_rect (SDL_Rect *rect, SDL_Color color) {
+
+    if (rect) {
+        SDL_SetRenderDrawColor (main_renderer->renderer, color.r, color.g, color.b, color.a);        
+        SDL_RenderFillRect (main_renderer->renderer, rect);
+    }
+
+}
+
+// renders an outline rect
+void render_basic_outline_rect (SDL_Rect *rect, SDL_Color color) {
+
+    SDL_SetRenderDrawColor (main_renderer->renderer, color.r, color.g, color.b, color.a);        
+    SDL_RenderDrawRect (main_renderer->renderer, rect);
+
+}
+
+// renders a line
+void render_basic_line (int x1, int x2, int y1, int y2, SDL_Color color) {
+
+    SDL_SetRenderDrawColor (main_renderer->renderer, color.r, color.g, color.b, color.a);        
+    SDL_RenderDrawLine (main_renderer->renderer, x1, y1, x2, y2);
+
+}
+
+#pragma endregion
+
+#pragma region Complex
+
+// renders a rect with transparency
+SDL_Texture *render_complex_transparent_rect (SDL_Rect *rect, SDL_Color color) {
+
+    SDL_Texture *texture = NULL;
+
+    SDL_Surface *surface = surface_create (rect->w, rect->h);
+    if (surface) {
+        (void) SDL_FillRect (surface, NULL, 
+            convert_rgba_to_hex (color.r, color.g, color.b, color.a));
+        texture = SDL_CreateTextureFromSurface (main_renderer->renderer, surface);
+        SDL_FreeSurface (surface); 
+    }
+
+    return texture;
+
+}
+
+#pragma endregion
+
+#pragma region Render
+
 // FIXME: we need to implement occlusion culling!
+// renders the game objects to the screen
 void render (void) {
 
+    SDL_SetRenderDrawColor (main_renderer->renderer, 0, 0, 0, 255);
     SDL_RenderClear (main_renderer->renderer);
 
     // render by layers
@@ -384,10 +544,10 @@ void render (void) {
     GameObject *go = NULL;
     Transform *transform = NULL;
     Graphics *graphics = NULL;
-    for (ListElement *layer_le = dlist_start (layers); layer_le; layer_le = layer_le->next) {
+    for (ListElement *layer_le = dlist_start (gos_layers); layer_le; layer_le = layer_le->next) {
         layer = (Layer *) layer_le->data;
 
-        for (ListElement *le = dlist_start (layer->gos); le; le = le->next) {
+        for (ListElement *le = dlist_start (layer->elements); le; le = le->next) {
             go = (GameObject *) le->data;
 
             transform = (Transform *) game_object_get_component (go, TRANSFORM_COMP);
@@ -414,3 +574,22 @@ void render (void) {
     SDL_RenderPresent (main_renderer->renderer);
 
 }
+
+#pragma endregion
+
+#pragma region public
+
+// inits cengine render capabilities
+u8 render_init (void) {
+
+    return layers_init ();
+
+}
+
+void render_end (void) {
+
+    layers_end ();
+
+}
+
+#pragma endregion

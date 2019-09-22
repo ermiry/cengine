@@ -22,78 +22,61 @@ typedef enum FilterEnum {
 
 } FilterEnum;
 
-typedef struct GlyphData {
-
-    UIRect rect;
-    int cacheLevel;
-
-} GlyphData;
-
-typedef struct FontMapNode {
-
-    u32 key;
-    GlyphData value;
-    struct FontMapNode *next;
-
-} FontMapNode;
-
-#define DEFAULT_FONT_MAP_N_BUCKETS      300
-
-typedef struct FontMap {
-
-    i32 n_buckets;
-    FontMapNode **buckets;
-
-} FontMap;
-
-typedef struct Font {
-
-    String *name;
-    String *filename;
+typedef struct FontSource {
 
     TTF_Font *ttf_source;
     u8 owns_ttf_source;
 
-    FilterEnum filter;
-
-    RGBA_Color default_color;
     u16 height;
     u16 maxWidth;
     u16 baseline;
     i32 ascent;
     i32 descent;
 
-    i32 lineSpacing;
-    i32 letterSpacing;
+    unsigned int size;
 
-    FontMap *glyphs;
-    GlyphData last_glyph;
-    i32 glyph_cache_size;
-    i32 glyph_cache_count;
-    FontImage **glyph_cache;
-    char *loading_string;
+} FontSource;
+
+typedef struct Font {
+
+    String *name;
+    String *filename;
+
+    unsigned int n_sizes;
+    unsigned int *sizes;
+
+    FontSource **sources;
+
+    FilterEnum filter;
 
 } Font;
 
+extern FontSource *font_source_get_by_size (Font *font, unsigned int size);
+
 // inits cengine ui font capabilities
 extern u8 ui_fonts_init (void);
+
 // destroys any cengine font data left
 extern void ui_font_end (void);
 
-// creates a new font data structure
-extern Font *ui_font_new (const char *font_name, const char *font_filename);
+// creates a new font structure that requires a font to be loaded
+extern Font *ui_font_create (const char *font_name, const char *font_filename);
+
+// sets the font sizes to be loaded
+// returns 0 on success, 1 on error
+extern u8 ui_font_set_sizes (Font *font, u8 n_sizes, ...);
+
 // loads the font with the specified values
-extern u8 ui_font_load (Font *font, u32 pointSize, RGBA_Color color, int style);
+extern u8 ui_font_load (Font *font, int style);
+
 // destroys a font data structure
 extern void ui_font_delete (void *font_ptr);
 
+// get a refrence to the default font --> the first one that was added
+extern Font *ui_font_get_default (void);
+
 // gets a refrence to a ui font by its name -> it should be ready to use
 extern Font *ui_font_get_by_name (const char *name);
-
-/*** Glyph ***/
-
-extern u8 glyph_get_data (Font *font, GlyphData *result, u32 codepoint);
-extern SDL_Texture *glyph_get_cache_level (Font *font, int cacheLevel);
 
 /*** Misc ***/
 

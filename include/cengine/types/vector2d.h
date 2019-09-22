@@ -1,17 +1,17 @@
-#ifndef _CENGINE_VECTOR2D_H_
-#define _CENGINE_VECTOR2D_H_
-
-typedef struct Point {
-
-    int x, y;
-
-} Point;
+#ifndef _CENGINE_TYPES_VECTOR2D_H_
+#define _CENGINE_TYPES_VECTOR2D_H_
 
 typedef struct Vector2D { 
 
     float x, y;
 
 } Vector2D;
+
+extern const Vector2D zero_vector;
+
+extern Vector2D *vector_new (void);
+extern Vector2D *vector_create (float x, float y);
+extern void vector_delete (void *vector_ptr);
 
 extern float vector_magnitude (Vector2D v);
 extern Vector2D vector_normalize (Vector2D vector);
@@ -37,7 +37,7 @@ extern Vector2D unit_vector (Vector2D v);
 extern Vector2D vector_rotate (Vector2D v, float radian);
 // extern Vector2D vector_rotate_90 (Vector2D v);
 
-/*** UNITY LIKE FUNCS ***/
+/*** Unity like functions ***/
 
 // returns a copy of (vector) with its magnitude clamped to (maxLength)
 extern Vector2D vector_clamp_magnitude (Vector2D vector, float maxLength);
