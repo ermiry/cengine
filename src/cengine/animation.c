@@ -14,11 +14,11 @@
 #include "cengine/sprites.h"
 #include "cengine/threads/thread.h"
 #include "cengine/animation.h"
+#include "cengine/files.h"
 #include "cengine/game/go.h"
 
 #include "cengine/collections/dlist.h"
 
-#include "cengine/utils/file.h"
 #include "cengine/utils/json.h"
 #include "cengine/utils/log.h"
 

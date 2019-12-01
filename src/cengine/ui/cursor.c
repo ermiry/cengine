@@ -26,7 +26,8 @@ Cursor *ui_cursor_new (void) {
 
 // create a new ui cursor with a custom sprite or pass a spirtesheet to load different images
 // when performing different actions
-Cursor *ui_cursor_create (const char *sprite, const char *sprite_sheet, int w, int h, int hot_x, int hot_y) {
+Cursor *ui_cursor_create (Renderer *renderer, const char *sprite, const char *sprite_sheet, 
+    int w, int h, int hot_x, int hot_y) {
 
     Cursor *c = NULL;
 
@@ -45,7 +46,7 @@ Cursor *ui_cursor_create (const char *sprite, const char *sprite_sheet, int w, i
         SDL_SetCursor (c->cursor);
 
         if (sprite) {
-            c->sprite = sprite_load (sprite, main_renderer);
+            c->sprite = sprite_load (sprite, renderer);
             if (!c->sprite) {
                 cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to load cursor sprite!");
                 ui_cursor_delete (c);
@@ -56,7 +57,7 @@ Cursor *ui_cursor_create (const char *sprite, const char *sprite_sheet, int w, i
         }
 
         else if (sprite_sheet) {
-            c->sprite_sheet = sprite_sheet_load (sprite_sheet, main_renderer);
+            c->sprite_sheet = sprite_sheet_load (sprite_sheet, renderer);
             if (!c->sprite_sheet) {
                 cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to load cursor sprite sheet!");
                 ui_cursor_delete (c);
@@ -91,13 +92,13 @@ void ui_cursor_delete (Cursor *cursor) {
 
 }
 
-void ui_cursor_draw (Cursor *cursor) {
+void ui_cursor_draw (Cursor *cursor, Renderer *renderer) {
 
-    if (cursor) {
+    if (cursor && renderer) {
         cursor->sprite->dest_rect.x = mousePos.x;
         cursor->sprite->dest_rect.y = mousePos.y;
 
-        SDL_RenderCopyEx (main_renderer->renderer, cursor->sprite->texture, 
+        SDL_RenderCopyEx (renderer->renderer, cursor->sprite->texture, 
             &cursor->sprite->src_rect, &cursor->sprite->dest_rect, 
             0, 0, NO_FLIP);   
     }

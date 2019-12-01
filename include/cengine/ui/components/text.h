@@ -8,6 +8,9 @@
 #include "cengine/types/types.h"
 #include "cengine/types/string.h"
 
+#include "cengine/graphics.h"
+#include "cengine/renderer.h"
+
 #include "cengine/ui/ui.h"
 #include "cengine/ui/font.h"
 #include "cengine/ui/components/transform.h"
@@ -47,9 +50,9 @@ extern void ui_text_component_update (Text *text, const char *text_str);
 extern void ui_text_component_set_wrap (Text *text, u32 wrap_lenght);
 
 // creates / updates the text texture
-extern void ui_text_component_draw (Text *text);
+extern void ui_text_component_draw (Text *text, Renderer *renderer);
 
 // renders the text component to the screen
-extern void ui_text_component_render (Text *text);
+extern void ui_text_component_render (Text *text, Renderer *renderer);
 
 #endif

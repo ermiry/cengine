@@ -3,7 +3,11 @@
 
 #include <stdbool.h>
 
-#include <SDL2/SDL_rect.h>
+#include "cengine/renderer.h"
+
+#include "cengine/ui/types/types.h"
+
+struct _Renderer;
 
 typedef enum UIPosition {
 
@@ -22,6 +26,6 @@ typedef enum UIPosition {
 
 } UIPosition;
 
-extern void ui_position_update (void *transform_ptr, SDL_Rect *ref_rect, bool offset);
+extern void ui_position_update (struct _Renderer *renderer, void *transform_ptr, UIRect *ref_rect, bool offset);
 
 #endif

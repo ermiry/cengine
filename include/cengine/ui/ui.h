@@ -3,65 +3,51 @@
 
 #include <stdbool.h>
 
-#include <SDL2/SDL.h>
-
 #include "cengine/types/types.h"
+#include "cengine/collections/dlist.h"
 
-/*** Common HEX colors ***/
+#include "cengine/window.h"
+#include "cengine/renderer.h"
 
-#define HEX_NO_COLOR        0x00000000
-#define HEX_WHITE           0xFFFFFFFF
-#define HEX_BLACK           0x000000FF
+#include "cengine/ui/components/transform.h"
 
-#define HEX_FULL_RED        0xFF0000FF
-#define HEX_FULL_GREEN      0x00FF00FF
-#define HEX_FULL_BLUE       0x0000FFFF
-
-#define HEX_YELLOW          0xFFD32AFF
-#define HEX_SAPPHIRE        0x1E3799FF
-
-#define HEX_SILVER          0xBDC3C7FF
-
-/*** Common RGBA Colors ***/
-
-typedef SDL_Color RGBA_Color;
-
-extern RGBA_Color RGBA_NO_COLOR;
-extern RGBA_Color RGBA_WHITE;
-extern RGBA_Color RGBA_BLACK;
-extern RGBA_Color RGBA_RED;
-extern RGBA_Color RGBA_GREEN;
-extern RGBA_Color RGBA_BLUE;
-
-/*** UI Elements ***/
+struct _Window;
+struct _Renderer;
+struct _UI;
+// struct _UITransform;
 
 typedef enum UIElementType {
 
-    UI_TEXTBOX,
-    UI_IMAGE,
-    UI_PANEL,
-    UI_BUTTON,
-    UI_INPUT,
-    UI_CHECK,
-    UI_NOTI_CENTER,
-    UI_DROPDOWN
+    UI_NONE             = 0,
+
+    UI_TEXTBOX          = 1,
+    UI_IMAGE            = 2,
+    UI_PANEL            = 3,
+    UI_BUTTON           = 4,
+    UI_INPUT            = 5,
+    UI_CHECK            = 6,
+    UI_NOTI_CENTER      = 7,
+    UI_DROPDOWN         = 8
 
 } UIElementType;
 
-#define DEFAULT_MAX_UI_ELEMENTS     10
+#define DEFAULT_MAX_UI_ELEMENTS         256
 
 typedef struct UIElement {
 
     i32 id;
+
     bool active;
-    UIElementType type;
     int layer_id;
+
+    UIElementType type;
     void *element;
+    struct _UITransform *transform;
 
 } UIElement;
 
 // ui element constructor
-extern UIElement *ui_element_new (UIElementType type);
+extern UIElement *ui_element_create (struct _UI *ui, UIElementType type);
 
 // deactivates the ui element and destroys its component (this is what the user should call)
 extern void ui_element_destroy (UIElement *ui_element);
@@ -78,32 +64,46 @@ extern int ui_element_comparator (const void *one, const void *two);
 // sets the render layer of the ui element
 // removes it from the one it is now and adds it to the new one
 // returns 0 on success, 1 on error
-extern int ui_element_set_layer (UIElement *ui_element, const char *layer_name);
+extern int ui_element_set_layer (struct _UI *ui, UIElement *ui_element, const char *layer_name);
 
 extern void ui_element_toggle_active (UIElement *ui_element);
 
-typedef SDL_Rect UIRect;
+extern void ui_element_set_active (UIElement *ui_element, bool active);
 
-extern UIRect ui_rect_create (u32 x, u32 y, u32 w, u32 h);
-extern UIRect ui_rect_union (UIRect a, UIRect b);
+struct _UI {
 
-extern RGBA_Color ui_rgba_color_create (u8 r, u8 g, u8 b, u8 a);
+    UIElement **ui_elements;
+    u32 max_ui_elements;
+    u32 curr_max_ui_elements;
+    u32 new_ui_element_id;
+
+    DoubleList *ui_elements_layers;
+
+    UIElement *ui_element_hover;
+
+};
+
+typedef struct _UI UI;
+
+extern void ui_delete (void *ui_ptr);
+
+// init our ui elements structures
+extern UI *ui_create (void);
+
+extern UIElement *ui_element_hover_get (UI *ui);
 
 /*** Public ui funcs ***/
 
+// resize the ui elements to fit new window
+extern void ui_resize (struct _Window *window);
+
 // renders all the current active ui to the screen
-extern void ui_render (void);
+extern void ui_render (struct _Renderer *renderer);
 
 // initializes cengine's ui capabilities
 extern u8 ui_init (void);
 
-// sets the location of cengine's default ui assets
-extern void ui_default_assets_set_path (const char *pathname);
-
-// loads cengine's default ui assets
-extern u8 ui_default_assets_load (void);
-
-// destroys any cengine ui element left and deallocates memory
-extern u8 ui_destroy (void);
+// destroy common ui elements
+extern u8 ui_end (void);
 
 #endif

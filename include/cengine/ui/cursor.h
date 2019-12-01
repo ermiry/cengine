@@ -1,6 +1,13 @@
 #ifndef _CENGINE_UI_CURSOR_H_
 #define _CENGINE_UI_CURSOR_H_
 
+#include <stdbool.h>
+
+#include "cengine/types/types.h"
+
+#include "cengine/renderer.h"
+#include "cengine/sprites.h"
+
 #define CURSOR_DEFAULT_WIDTH            8
 #define CURSOR_DEFAULT_HEIGHT           8
 #define CURSOR_DEFAULT_HOT_X            4
@@ -25,9 +32,15 @@ typedef struct Cursor {
 extern Cursor *main_cursor;
 
 extern Cursor *ui_cursor_new (void);
+
 extern void ui_cursor_delete (Cursor *cursor);
 
-extern void ui_cursor_draw (Cursor *cursor);
+// create a new ui cursor with a custom sprite or pass a spirtesheet to load different images
+// when performing different actions
+extern Cursor *ui_cursor_create (Renderer *renderer, const char *sprite, const char *sprite_sheet, 
+    int w, int h, int hot_x, int hot_y);
+
+extern void ui_cursor_draw (Cursor *cursor, Renderer *renderer);
 
 // update cursor with new values
 extern int ui_cursor_update (Cursor *c, int w, int h, int hot_x, int hot_y);

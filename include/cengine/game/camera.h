@@ -5,8 +5,13 @@
 
 #include <SDL2/SDL.h>
 
-#include "cengine/game/go.h"
+#include "cengine/types/types.h"
 #include "cengine/types/vector2d.h"
+
+#include "cengine/renderer.h"
+
+#include "cengine/game/go.h"
+#include "cengine/game/components/transform.h"
 
 #define DEFAULT_CAM_ACCEL           1
 #define DEFAULT_CAM_MAX_VEL         2
@@ -48,7 +53,7 @@ typedef struct _Camera Camera;
 
 extern Camera *main_camera;
 
-extern Camera *camera_new (u32 windowWidth, u32 windowHeight);
+extern Camera *camera_new (Renderer *renderer);
 extern void camera_destroy (Camera *cam);
 
 extern void camera_update (Camera *cam);

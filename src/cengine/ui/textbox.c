@@ -22,7 +22,6 @@ static TextBox *ui_textbox_new (void) {
     if (textbox) {
         memset (textbox, 0, sizeof (TextBox));
         textbox->ui_element = NULL;
-        textbox->transform = NULL;
         textbox->colour = false;
         textbox->bg_texture = NULL;
         textbox->text = NULL;
@@ -38,12 +37,18 @@ void ui_textbox_delete (void *textbox_ptr) {
         TextBox *textbox = (TextBox *) textbox_ptr;
 
         textbox->ui_element = NULL;
-        ui_transform_component_delete (textbox->transform);
         if (textbox->bg_texture) SDL_DestroyTexture (textbox->bg_texture);
         ui_text_component_delete (textbox->text);
 
         free (textbox);
     }
+
+}
+
+// sets the textbox's UI position
+void ui_textbox_set_pos (TextBox *textbox, UIRect *ref_rect, UIPosition pos, Renderer *renderer) {
+
+    if (textbox) ui_transform_component_set_pos (textbox->ui_element->transform, renderer, ref_rect, pos, false);
 
 }
 
@@ -55,7 +60,7 @@ String *ui_textbox_get_text (TextBox *textbox) {
 }
 
 // sets the textbox's text with options
-void ui_textbox_set_text (TextBox *textbox, const char *text, 
+void ui_textbox_set_text (TextBox *textbox, Renderer *renderer, const char *text, 
     Font *font, u32 size, RGBA_Color color, bool adjust_to_text) {
 
     if (textbox) {
@@ -67,15 +72,15 @@ void ui_textbox_set_text (TextBox *textbox, const char *text,
                 font, size, color, text);
 
             // set the text position inside the textbox
-            textbox->text->transform->rect.x = textbox->transform->rect.x;
-            textbox->text->transform->rect.y = textbox->transform->rect.y;
+            textbox->text->transform->rect.x = textbox->ui_element->transform->rect.x;
+            textbox->text->transform->rect.y = textbox->ui_element->transform->rect.y;
 
-            ui_text_component_draw (textbox->text);
+            ui_text_component_draw (textbox->text, renderer);
 
             if (adjust_to_text) {
-                textbox->transform->rect.w = textbox->text->transform->rect.w;
-                textbox->transform->rect.h = textbox->text->transform->rect.h;
-                ui_position_update (textbox->transform, NULL, true);
+                textbox->ui_element->transform->rect.w = textbox->text->transform->rect.w;
+                textbox->ui_element->transform->rect.h = textbox->text->transform->rect.h;
+                ui_position_update (renderer, textbox->ui_element->transform, NULL, true);
             }
         }
     }
@@ -83,12 +88,12 @@ void ui_textbox_set_text (TextBox *textbox, const char *text,
 }
 
 // updates the textbox's text
-void ui_textbox_update_text (TextBox *textbox, const char *text) {
+void ui_textbox_update_text (TextBox *textbox, Renderer *renderer, const char *text) {
 
     if (textbox) {
         if (textbox->text) {
             ui_text_component_update (textbox->text, text);
-            ui_text_component_draw (textbox->text);
+            ui_text_component_draw (textbox->text, renderer);
             // ui_transform_component_set_pos (textbox->text->transform, 
             //     &textbox->transform->rect, textbox->text->transform->pos, true);
         }
@@ -100,29 +105,29 @@ void ui_textbox_update_text (TextBox *textbox, const char *text) {
 void ui_textbox_set_text_pos (TextBox *textbox, UIPosition pos) {
 
     if (textbox) {
-        if (textbox->text) {}
-            ui_transform_component_set_pos (textbox->text->transform, &textbox->transform->rect, pos, true);
+        if (textbox->text)
+            ui_transform_component_set_pos (textbox->text->transform, NULL, &textbox->ui_element->transform->rect, pos, true);
     }
 
 }
 
 // sets the textbox font
-void ui_textbox_set_font (TextBox *textbox, Font *font) {
+void ui_textbox_set_font (TextBox *textbox, Renderer *renderer, Font *font) {
 
     if (textbox) {
         textbox->text->font = font;
-        ui_text_component_draw (textbox->text);
+        ui_text_component_draw (textbox->text, renderer);
     }
 
 }
 
 // sets the textbox's text color
-void ui_textbox_set_text_color (TextBox *textbox, RGBA_Color color) {
+void ui_textbox_set_text_color (TextBox *textbox, Renderer *renderer, RGBA_Color color) {
 
     if (textbox) {
         if (textbox->text) {
             textbox->text->text_color = color;
-            ui_text_component_draw (textbox->text);
+            ui_text_component_draw (textbox->text, renderer);
         }
     }
 
@@ -138,6 +143,16 @@ void ui_textbox_set_ouline_colour (TextBox *textbox, RGBA_Color colour) {
 
 }
 
+// sets the textbox's outline scale
+void ui_textbox_set_ouline_scale (TextBox *textbox, float x_scale, float y_scale) {
+
+    if (textbox) {
+        textbox->outline_scale_x = x_scale;
+        textbox->outline_scale_y = y_scale;
+    }
+
+}
+
 // removes the ouline form the textbox
 void ui_textbox_remove_outline (TextBox *textbox) {
 
@@ -149,14 +164,14 @@ void ui_textbox_remove_outline (TextBox *textbox) {
 }
 
 // sets the textbox's background color
-void ui_textbox_set_bg_color (TextBox *textbox, RGBA_Color color) {
+void ui_textbox_set_bg_color (TextBox *textbox, Renderer *renderer, RGBA_Color color) {
 
     if (textbox) {
         textbox->bg_colour = color;
         if (color.a < 255) {
-            textbox->bg_texture = render_complex_transparent_rect (&textbox->transform->rect, color);
-            textbox->bg_texture_rect.w = textbox->transform->rect.w;
-            textbox->bg_texture_rect.h = textbox->transform->rect.h;
+            render_complex_transparent_rect (renderer, &textbox->bg_texture, &textbox->ui_element->transform->rect, color);
+            textbox->bg_texture_rect.w = textbox->ui_element->transform->rect.w;
+            textbox->bg_texture_rect.h = textbox->ui_element->transform->rect.h;
         }
 
         textbox->colour = true;
@@ -180,18 +195,24 @@ void ui_textbox_remove_background (TextBox *textbox) {
 }
 
 // creates a new textbox
-TextBox *ui_textbox_create (i32 x, i32 y, u32 w, u32 h, UIPosition pos) {
+TextBox *ui_textbox_create (i32 x, i32 y, u32 w, u32 h, UIPosition pos, Renderer *renderer) {
 
     TextBox *textbox = NULL;
 
-    UIElement *ui_element = ui_element_new (UI_TEXTBOX);
+    UIElement *ui_element = ui_element_create (renderer->ui, UI_TEXTBOX);
     if (ui_element) {
         textbox = ui_textbox_new ();
         if (textbox) {
             textbox->ui_element = ui_element;
-            textbox->transform = ui_transform_component_create (x, y, w, h);
-            ui_transform_component_set_pos (textbox->transform, NULL, pos, true);
+            ui_transform_component_set_values (ui_element->transform, x, y, w, h);
+            ui_transform_component_set_pos (textbox->ui_element->transform, renderer, NULL, pos, true);
             ui_element->element = textbox;
+
+            textbox->outline_scale_x = 1;
+            textbox->outline_scale_y = 1;
+
+            textbox->original_w = w;
+            textbox->original_h = h;
         }
 
         else ui_element_delete (ui_element);
@@ -201,26 +222,50 @@ TextBox *ui_textbox_create (i32 x, i32 y, u32 w, u32 h, UIPosition pos) {
 
 }
 
-// draws the textbox
-void ui_textbox_draw (TextBox *textbox) {
+// rezises the textbox based on window size
+void ui_textbox_resize (TextBox *textbox, WindowSize window_original_size, WindowSize window_new_size) {
 
     if (textbox) {
-        // render the background
-        if (textbox->bg_texture) {
-            SDL_RenderCopyEx (main_renderer->renderer, textbox->bg_texture, 
-                &textbox->bg_texture_rect, &textbox->transform->rect, 
-                0, 0, SDL_FLIP_NONE);
+        if ((window_original_size.width == window_new_size.width) && window_original_size.height == window_new_size.height) {
+            textbox->ui_element->transform->rect.w = textbox->original_w;
+            textbox->ui_element->transform->rect.h = textbox->original_h;
         }
 
-        else if (textbox->colour) 
-            render_basic_filled_rect (&textbox->transform->rect, textbox->bg_colour);
+        else {
+            u32 new_width = (window_new_size.width * textbox->ui_element->transform->rect.w) / window_original_size.width;
+            u32 new_height = (window_new_size.height * textbox->ui_element->transform->rect.h) / window_original_size.height;
+            textbox->ui_element->transform->rect.w = new_width;
+            textbox->ui_element->transform->rect.h = new_height;
+        }
+    }
 
-        // render the outline border
-        if (textbox->outline) 
-            render_basic_outline_rect (&textbox->transform->rect, textbox->outline_colour);
+}
 
-        // render the text
-        ui_text_component_render (textbox->text);
+// draws the textbox
+void ui_textbox_draw (TextBox *textbox, Renderer *renderer) {
+
+    if (textbox && renderer) {
+        if (SDL_HasIntersection (&textbox->ui_element->transform->rect, &renderer->window->screen_rect)) {
+            // render the background
+            if (textbox->bg_texture) {
+                SDL_RenderCopyEx (renderer->renderer, textbox->bg_texture, 
+                    &textbox->bg_texture_rect, &textbox->ui_element->transform->rect, 
+                    0, 0, SDL_FLIP_NONE);
+            }
+
+            else if (textbox->colour) 
+                render_basic_filled_rect (renderer, &textbox->ui_element->transform->rect, textbox->bg_colour);
+
+            // render the outline border
+            if (textbox->outline) 
+                render_basic_outline_rect (renderer, &textbox->ui_element->transform->rect, textbox->outline_colour,
+                    textbox->outline_scale_x, textbox->outline_scale_y);
+
+            // render the text
+            ui_text_component_render (textbox->text, renderer);
+
+            renderer->render_count += 1;
+        }
     }
 
 }

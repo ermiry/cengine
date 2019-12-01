@@ -2,15 +2,20 @@
 #include <string.h>
 #include <stdbool.h>
 
+#include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_rwops.h>
 #include <SDL2/SDL_surface.h>
 #include <SDL2/SDL_image.h>
 
 #include "cengine/types/types.h"
+#include "cengine/types/vector2d.h"
 
 #include "cengine/sprites.h"
 #include "cengine/renderer.h"
+#include "cengine/input.h"
+#include "cengine/timer.h"
 
+#include "cengine/ui/types/types.h"
 #include "cengine/ui/ui.h"
 #include "cengine/ui/image.h"
 
@@ -20,10 +25,22 @@ static Image *ui_image_new (void) {
     if (image) {
         memset (image, 0, sizeof (Image));
         image->ui_element = NULL;
-        image->transform = NULL;
+
         image->sprite = NULL;
         image->texture = NULL;
         image->sprite_sheet = NULL;
+
+        image->active = NULL;
+        image->pressed = NULL;
+        image->action = NULL;
+        image->args = NULL;
+
+        image->overlay_texture = NULL;
+        image->selected_texture = NULL;
+
+        image->double_click_timer = NULL;
+        image->double_click_action = NULL;
+        image->double_click_args = NULL;
     }
 
     return image;
@@ -36,7 +53,6 @@ void ui_image_delete (void *image_ptr) {
         Image *image = (Image *) image_ptr;
 
         image->ui_element = NULL;
-        ui_transform_component_delete (image->transform);
 
         if (image->ref_sprite) {
             image->sprite = NULL;
@@ -50,7 +66,32 @@ void ui_image_delete (void *image_ptr) {
 
         if (image->texture) SDL_DestroyTexture (image->texture);
 
+        if (image->overlay_texture && !image->overlay_reference) 
+            SDL_DestroyTexture (image->overlay_texture);
+
+        if (image->selected_texture && !image->selected_reference)
+            SDL_DestroyTexture (image->selected_texture);
+
+        timer_destroy (image->double_click_timer);
+
         free (image);
+    }
+
+}
+
+// sets the image's UI position
+void ui_image_set_pos (Image *image, UIRect *ref_rect, UIPosition pos, Renderer *renderer) {
+
+    if (image) ui_transform_component_set_pos (image->ui_element->transform, renderer, ref_rect, pos, false);
+
+}
+
+// sets the image's render dimensions
+void ui_image_set_dimensions (Image *image, unsigned int width, unsigned int height) {
+
+    if (image) {
+        image->ui_element->transform->rect.w = width;
+        image->ui_element->transform->rect.h = height;
     }
 
 }
@@ -59,28 +100,28 @@ void ui_image_delete (void *image_ptr) {
 void ui_image_set_scale (Image *image, int x_scale, int y_scale) {
 
     if (image) {
-        image->transform->x_scale = x_scale;
-        image->transform->y_scale = y_scale;
+        image->ui_element->transform->x_scale = x_scale;
+        image->ui_element->transform->y_scale = y_scale;
 
-        image->transform->rect.w *= image->transform->x_scale;
-        image->transform->rect.h *= image->transform->y_scale;
+        image->ui_element->transform->rect.w *= image->ui_element->transform->x_scale;
+        image->ui_element->transform->rect.h *= image->ui_element->transform->y_scale;
     }
 
 }
 
 // sets the image's sprite to be rendered and loads its
 // returns 0 on success loading sprite, 1 on error
-u8 ui_image_set_sprite (Image *image, const char *filename) {
+u8 ui_image_set_sprite (Image *image, Renderer *renderer, const char *filename) {
 
     u8 retval = 1;
 
-    if (image && filename) {
+    if (image && renderer && filename) {
         if (!image->ref_sprite) sprite_destroy (image->sprite);
 
-        image->sprite = sprite_load (filename, main_renderer);
+        image->sprite = sprite_load (filename, renderer);
         if (image->sprite) {
-            image->transform->rect.w = image->sprite->w;
-            image->transform->rect.h = image->sprite->h;
+            image->ui_element->transform->rect.w = image->sprite->w;
+            image->ui_element->transform->rect.h = image->sprite->h;
             retval = 0;
         }
     }
@@ -91,14 +132,14 @@ u8 ui_image_set_sprite (Image *image, const char *filename) {
 
 // sets the image's sprite sheet to be rendered and loads it
 // returns 0 on success loading sprite sheet, 1 on error
-u8 ui_image_set_sprite_sheet (Image *image, const char *filename) {
+u8 ui_image_set_sprite_sheet (Image *image, Renderer *renderer, const char *filename) {
 
     u8 retval = 1;
 
-    if (image && filename) {
+    if (image && renderer && filename) {
         if (!image->ref_sprite) sprite_sheet_destroy (image->sprite_sheet);
 
-        image->sprite_sheet = sprite_sheet_load (filename, main_renderer);
+        image->sprite_sheet = sprite_sheet_load (filename, renderer);
         if (image->sprite_sheet) retval = 0;
     }
 
@@ -140,16 +181,188 @@ void ui_image_set_sprite_sheet_offset (Image *image, u32 x_offset, u32 y_offset)
 
 }
 
-static Image *ui_image_create_common (void) {
+// sets the image's outline colour
+void ui_image_set_ouline_colour (Image *image, RGBA_Color colour) {
+
+    if (image) {
+        image->outline = true;
+        image->outline_colour = colour;
+    }
+
+}
+
+// sets the image's outline scale
+void ui_image_set_outline_scale (Image *image, float x_scale, float y_scale) {
+
+    if (image) {
+        image->outline_scale_x = x_scale;
+        image->outline_scale_y = y_scale;
+    }
+
+}
+
+// removes the ouline form the image
+void ui_image_remove_outline (Image *image) {
+
+    if (image) {
+        memset (&image->outline_colour, 0, sizeof (RGBA_Color));
+        image->outline = false;
+    }
+
+}
+
+// sets the image to be active depending on value
+// action listerner working
+void ui_image_set_active (Image *image, bool active) {
+
+    if (image) image->active = active;
+
+}
+
+// toggles the image to be active or not
+// action listerner working
+void ui_image_toggle_active (Image *image) {
+
+    if (image) image->active = !image->active;
+
+}
+
+// sets an action to be triggered when the image is clicked
+void ui_image_set_action (Image *image, Action action, void *args) {
+
+    if (image) {
+        image->action = action;
+        image->args = args;
+    } 
+
+}
+
+// sets an action to be executed if double click is dected
+void ui_image_set_double_click_action (Image *image, Action action, void *args) {
+
+    if (image) {
+        image->double_click_action = action;
+        image->double_click_args = args;
+    }
+
+}
+
+// sets an overlay to the image that only renders when you hover the image
+void ui_image_set_overlay (Image *image, Renderer *renderer, RGBA_Color color) {
+
+    if (image) {
+        if (image->overlay_texture) {
+            if (!image->overlay_reference) {
+                SDL_DestroyTexture (image->overlay_texture);
+                image->overlay_texture = NULL;
+            }
+        }
+
+        render_complex_transparent_rect (renderer, &image->overlay_texture, &image->ui_element->transform->rect, color); 
+        image->overlay_reference = false;   
+    }
+
+}
+
+// sets an overlay to the image that only renders when you hover the image
+// you need to pass a reference to the texture
+void ui_image_set_overlay_ref (Image *image, SDL_Texture *overlay_ref) {
+
+    if (image && overlay_ref) {
+        if (image->overlay_texture) {
+            if (!image->overlay_reference) {
+                SDL_DestroyTexture (image->overlay_texture);
+                image->overlay_texture = NULL;
+            }
+        }
+
+        image->overlay_texture = overlay_ref;
+        image->overlay_reference = true;
+    }
+
+}
+
+// removes the overlay from the image
+void ui_image_remove_overlay (Image *image) {
+
+    if (image) {
+        if (image->overlay_texture) {
+            if (!image->overlay_reference) {
+                SDL_DestroyTexture (image->overlay_texture);
+            }
+
+            image->overlay_texture = NULL;
+            image->overlay_reference = false;
+        }
+    }
+
+}
+
+// sets an overlay to the image that only renders when you select the image (1 left click)
+void ui_image_set_selected (Image *image, Renderer *renderer, RGBA_Color color) {
+
+    if (image) {
+        if (image->selected_texture) {
+            if (!image->selected_reference) {
+                SDL_DestroyTexture (image->selected_texture);
+                image->selected_texture = NULL;
+            }
+        }
+
+        render_complex_transparent_rect (renderer, &image->selected_texture, &image->ui_element->transform->rect, color); 
+        image->selected_reference = false;   
+    }
+
+}
+
+// sets an overlay to the image that only renders when you select the image
+// you need to pass a reference to the texture
+void ui_image_set_selected_ref (Image *image, SDL_Texture *selected_ref) {
+
+    if (image && selected_ref) {
+        if (image->selected_texture) {
+            if (!image->selected_reference) {
+                SDL_DestroyTexture (image->selected_texture);
+                image->selected_texture = NULL;
+            }
+        }
+
+        image->selected_texture = selected_ref;
+        image->selected_reference = true;
+    }
+
+}
+
+// removes the select overlay from the image
+void ui_image_remove_selected (Image *image) {
+
+    if (image) {
+        if (image->selected_texture) {
+            if (!image->selected_reference) {
+                SDL_DestroyTexture (image->selected_texture);
+            }
+
+            image->selected_texture = NULL;
+            image->selected_reference = false;
+        }
+    }
+
+}
+
+static Image *ui_image_create_common (Renderer *renderer) {
 
     Image *image = NULL;
 
-    UIElement *ui_element = ui_element_new (UI_IMAGE);
+    UIElement *ui_element = ui_element_create (renderer->ui, UI_IMAGE);
     if (ui_element) {
         image = ui_image_new ();
         if (image) {
             image->ui_element = ui_element;
             ui_element->element = image;
+
+            image->outline_scale_x = image->outline_scale_y = 1;
+
+            image->double_click_timer = timer_new ();
         }
     }
 
@@ -159,11 +372,12 @@ static Image *ui_image_create_common (void) {
 
 // creates a new image to be displayed from a constant source, like using a sprite loaded from a file
 // x and y for position
-Image *ui_image_create_static (u32 x, u32 y) {
+Image *ui_image_create_static (u32 x, u32 y, Renderer *renderer) {
 
-    Image *image = ui_image_create_common ();
+    Image *image = ui_image_create_common (renderer);
     if (image) {
-        image->transform = ui_transform_component_create (x, y, 0, 0);
+        image->ui_element->transform->rect.x = x;
+        image->ui_element->transform->rect.y = y;
     }
 
     return image;
@@ -171,13 +385,13 @@ Image *ui_image_create_static (u32 x, u32 y) {
 }
 
 // manually creates a streaming access texture, usefull for constant updates
-u8 ui_image_create_streaming_texture (Image *image, Uint32 sdl_pixel_format) {
+u8 ui_image_create_streaming_texture (Image *image, Renderer *renderer, Uint32 sdl_pixel_format) {
 
     u8 retval = 1;
 
-    if (image) {
-        image->texture = SDL_CreateTexture (main_renderer->renderer, sdl_pixel_format,
-            SDL_TEXTUREACCESS_STREAMING, image->transform->rect.w, image->transform->rect.h);
+    if (image && renderer) {
+        image->texture = SDL_CreateTexture (renderer->renderer, sdl_pixel_format,
+            SDL_TEXTUREACCESS_STREAMING, image->ui_element->transform->rect.w, image->ui_element->transform->rect.h);
         if (image->texture) retval = 0;
     }
 
@@ -223,42 +437,115 @@ u8 ui_image_update_streaming_texture_mem (Image *image, void *mem, int mem_size)
 // usefull for streaming video
 // x and y for position
 // w and h for dimensions
-Image *ui_image_create_dynamic (u32 x, u32 y, u32 w, u32 h) {
+Image *ui_image_create_dynamic (u32 x, u32 y, u32 w, u32 h, Renderer *renderer) {
 
-    Image *image = ui_image_create_common ();
-    if (image) {
-        image->transform = ui_transform_component_create (x, y, w, h);
-    }
+    Image *image = ui_image_create_common (renderer);
+    if (image) ui_transform_component_set_values (image->ui_element->transform, x, y, w, h);
 
     return image;
 
 }
 
 // draws the image to the screen
-void ui_image_draw (Image *image) {
+void ui_image_draw (Image *image, Renderer *renderer) {
 
-    if (image) {
-        if (image->texture) {
-            SDL_RenderCopyEx (main_renderer->renderer, image->texture, 
-                NULL, &image->transform->rect, 
-                0, 0, image->flip);
-        }
-
-        else {
-            if (image->sprite) {
-                SDL_RenderCopyEx (main_renderer->renderer, image->sprite->texture, 
-                    &image->sprite->src_rect, &image->transform->rect, 
+    if (image && renderer) {
+        if (SDL_HasIntersection (&image->ui_element->transform->rect, &renderer->window->screen_rect)) {
+            if (image->texture) {
+                SDL_RenderCopyEx (renderer->renderer, image->texture, 
+                    NULL, &image->ui_element->transform->rect, 
                     0, 0, image->flip);
             }
-            
-            else if (image->sprite_sheet) {
-                image->sprite_sheet->src_rect.x = image->sprite_sheet->sprite_w * image->x_sprite_offset;
-                image->sprite_sheet->src_rect.y = image->sprite_sheet->sprite_h * image->y_sprite_offset;
 
-                SDL_RenderCopyEx (main_renderer->renderer, image->sprite_sheet->texture, 
-                    &image->sprite_sheet->src_rect, &image->transform->rect, 
+            else {
+                if (image->sprite) {
+                    SDL_RenderCopyEx (renderer->renderer, image->sprite->texture, 
+                        &image->sprite->src_rect, &image->ui_element->transform->rect, 
+                        0, 0, image->flip);
+                }
+                
+                else if (image->sprite_sheet) {
+                    image->sprite_sheet->src_rect.x = image->sprite_sheet->sprite_w * image->x_sprite_offset;
+                    image->sprite_sheet->src_rect.y = image->sprite_sheet->sprite_h * image->y_sprite_offset;
+
+                    SDL_RenderCopyEx (renderer->renderer, image->sprite_sheet->texture, 
+                        &image->sprite_sheet->src_rect, &image->ui_element->transform->rect, 
+                        0, 0, image->flip);
+                }
+            }
+
+            // render the outline border
+            if (image->outline) 
+                render_basic_outline_rect (renderer, &image->ui_element->transform->rect, image->outline_colour, 
+                    image->outline_scale_x, image->outline_scale_y);
+
+            // check for action listener
+            if (image->active) {
+                if (renderer->window->mouse) {
+                    // check if the mouse is in the image
+                    if (mousePos.x >= image->ui_element->transform->rect.x && mousePos.x <= (image->ui_element->transform->rect.x + image->ui_element->transform->rect.w) && 
+                        mousePos.y >= image->ui_element->transform->rect.y && mousePos.y <= (image->ui_element->transform->rect.y + image->ui_element->transform->rect.h)) {
+                        renderer->ui->ui_element_hover = image->ui_element;
+                            
+                        if (image->overlay_texture && !image->selected) {
+                            SDL_RenderCopyEx (renderer->renderer, image->overlay_texture, 
+                                NULL, &image->ui_element->transform->rect, 
+                                0, 0, image->flip);
+                        }
+
+                        // check if the user pressed the left button over the image
+                        if (input_get_mouse_button_state (MOUSE_LEFT)) {
+                            image->pressed = true;
+                        }
+                        
+                        else if (!input_get_mouse_button_state (MOUSE_LEFT)) {
+                            if (image->pressed) {
+                                if (!image->one_click) {
+                                    image->one_click = true;
+                                    timer_start (image->double_click_timer);
+                                    image->selected = !image->selected;
+                                    if (image->action) image->action (image->args);
+                                    // printf ("One click!\n");
+                                }
+
+                                else {
+                                    u32 ticks = timer_get_ticks (image->double_click_timer);
+                                    if (ticks <= 500) {
+                                        image->one_click = false;
+                                        if (image->double_click_action) 
+                                            image->double_click_action (image->double_click_args);
+
+                                        // image->selected = !image->selected;
+                                        // printf ("Double click!\n");
+                                    }
+
+                                    else {
+                                        image->one_click = true;
+                                        timer_start (image->double_click_timer);
+                                        image->selected = !image->selected;
+                                        if (image->action) image->action (image->args);
+                                        // printf ("One click again!\n");
+                                    }
+                                }
+                                
+                                image->pressed = false;
+                            }
+                        }
+                    }
+                
+                    else image->pressed = false;
+                }
+                
+                else image->pressed = false;
+            }
+
+            if (image->selected && image->selected_texture) {
+                SDL_RenderCopyEx (renderer->renderer, image->selected_texture, 
+                    NULL, &image->ui_element->transform->rect, 
                     0, 0, image->flip);
             }
+
+            renderer->render_count += 1;
         }
     }
 

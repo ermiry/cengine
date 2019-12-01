@@ -42,21 +42,21 @@ void graphics_destroy (Graphics *graphics) {
 
 }
 
-void graphics_set_sprite (Graphics *graphics, const char *filename) {
+void graphics_set_sprite (Graphics *graphics, Renderer *renderer, const char *filename) {
 
     if (graphics && filename) {
-        graphics->sprite = sprite_load (filename, main_renderer);
+        graphics->sprite = sprite_load (filename, renderer);
         graphics->spriteSheet = NULL;
         graphics->multipleSprites = false;
     }
 
 }
 
-void graphics_set_sprite_sheet (Graphics *graphics, const char *filename) {
+void graphics_set_sprite_sheet (Graphics *graphics, Renderer *renderer, const char *filename) {
 
     if (graphics && filename) {
         graphics->sprite = NULL;
-        graphics->spriteSheet = sprite_sheet_load (filename, main_renderer);
+        graphics->spriteSheet = sprite_sheet_load (filename, renderer);
         graphics->multipleSprites = true;
     }
 

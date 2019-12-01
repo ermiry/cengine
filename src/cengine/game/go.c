@@ -367,7 +367,7 @@ int game_object_set_layer (GameObject *go, const char *layer_name) {
     int retval = 1;
 
     if (go && layer_name) {
-        Layer *layer = layer_get_by_name (ui_elements_layers, layer_name);
+        Layer *layer = layer_get_by_name (gos_layers, layer_name);
         if (layer) {
             layer_remove_element (go->layer, go);
             retval = layer_add_element (layer, go);

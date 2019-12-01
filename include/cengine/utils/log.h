@@ -24,10 +24,9 @@ typedef enum LogMsgType {
 
     LOG_TEST,
 
-
 } LogMsgType;
 
-extern void cengine_log_msg (FILE *__restrict __stream, LogMsgType firstType, LogMsgType secondType,
-    const char *msg);
+void cengine_log_msg (FILE *__restrict __stream, LogMsgType first_type, LogMsgType second_type,
+    const char *msg, ...);
 
 #endif

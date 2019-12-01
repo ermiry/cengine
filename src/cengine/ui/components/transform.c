@@ -21,11 +21,11 @@ void ui_transform_component_delete (void *transform_ptr) {
 
 void ui_transform_component_delete_dummy (void *transform_ptr) {}
 
-void ui_transform_component_set_pos (UITransform *transform, UIRect *ref_rect, UIPosition pos, bool offset) {
+void ui_transform_component_set_pos (UITransform *transform, Renderer *renderer, UIRect *ref_rect, UIPosition pos, bool offset) {
 
     if (transform) {
         transform->pos = pos;
-        ui_position_update (transform, ref_rect, offset);
+        ui_position_update (renderer, transform, ref_rect, offset);
     } 
 
 }

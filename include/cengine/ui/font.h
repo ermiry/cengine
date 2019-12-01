@@ -67,7 +67,7 @@ extern Font *ui_font_create (const char *font_name, const char *font_filename);
 extern u8 ui_font_set_sizes (Font *font, u8 n_sizes, ...);
 
 // loads the font with the specified values
-extern u8 ui_font_load (Font *font, int style);
+extern u8 ui_font_load (Font *font, Renderer *renderer, int style);
 
 // destroys a font data structure
 extern void ui_font_delete (void *font_ptr);

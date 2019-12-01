@@ -9,11 +9,12 @@
 #include "cengine/types/types.h"
 #include "cengine/types/string.h"
 
+#include "cengine/video.h"
+#include "cengine/renderer.h"
 #include "cengine/sprites.h"
 
 #include "cengine/ui/ui.h"
 #include "cengine/ui/font.h"
-#include "cengine/ui/components/transform.h"
 #include "cengine/ui/components/text.h"
 
 typedef enum ButtonState {
@@ -31,8 +32,6 @@ typedef struct Button {
 
     UIElement *ui_element;
 
-    UITransform *transform;
-
     bool active;
 
     // background
@@ -43,6 +42,8 @@ typedef struct Button {
 
     bool outline;
     RGBA_Color outline_colour;
+    float outline_scale_x;
+    float outline_scale_y;
 
     Text *text;
 
@@ -54,9 +55,21 @@ typedef struct Button {
     Action action;
     void *args;
 
+    // media
+    u32 original_w, original_h;
+
 } Button;
 
 extern void ui_button_delete (void *button_ptr);
+
+// sets the buttons's UI position
+extern void ui_button_set_pos (Button *button, UIRect *ref_rect, UIPosition pos, Renderer *renderer);
+
+// sets the button's render dimensions
+extern void ui_button_set_dimensions (Button *button, unsigned int width, unsigned int height);
+
+// sets the button's scale factor
+extern void ui_button_set_scale (Button *button, int x_scale, int y_scale);
 
 // sets the button to be active depending on values
 extern void ui_button_set_active (Button *button, bool active);
@@ -65,30 +78,33 @@ extern void ui_button_set_active (Button *button, bool active);
 extern void ui_button_toggle_active (Button *button);
 
 // sets the button text
-extern void ui_button_set_text (Button *button, const char *text, 
+extern void ui_button_set_text (Button *button, Renderer *renderer, const char *text, 
     Font *font, u32 size, RGBA_Color text_color);
 
 // sets the button's text position
 extern void ui_button_set_text_pos (Button *button, UIPosition pos);
 
 // sets the button's text color
-extern void ui_button_set_text_color (Button *button, RGBA_Color color);
+extern void ui_button_set_text_color (Button *button, Renderer *renderer, RGBA_Color color);
 
 // sets the button's outline colour
 extern void ui_button_set_ouline_colour (Button *button, RGBA_Color colour);
+
+// sets the button's outline scale
+extern void ui_button_set_ouline_scale (Button *button, float x_scale, float y_scale);
 
 // removes the ouline form the button
 extern void ui_button_remove_outline (Button *button);
 
 // sets the background color of the button
-extern void ui_button_set_bg_color (Button *button, RGBA_Color color);
+extern void ui_button_set_bg_color (Button *button, Renderer *renderer, RGBA_Color color);
 
 // removes the background from the button
 extern void ui_button_remove_background (Button *button);
 
 // sets an sprite for each button state
 // the sprite is loaded and deleted when the button gets deleted
-extern void ui_button_set_sprite (Button *button, ButtonState state, const char *filename);
+extern void ui_button_set_sprite (Button *button, Renderer *renderer, ButtonState state, const char *filename);
 
 // uses a refrence to the sprite and does not load or destroy it 
 extern void ui_button_ref_sprite (Button *button, ButtonState state, Sprite *sprite);
@@ -97,9 +113,12 @@ extern void ui_button_ref_sprite (Button *button, ButtonState state, Sprite *spr
 extern void ui_button_set_action (Button *button, Action action, void *args);
 
 // creates a new button
-extern Button *ui_button_create (i32 x, i32 y, u32 w, u32 h, UIPosition pos);
+extern Button *ui_button_create (i32 x, i32 y, u32 w, u32 h, UIPosition pos, Renderer *renderer);
+
+// rezises the button based on window size
+extern void ui_button_resize (Button *button, WindowSize window_original_size, WindowSize window_new_size);
 
 // draws a button
-extern void ui_button_draw (Button *button);
+extern void ui_button_draw (Button *button, Renderer *renderer);
 
 #endif

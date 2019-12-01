@@ -9,6 +9,8 @@
 #include "cengine/types/string.h"
 #include "cengine/types/vector2d.h"
 
+#include "cengine/video.h"
+#include "cengine/graphics.h"
 #include "cengine/renderer.h"
 #include "cengine/textures.h"
 #include "cengine/sprites.h"
@@ -27,7 +29,6 @@ static Button *ui_button_new (void) {
         memset (button, 0, sizeof (Button));
 
         button->ui_element = NULL;
-        button->transform = NULL;
 
         button->active = true;
 
@@ -59,7 +60,6 @@ void ui_button_delete (void *button_ptr) {
         Button *button = (Button *) button_ptr;
 
         button->ui_element = NULL;
-        ui_transform_component_delete (button->transform);
         ui_text_component_delete (button->text);
 
         if (button->bg_texture) SDL_DestroyTexture (button->bg_texture);
@@ -79,6 +79,36 @@ void ui_button_delete (void *button_ptr) {
 
 }
 
+// sets the buttons's UI position
+void ui_button_set_pos (Button *button, UIRect *ref_rect, UIPosition pos, Renderer *renderer) {
+
+    if (button) ui_transform_component_set_pos (button->ui_element->transform, renderer, ref_rect, pos, false);
+
+}
+
+// sets the button's render dimensions
+void ui_button_set_dimensions (Button *button, unsigned int width, unsigned int height) {
+
+    if (button) {
+        button->ui_element->transform->rect.w = width;
+        button->ui_element->transform->rect.h = height;
+    }
+
+}
+
+// sets the button's scale factor
+void ui_button_set_scale (Button *button, int x_scale, int y_scale) {
+
+    if (button) {
+        button->ui_element->transform->x_scale = x_scale;
+        button->ui_element->transform->y_scale = y_scale;
+
+        button->ui_element->transform->rect.w *= button->ui_element->transform->x_scale;
+        button->ui_element->transform->rect.h *= button->ui_element->transform->y_scale;
+    }
+
+}
+
 // sets the button to be active depending on values
 void ui_button_set_active (Button *button, bool active) {
 
@@ -94,7 +124,7 @@ void ui_button_toggle_active (Button *button) {
 }
 
 // sets the button text
-void ui_button_set_text (Button *button, const char *text, 
+void ui_button_set_text (Button *button, Renderer *renderer, const char *text, 
     Font *font, u32 size, RGBA_Color text_color) {
 
     if (button) {
@@ -106,10 +136,10 @@ void ui_button_set_text (Button *button, const char *text,
                 font, size, text_color, text);
 
             // set the text position inside the button
-            button->text->transform->rect.x = button->transform->rect.x;
-            button->text->transform->rect.y = button->transform->rect.y;
+            button->text->transform->rect.x = button->ui_element->transform->rect.x;
+            button->text->transform->rect.y = button->ui_element->transform->rect.y;
 
-            ui_text_component_draw (button->text);
+            ui_text_component_draw (button->text, renderer);
         }
     }
 
@@ -120,17 +150,17 @@ void ui_button_set_text_pos (Button *button, UIPosition pos) {
 
     if (button) {
         if (button->text)
-            ui_transform_component_set_pos (button->text->transform, &button->transform->rect, pos, true);
+            ui_transform_component_set_pos (button->text->transform, NULL, &button->ui_element->transform->rect, pos, true);
     }
 
 }
 
 // sets the button's text color
-void ui_button_set_text_color (Button *button, RGBA_Color color) {
+void ui_button_set_text_color (Button *button, Renderer *renderer, RGBA_Color color) {
 
     if (button) {
         button->text->text_color = color;
-        ui_text_component_draw (button->text);
+        ui_text_component_draw (button->text, renderer);
     }
 
 }
@@ -141,6 +171,16 @@ void ui_button_set_ouline_colour (Button *button, RGBA_Color colour) {
     if (button) {
         button->outline = true;
         button->outline_colour = colour;
+    }
+
+}
+
+// sets the button's outline scale
+void ui_button_set_ouline_scale (Button *button, float x_scale, float y_scale) {
+
+    if (button) {
+        button->outline_scale_x = x_scale;
+        button->outline_scale_y = y_scale;
     }
 
 }
@@ -156,14 +196,14 @@ void ui_button_remove_outline (Button *button) {
 }
 
 // sets the background color of the button
-void ui_button_set_bg_color (Button *button, RGBA_Color color) {
+void ui_button_set_bg_color (Button *button, Renderer *renderer, RGBA_Color color) {
 
     if (button) {
         button->bg_colour = color;
         if (color.a < 255) {
-            button->bg_texture = render_complex_transparent_rect (&button->transform->rect, color);
-            button->bg_texture_rect.w = button->transform->rect.w;
-            button->bg_texture_rect.h = button->transform->rect.h;
+            render_complex_transparent_rect (renderer, &button->bg_texture, &button->ui_element->transform->rect, color);
+            button->bg_texture_rect.w = button->ui_element->transform->rect.w;
+            button->bg_texture_rect.h = button->ui_element->transform->rect.h;
         }
 
         button->colour = true;
@@ -188,10 +228,10 @@ void ui_button_remove_background (Button *button) {
 
 // sets an sprite for each button state
 // the sprite is loaded and deleted when the button gets deleted
-void ui_button_set_sprite (Button *button, ButtonState state, const char *filename) {
+void ui_button_set_sprite (Button *button, Renderer *renderer, ButtonState state, const char *filename) {
 
     if (button && filename) {
-        Sprite *sprite = sprite_load (filename, main_renderer);
+        Sprite *sprite = sprite_load (filename, renderer);
 
         if (sprite) {
             switch (state) {
@@ -258,19 +298,25 @@ void ui_button_set_action (Button *button, Action action, void *args) {
 }
 
 // creates a new button
-Button *ui_button_create (i32 x, i32 y, u32 w, u32 h, UIPosition pos) {
+Button *ui_button_create (i32 x, i32 y, u32 w, u32 h, UIPosition pos, Renderer *renderer) {
 
     Button *button = NULL;
 
-    UIElement *ui_element = ui_element_new (UI_BUTTON);
+    UIElement *ui_element = ui_element_create (renderer->ui, UI_BUTTON);
     if (ui_element) {
         button = ui_button_new ();
         if (button) {
             button->ui_element = ui_element;
-            button->transform = ui_transform_component_create (x, y, w, h);
-            ui_transform_component_set_pos (button->transform, NULL, pos, true);
+            ui_transform_component_set_values (ui_element->transform, x, y, w, h);
+            ui_transform_component_set_pos (button->ui_element->transform, renderer, NULL, pos, true);
 
             ui_element->element = button;
+
+            button->outline_scale_x = 1;
+            button->outline_scale_y = 1;
+
+            button->original_w = w;
+            button->original_h = h;
         }
 
         else ui_element_delete (ui_element);
@@ -280,70 +326,98 @@ Button *ui_button_create (i32 x, i32 y, u32 w, u32 h, UIPosition pos) {
 
 }
 
-// draws a button
-void ui_button_draw (Button *button) {
+// rezises the button based on window size
+void ui_button_resize (Button *button, WindowSize window_original_size, WindowSize window_new_size) {
 
     if (button) {
-        // draw the background
-         if (button->bg_texture) {
-            SDL_RenderCopyEx (main_renderer->renderer, button->bg_texture, 
-                &button->bg_texture_rect, &button->transform->rect, 
-                0, 0, SDL_FLIP_NONE);
+        if ((window_original_size.width == window_new_size.width) && window_original_size.height == window_new_size.height) {
+            button->ui_element->transform->rect.w = button->original_w;
+            button->ui_element->transform->rect.h = button->original_h;
         }
 
-        else if (button->colour) 
-            render_basic_filled_rect (&button->transform->rect, button->bg_colour);
+        else {
+            u32 new_width = (window_new_size.width * button->ui_element->transform->rect.w) / window_original_size.width;
+            u32 new_height = (window_new_size.height * button->ui_element->transform->rect.h) / window_original_size.height;
+            button->ui_element->transform->rect.w = new_width;
+            button->ui_element->transform->rect.h = new_height;
+        }
+    }
 
-        // render the outline border
-        if (button->outline) 
-            render_basic_outline_rect (&button->transform->rect, button->outline_colour);
+}
 
-        Sprite *selected_sprite = NULL;
+// draws a button
+void ui_button_draw (Button *button, Renderer *renderer) {
 
-        if (button->active) {
-            // check if the mouse is in the button
-            if (mousePos.x >= button->transform->rect.x && mousePos.x <= (button->transform->rect.x + button->transform->rect.w) && 
-                mousePos.y >= button->transform->rect.y && mousePos.y <= (button->transform->rect.y + button->transform->rect.h)) {
-                // check if the user pressed the left button over the mouse
-                if (input_get_mouse_button_state (MOUSE_LEFT)) {
-                    button->pressed = true;
-                    selected_sprite = button->sprites[BUTTON_STATE_MOUSE_DOWN];
-                }
-                
-                else if (!input_get_mouse_button_state (MOUSE_LEFT)) {
-                    if (button->pressed) {
-                        button->pressed = false;
-                        selected_sprite = button->sprites[BUTTON_STATE_MOUSE_UP];
-                        if (button->action) button->action (button->args);
-                        // printf ("Pressed!\n");
-                    }
-                }
-
-                // if not, the user is hovering the mouse over the button
-                else selected_sprite = button->sprites[BUTTON_STATE_MOUSE_OVER_MOTION];
+    if (button && renderer) {
+        if (SDL_HasIntersection (&button->ui_element->transform->rect, &renderer->window->screen_rect)) {
+            // draw the background
+            if (button->bg_texture) {
+                SDL_RenderCopyEx (renderer->renderer, button->bg_texture, 
+                    &button->bg_texture_rect, &button->ui_element->transform->rect, 
+                    0, 0, SDL_FLIP_NONE);
             }
-        
-            else button->pressed = false;
+
+            else if (button->colour) 
+                render_basic_filled_rect (renderer, &button->ui_element->transform->rect, button->bg_colour);
+
+            Sprite *selected_sprite = NULL;
+
+            if (button->active) {
+                if (renderer->window->mouse) {
+                    // check if the mouse is in the button
+                    if (mousePos.x >= button->ui_element->transform->rect.x && mousePos.x <= (button->ui_element->transform->rect.x + button->ui_element->transform->rect.w) && 
+                        mousePos.y >= button->ui_element->transform->rect.y && mousePos.y <= (button->ui_element->transform->rect.y + button->ui_element->transform->rect.h)) {
+                        // check if the user pressed the left button over the mouse
+                        if (input_get_mouse_button_state (MOUSE_LEFT)) {
+                            button->pressed = true;
+                            selected_sprite = button->sprites[BUTTON_STATE_MOUSE_DOWN];
+                        }
+                        
+                        else if (!input_get_mouse_button_state (MOUSE_LEFT)) {
+                            if (button->pressed) {
+                                button->pressed = false;
+                                selected_sprite = button->sprites[BUTTON_STATE_MOUSE_UP];
+                                if (button->action) button->action (button->args);
+                                // printf ("Pressed!\n");
+                            }
+                        }
+
+                        // if not, the user is hovering the mouse over the button
+                        else selected_sprite = button->sprites[BUTTON_STATE_MOUSE_OVER_MOTION];
+                    }
+
+                    else button->pressed = false;
+                }
+            
+                else button->pressed = false;
+            }
+
+            else selected_sprite = button->sprites[BUTTON_STATE_DISABLE];
+
+            // the mouse is NOT hovering over the button OR we dont have any other sprite available
+            if (!selected_sprite)
+                selected_sprite = button->sprites[BUTTON_STATE_MOUSE_OUT];
+
+            if (selected_sprite) {
+                selected_sprite->dest_rect.x = button->ui_element->transform->rect.x;
+                selected_sprite->dest_rect.y = button->ui_element->transform->rect.y;
+
+                SDL_RenderCopyEx (renderer->renderer, selected_sprite->texture, 
+                    &selected_sprite->src_rect, 
+                    &button->ui_element->transform->rect, 
+                    0, 0, NO_FLIP);
+            } 
+
+            // draw button text
+            ui_text_component_render (button->text, renderer);
+
+            // render the outline border
+            if (button->outline) 
+                render_basic_outline_rect (renderer, &button->ui_element->transform->rect, button->outline_colour,
+                    button->outline_scale_x, button->outline_scale_y);
+
+            renderer->render_count += 1;
         }
-
-        else selected_sprite = button->sprites[BUTTON_STATE_DISABLE];
-
-        // the mouse is NOT hovering over the button OR we dont have any other sprite available
-        if (!selected_sprite)
-            selected_sprite = button->sprites[BUTTON_STATE_MOUSE_OUT];
-
-        if (selected_sprite) {
-            selected_sprite->dest_rect.x = button->transform->rect.x;
-            selected_sprite->dest_rect.y = button->transform->rect.y;
-
-            SDL_RenderCopyEx (main_renderer->renderer, selected_sprite->texture, 
-                &selected_sprite->src_rect, 
-                &selected_sprite->dest_rect, 
-                0, 0, NO_FLIP);
-        } 
-
-        // draw button text
-        ui_text_component_render (button->text);
     }
 
 }

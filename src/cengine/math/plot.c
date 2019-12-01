@@ -75,7 +75,8 @@ int math_plot_caption_point_remove (PlotCaption *caption, int x, int y) {
 
     if (caption) {
         Point2D *query = point_create (x, y);
-        retval = dlist_remove (caption->points, query);
+        void *data = dlist_remove (caption->points, query);
+        point_delete (data);
         point_delete (query);
     }
 

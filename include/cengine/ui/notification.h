@@ -10,6 +10,7 @@
 #include "cengine/types/types.h"
 #include "cengine/collections/dlist.h"
 
+#include "cengine/graphics.h"
 #include "cengine/timer.h"
 
 #include "cengine/ui/ui.h"
@@ -115,11 +116,11 @@ extern Notification *ui_notification_create (NotificationType type, float lifeti
 
 // adds the notification to the notification center where you want to display it
 // and displays the notification for x seconds (lifetime)
-extern void ui_notification_display (struct _NotiCenter *noti_center, Notification *notification);
+extern void ui_notification_display (struct _NotiCenter *noti_center, Notification *notification, Renderer *renderer);
 
 // creates the notification with the passed values and default options by notification type
 // and then displays it in the notification center
-extern void ui_notification_create_and_display (struct _NotiCenter *noti_center, NotificationType type, 
+extern void ui_notification_create_and_display (struct _NotiCenter *noti_center, Renderer *renderer, NotificationType type, 
     float lifetime, bool display_timestamp,
     const char *title, const char *msg);
 
@@ -132,10 +133,11 @@ extern void ui_notification_create_and_display (struct _NotiCenter *noti_center,
 struct _NotiCenter {
 
     UIElement *ui_element;
-    UITransform *transform;
 
     bool outline;
     RGBA_Color outline_colour;
+    float outline_scale_x;
+    float outline_scale_y;
 
     bool colour;
     RGBA_Color bg_colour;
@@ -158,7 +160,7 @@ extern void ui_noti_center_delete (void *noti_center_ptr);
 // creates a new notification center
 // max_display: max number of notifications to display at once
 // position: where do you want the notification center to be
-extern NotiCenter *ui_noti_center_create (u8 max_display, UIPosition pos);
+extern NotiCenter *ui_noti_center_create (UI *ui, u8 max_display, UIPosition pos, Renderer *renderer);
 
 // sets the notification center position in the screen
 extern void ui_noti_center_set_position (NotiCenter *noti_center, UIPosition pos);
@@ -169,16 +171,19 @@ extern void ui_noti_center_set_dimensions (NotiCenter *noti_center, u32 width, u
 // sets the noti center's outline colour
 extern void ui_noti_center_set_ouline_colour (NotiCenter *noti_center, RGBA_Color colour);
 
+// sets the noti center's outline scale
+extern void ui_noti_center_set_ouline_scale (NotiCenter *noti_center, float x_scale, float y_scale);
+
 // removes the ouline form the noti center
 extern void ui_noti_center_remove_outline (NotiCenter *noti_center);
 
 // sets the notification center background color
-extern void ui_noti_center_set_bg_color (NotiCenter *noti_center, RGBA_Color color);
+extern void ui_noti_center_set_bg_color (NotiCenter *noti_center, Renderer *renderer, RGBA_Color color);
 
 // removes the background from the noticenter
 extern void ui_noti_center_remove_background (NotiCenter *noti_center);
 
  // draws the notification center
-extern void ui_noti_center_draw (NotiCenter *noti_center);
+extern void ui_noti_center_draw (NotiCenter *noti_center, Renderer *renderer);
 
 #endif

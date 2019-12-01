@@ -7,9 +7,13 @@
 #include "cengine/types/types.h"
 #include "cengine/types/string.h"
 
+#include "cengine/collections/dlist.h"
+
 #include "cengine/animation.h"
+#include "cengine/assets.h"
 #include "cengine/input.h"
 #include "cengine/renderer.h"
+#include "cengine/window.h"
 
 #include "cengine/threads/thread.h"
 
@@ -23,39 +27,40 @@
 #include "cengine/utils/log.h"
 #include "cengine/utils/utils.h"
 
-/*** assets ***/
-
-const String *cengine_assets_path = NULL;
-
-// sets the path for the assets folder
-void cengine_assets_set_path (const char *pathname) {
-
-    if (cengine_assets_path) str_delete ((String *) cengine_assets_path);
-    cengine_assets_path = pathname ? str_new (pathname) : NULL;
-
-}
-
-/*** cengine ***/
-
-// TODO: create a similar function to sdl init to pass what we want to init
-int cengine_init (const char *window_title, WindowSize window_size, bool full_screen) {
+int cengine_init (void) {
 
     int errors = 0;
+    int retval = 0;
 
     srand ((unsigned) time (NULL));
 
     if (!SDL_Init (SDL_INIT_AUDIO | SDL_INIT_EVENTS | SDL_INIT_VIDEO)) {
-        errors = thread_hub_init_global ();
-        errors = animations_init ();
-        errors = render_init ();
-        errors = renderer_init_main (SDL_RENDERER_SOFTWARE | SDL_RENDERER_ACCELERATED, 
-            window_title, window_size, full_screen);
-        errors = game_objects_init_all ();
-        errors = ui_init ();
+        retval = thread_hub_init_global ();
+        if (retval) cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to init cengine's threads!");
+        errors |= retval;
+
+        retval = animations_init ();
+        if (retval) cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to init cengine's animations!");
+        errors |= retval;
+
+        retval = render_init ();
+        if (retval) cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to init cengine's renderer!");
+        errors |= retval;
+
+        retval = game_objects_init_all ();
+        if (retval) cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to init cengine's game objects!");
+        errors |= retval;
+
+        retval = ui_init ();
+        if (retval) cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to init cengine's ui!");
+        errors |= retval;
+
         input_init ();
 
-        main_camera = camera_new (main_renderer->window_size.width, main_renderer->window_size.height);
-        errors = main_camera ? 0 : 1;
+        // main_camera = camera_new (main_renderer->window_size.width, main_renderer->window_size.height);
+        // retval = main_camera ? 0 : 1;
+
+        errors |= retval;
     }
 
     else {
@@ -75,16 +80,14 @@ int cengine_end (void) {
     manager->curr_state->on_exit ();
     manager_delete (manager);
 
+    assets_end ();
     input_end ();
     camera_destroy (main_camera);
-    ui_destroy ();
-    renderer_delete_main ();
+    ui_end ();
     render_end ();
     game_object_destroy_all ();
     animations_end ();
     thread_hub_end_global ();
-
-    str_delete ((String *) cengine_assets_path);
 
     SDL_Quit ();
 
@@ -178,10 +181,23 @@ static void cengine_run (void) {
 
         input_handle (event);
 
-        render ();
+        // TODO: maybe create a new thread for every window
+        // update input and renderer for each window
+        Window *win = NULL;
+        for (ListElement *le = dlist_start (windows); le; le = le->next) {
+            win = (Window *) le->data;
+            if (win->input) win->input (win);
+            win->renderer->ui->ui_element_hover = NULL;
+            render (win->renderer);
+
+            if (win->renderer->update) win->renderer->update (win->renderer->update_args);
+        }
 
         // limit the FPS
+        // u32 ticks = (SDL_GetTicks () - frame_start);
+        // printf ("ticks: %d\n", ticks);
         sleep_time = time_per_frame - (SDL_GetTicks () - frame_start);
+        // printf ("sleep: %d\n", sleep_time);
         if (sleep_time > 0) SDL_Delay (sleep_time);
 
         // count fps
@@ -192,13 +208,15 @@ static void cengine_run (void) {
             if (main_fps_text) {
                 char *text = c_string_create ("main: %d", main_fps);
                 if (text) {
-                    ui_textbox_update_text (main_fps_text, text);
+                    // FIXME:
+                    // ui_textbox_update_text (main_fps_text, text);
                     free (text);
                 }   
             }
 
             if (update_fps_text) {
-                ui_textbox_update_text (update_fps_text, update_text);
+                // FIXME:
+                // ui_textbox_update_text (update_fps_text, renderer, update_text);
             } 
             
             delta_ticks = 0;

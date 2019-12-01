@@ -1,16 +1,23 @@
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_surface.h>
+#include <SDL2/SDL_image.h>
 
 #include "cengine/types/types.h"
 #include "cengine/types/string.h"
 
+#include "cengine/collections/dlist.h"
+#include "cengine/collections/queue.h"
+
 #include "cengine/renderer.h"
+#include "cengine/window.h"
 #include "cengine/textures.h"
+#include "cengine/threads/thread.h"
 
 #include "cengine/manager/manager.h"
 
@@ -22,82 +29,38 @@
 #include "cengine/utils/utils.h"
 #include "cengine/utils/log.h"
 
-#pragma region Window
+static u64 next_renderer_id = 0;
 
-// gets window size into renderer data struct
-int window_get_size (SDL_Window *window, WindowSize *window_size) {
+SurfaceTexture *surface_texture_new (SDL_Surface *surface, SDL_Texture **texture) {
 
-    int retval = 1;
-
-    if (window) {
-        SDL_GetWindowSize (window, &window_size->width, &window_size->height);
-        #ifdef CENGINE_DEBUG
-        cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, 
-            c_string_create ("Window size: %dx%dpx.", window_size->width, window_size->height));
-        #endif
-        retval = 0;
+    SurfaceTexture *st = (SurfaceTexture *) malloc (sizeof (SurfaceTexture));
+    if (st) {
+        st->surface = surface;
+        st->texture = texture;
     }
 
-    return retval;
+    return st;
 
 }
 
-// toggle full screen on and off
-int window_toggle_full_screen (Renderer *renderer) {
+void surface_texture_delete (void *st_ptr) {
 
-    int retval = 1;
+    if (st_ptr) {
+        SurfaceTexture *st = (SurfaceTexture *) st_ptr;
+        if (st->surface) SDL_FreeSurface (st->surface);
+        st->texture = NULL;
 
-    if (renderer) {
-        renderer->full_screen = SDL_GetWindowFlags (renderer->window) & SDL_WINDOW_FULLSCREEN;
-        retval = SDL_SetWindowFullscreen (renderer->window, renderer->full_screen ? 0 : SDL_WINDOW_FULLSCREEN);
-        renderer->full_screen = SDL_GetWindowFlags (renderer->window) & SDL_WINDOW_FULLSCREEN;
+        free (st);
     }
 
-    return retval;
-
 }
-
-// FIXME: do we need to update the renderer?
-// resizes the window asscoaited with a renderer
-int window_resize (Renderer *renderer, u32 new_width, u32 new_height) {
-
-    int retval = 1;
-
-    if (renderer) {
-        // check if we have a valid new size
-        if (new_width <= renderer->display_mode.w && new_width > 0 &&
-            new_height <= renderer->display_mode.h && new_height > 0) {
-            SDL_SetWindowSize (renderer->window, new_width, new_height);
-            window_get_size (renderer->window, &renderer->window_size);
-            retval = 0;
-        }
-    }
-
-    return retval;
-
-}
-
-static SDL_Window *window_create (const char *title, WindowSize window_size, bool full_screen) {
-
-    SDL_Window *window = NULL;
-
-    // creates a window of the size of the screen
-    window = SDL_CreateWindow (title,
-        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 
-        window_size.width, window_size.height,
-        full_screen ? SDL_WINDOW_FULLSCREEN : 0);
-
-    return window;
-
-}
-
-#pragma endregion
 
 #pragma region Renderer
 
-// TODO: as of 03/06/2019 we only have support for one renderer, the main one
-// the plan is to have as many as you want in order to support multiple windows 
-Renderer *main_renderer = NULL;
+DoubleList *renderers = NULL;
+
+int renderer_window_attach (Renderer *renderer, Uint32 render_flags, int display_idx,
+    const char *window_title, WindowSize window_size, Uint32 window_flags);
 
 static Renderer *renderer_new (void) {
 
@@ -105,105 +68,183 @@ static Renderer *renderer_new (void) {
     if (renderer) {
         memset (renderer, 0, sizeof (Renderer));
         renderer->name = NULL;
-        renderer->window_title = NULL;
-        renderer->window = NULL;
+        renderer->textures_queue = NULL;
+
         renderer->renderer = NULL;
+        renderer->window = NULL;
+
+        renderer->ui = NULL;
+
+        renderer->update = NULL;
+        renderer->update_args = NULL;
     }
 
     return renderer;
 
 }
 
-static void *renderer_delete (void *ptr) {
+void renderer_delete (void *ptr) {
 
     if (ptr) {
         Renderer *renderer = (Renderer *) ptr;
 
         str_delete (renderer->name);
-        str_delete (renderer->window_title);
-        if (renderer->window) SDL_DestroyWindow (renderer->window);
         if (renderer->renderer) SDL_DestroyRenderer (renderer->renderer);
+
+        if (renderer->textures_queue) 
+            queue_destroy_complete (renderer->textures_queue, surface_texture_delete);
+
+        ui_delete (renderer->ui);
 
         free (renderer);
     }
 
 }
 
-// FIXME: players with higher resolution have an advantage -> they see more of the world
-// TODO: check SDL_GetCurrentDisplayMode
-// TODO: get refresh rate -> do we need vsync?
-Renderer *render_create_renderer (const char *renderer_name, Uint32 flags, int display_index,
-    const char *window_title, WindowSize window_size, bool full_screen) {
+static int renderer_comparator (const void *a, const void *b) {
 
-    Renderer *renderer = renderer_new ();
+    if (a && b) {
+        Renderer *ren_a = (Renderer *) a;
+        Renderer *ren_b = (Renderer *) b;
 
-    renderer->display_index = display_index;
-    if (!SDL_GetCurrentDisplayMode (display_index, &renderer->display_mode)) {
-        #ifdef CENGINE_DEBUG
-        cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE,
-            c_string_create ("Display with idx %i mode is %dx%dpx @ %dhz.",
-            renderer->display_index, 
-            renderer->display_mode.w, renderer->display_mode.h, 
-            renderer->display_mode.refresh_rate));
-        #endif
+        if (ren_a->id < ren_b->id) return -1;
+        if (ren_a->id == ren_b->id) return 0;
+        else return 1;
+    }
 
-        // first init the window
-        renderer->window = window_create (window_title, window_size, full_screen);
-        if (renderer->window) {
-            window_get_size (renderer->window, &renderer->window_size);
+    return -1;
 
-            // init the sdl renderer
-            // SDL_CreateRenderer (main_window, 0, SDL_RENDERER_SOFTWARE | SDL_RENDERER_ACCELERATED);
-            renderer->renderer = SDL_CreateRenderer (renderer->window, display_index, flags);
-            if (renderer->renderer) {
-                SDL_SetRenderDrawColor (renderer->renderer, 0, 0, 0, 255);
-                SDL_SetHint (SDL_HINT_RENDER_SCALE_QUALITY, "0");
-                SDL_RenderSetLogicalSize (renderer->renderer, 
-                    renderer->window_size.width, renderer->window_size.height);
+}
 
-                renderer->name = str_new (renderer_name);
-                renderer->flags = flags;
-                renderer->window_title = str_new (window_title);
-                renderer->full_screen = full_screen;
+// gets the renderer by its name
+Renderer *renderer_get_by_name (const char *name) {
+
+    Renderer *retval = NULL;
+
+    if (name) {
+        Renderer *renderer = NULL;
+        for (ListElement *le = dlist_start (renderers); le; le = le->next) {
+            renderer = (Renderer *) le->data;
+            if (!strcmp (renderer->name->str, name)) {
+                retval = renderer;
+                break;
             }
-
-            else {
-                cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to create renderer!"); 
-                renderer_delete (renderer);
-                renderer = NULL;
-            }
-        }
-
-        else {
-            cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to create window!"); 
-            renderer_delete (renderer);
-            renderer = NULL;
         }
     }
 
-    else {
-        cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, 
-            c_string_create ("Failed to get display mode for display with idx %i", display_index));
-        #ifdef CENGINE_DEBUG
-        cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, SDL_GetError ());
-        #endif
-        renderer_delete (renderer);
-        renderer = NULL;
+    return retval;
+
+}
+
+// creates a new empty renderer without a window attached to it
+Renderer *renderer_create_empty (const char *name, int display_idx) {
+
+    Renderer *renderer = renderer_new ();
+    if (renderer) {
+        renderer->id = next_renderer_id;
+        next_renderer_id += 1;
+
+        renderer->name = name ? str_new (name) : NULL;
+        // renderer->display_index = display_idx;
+        renderer->textures_queue = queue_create ();
+        renderer->bg_loading_factor = DEFAULT_BG_LOADING_FACTOR;
+
+        renderer->ui = ui_create ();
+
+        dlist_insert_after (renderers, dlist_end (renderers), renderer);
     }
 
     return renderer;
 
 }
 
-int renderer_init_main (Uint32 flags,
-    const char *window_title, WindowSize window_size, bool full_screen) {
+// creates a new renderer with a window attached to it
+Renderer *renderer_create_with_window (const char *name, int display_idx,
+    Uint32 render_flags,
+    const char *window_title, WindowSize window_size, Uint32 window_flags) {
 
-    return ((main_renderer = render_create_renderer ("main", flags, 0, 
-        window_title, window_size, full_screen)) ? 0 : 1);
+    Renderer *renderer = renderer_create_empty (name, display_idx);
+    if (renderer) {
+        renderer->render_flags = render_flags;
+        renderer_window_attach (renderer, render_flags, display_idx,
+            window_title, window_size, window_flags);
+    }
+
+    return renderer;
 
 }
 
-void renderer_delete_main (void) { renderer_delete (main_renderer); }
+// attaches a new window to a renderer
+// creates a new window and then a new render (SDL_Renderer) for it
+// retunrs 0 on success, 1 on error
+int renderer_window_attach (Renderer *renderer, Uint32 render_flags, int display_idx,
+    const char *window_title, WindowSize window_size, Uint32 window_flags) {
+
+    int retval = 0;
+
+    if (renderer) {
+        renderer->window = window_create (window_title, window_size, window_flags, display_idx);
+        if (renderer->window) {
+            renderer->window->renderer = renderer;
+
+            // SDL_CreateRenderer (main_window, 0, SDL_RENDERER_SOFTWARE | SDL_RENDERER_ACCELERATED);
+            renderer->renderer = SDL_CreateRenderer (renderer->window->window, renderer->window->display_index, render_flags);
+            if (renderer->renderer) {
+                renderer->thread_id = pthread_self ();
+                // printf ("Renderer created in thread: %ld\n", renderer->thread_id);
+
+                SDL_SetRenderDrawColor (renderer->renderer, 0, 0, 0, 255);
+                SDL_SetHint (SDL_HINT_RENDER_SCALE_QUALITY, "0");
+                SDL_RenderSetLogicalSize (renderer->renderer, 
+                    renderer->window->window_size.width, renderer->window->window_size.height);
+                
+                retval = 0;
+            }
+
+            else {
+                cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to create renderer!"); 
+                if (renderer->window) window_delete (renderer->window);
+                renderer->window = NULL;
+            }
+        }
+
+        else cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to create window!"); 
+    }
+
+    return retval;
+
+}
+
+void renderer_queue_push (Renderer *renderer, SurfaceTexture *st) {
+
+    if (renderer) {
+        if (renderer->textures_queue) {
+            queue_put (renderer->textures_queue, st);
+        }
+    }
+
+}
+
+// sets how many textures the renderer can create in the background every loop
+// example: if you have a frame rate of 30, the default loading factor is 1,
+// so you will load 30 textures in a second, 1 for each frame
+void renderer_set_background_texture_loading_factor (Renderer *renderer, u32 bg_loading_factor) {
+
+    if (renderer) renderer->bg_loading_factor = bg_loading_factor;
+
+}
+
+// sets an action to executed on every renderer update
+// you can use this if you want to perform action son ui elements, like checking for 
+// the current ui element under the mouse using the ui_element_hover in UI
+void renderer_set_update (Renderer *renderer, Action update, void *update_args) {
+
+    if (renderer) {
+        renderer->update = update;
+        renderer->update_args = update_args;
+    }
+
+}
 
 #pragma endregion
 
@@ -212,7 +253,6 @@ void renderer_delete_main (void) { renderer_delete (main_renderer); }
 #pragma region Layers
 
 DoubleList *gos_layers = NULL;              // render layers for the gameobjects
-DoubleList *ui_elements_layers = NULL;      // render layers for the ui elements
 
 Layer *layer_get_by_pos (DoubleList *layers, int pos) {
 
@@ -334,7 +374,10 @@ int layer_add_element (Layer *layer, void *ptr) {
     int retval = 1;
 
     if (layer && ptr) {
-        dlist_insert_after (layer->elements, dlist_end (layer->elements), ptr);
+        if (!dlist_insert_after (layer->elements, dlist_end (layer->elements), ptr)) {
+            printf ("Added element to layer %s\n", layer->name->str);
+        }
+
         retval = 0;
     }
 
@@ -365,6 +408,7 @@ int layer_remove_element (Layer *layer, void *ptr) {
 
     if (layer && ptr) {
         void *element = dlist_remove_element (layer->elements, dlist_get_element (layer->elements, ptr));
+        // void *element = dlist_remove (layer->elements, ptr);
         retval = element ? 0 : 1;
     }
 
@@ -387,18 +431,10 @@ int layer_remove_element_by_name (DoubleList *layers, const char *layer_name, vo
 
 }
 
-static u8 layers_init (void) {
+// init the ui elements layers
+DoubleList *ui_layers_init (void) {
 
-    // ini the game objects layers
-    gos_layers = dlist_init (layer_delete, layer_comparator);
-    if (gos_layers) {
-        // add the default layer to the list
-        Layer *default_layer = layer_new (gos_layers, "default", 0, true);
-        dlist_insert_after (gos_layers, dlist_end (gos_layers), default_layer);
-    }
-
-    // init the ui elements layers
-    ui_elements_layers = dlist_init (layer_delete, layer_comparator);
+    DoubleList *ui_elements_layers = dlist_init (layer_delete, layer_comparator);
     if (ui_elements_layers) {
         // add the default layers to the list
         Layer *back_layer = layer_new (ui_elements_layers, "back", 0, false);
@@ -411,17 +447,33 @@ static u8 layers_init (void) {
         dlist_insert_after (ui_elements_layers, dlist_end (ui_elements_layers), top_layer);
     }
 
-    return (gos_layers && ui_elements_layers ? 0 : 1);
+    return ui_elements_layers;
 
 }
 
+// FIXME: 22/11/2019 -- we are not calling this any more!!
+static u8 layers_init (void) {
+
+    // ini the game objects layers
+    gos_layers = dlist_init (layer_delete, layer_comparator);
+    if (gos_layers) {
+        // add the default layer to the list
+        Layer *default_layer = layer_new (gos_layers, "default", 0, true);
+        dlist_insert_after (gos_layers, dlist_end (gos_layers), default_layer);
+    }
+
+    return (gos_layers ? 0 : 1);
+
+}
+
+// FIXME: 22/11/2019 -- we are not calling this any more!!
 static void layers_end (void) { 
     
     dlist_delete (gos_layers);
     gos_layers = NULL;
 
-    dlist_delete (ui_elements_layers);
-    ui_elements_layers = NULL;
+    // dlist_delete (ui_elements_layers);
+    // ui_elements_layers = NULL;
     
 }
 
@@ -429,6 +481,7 @@ static void layers_end (void) {
 
 #pragma region Surfaces
 
+// creates a new empty surface
 SDL_Surface *surface_create (int width, int height) {
 
     uint32_t rmask , gmask , bmask , amask ;
@@ -451,59 +504,132 @@ SDL_Surface *surface_create (int width, int height) {
 
 }
 
+// loads an image into a new surface
+SDL_Surface *surface_load_image (const char *filename) {
+
+    return filename ? IMG_Load (filename) : NULL;
+
+}
+
+// wrapper function to destroy a sdl surface
+void surface_delete (SDL_Surface *surface) { if (surface) SDL_FreeSurface (surface); }
+
 #pragma endregion
 
 #pragma region Basic
 
 // renders a dot
-void render_basic_dot (int x, int y, SDL_Color color) {
+void render_basic_dot (Renderer *renderer, int x, int y, SDL_Color color,
+    float x_scale, float y_scale) {
 
-    SDL_SetRenderDrawColor (main_renderer->renderer, color.r, color.g, color.b, color.a);
-    SDL_RenderDrawPoint (main_renderer->renderer, x ,y);
+    if (renderer) {
+        float original_scale_x = 0;
+        float original_scale_y = 0;
+
+        SDL_RenderGetScale (renderer->renderer, &original_scale_x, &original_scale_y);
+
+        SDL_RenderSetScale (renderer->renderer, x_scale, y_scale);
+        SDL_SetRenderDrawColor (renderer->renderer, color.r, color.g, color.b, color.a);
+
+        SDL_RenderDrawPoint (renderer->renderer, x / x_scale, y / y_scale);
+
+        SDL_RenderSetScale (renderer->renderer, original_scale_x, original_scale_y);
+    }
 
 }
 
 // renders a horizontal line of dots
-void render_basic_dot_line_horizontal (int start, int y, int length, int offset, SDL_Color color) {
+void render_basic_dot_line_horizontal (Renderer *renderer, int start, int end, int y, int offset, SDL_Color color,
+    float x_scale, float y_scale) {
 
-    SDL_SetRenderDrawColor (main_renderer->renderer, color.r, color.g, color.b, color.a);
-    for (unsigned int i = start; i < length; i += offset)
-        SDL_RenderDrawPoint (main_renderer->renderer, i, y);
+    if (renderer) {
+        float original_scale_x = 0;
+        float original_scale_y = 0;
+
+        SDL_RenderGetScale (renderer->renderer, &original_scale_x, &original_scale_y);
+
+        SDL_RenderSetScale (renderer->renderer, x_scale, y_scale);
+        SDL_SetRenderDrawColor (renderer->renderer, color.r, color.g, color.b, color.a);
+
+        int scale_offset = (offset * x_scale);
+        for (unsigned int i = start; i < end; i += scale_offset)
+            SDL_RenderDrawPoint (renderer->renderer, i / x_scale, y / y_scale);
+
+        SDL_RenderSetScale (renderer->renderer, original_scale_x, original_scale_y);
+    }
 
 }
 
 // renders a vertical line of dots
-void render_basic_dot_line_vertical (int x, int start, int length, int offset, SDL_Color color) {
+void render_basic_dot_line_vertical (Renderer *renderer, int start, int end, int x, int offset, SDL_Color color,
+    float x_scale, float y_scale) {
 
-    SDL_SetRenderDrawColor (main_renderer->renderer, color.r, color.g, color.b, color.a);
-    for (unsigned int i = start; i < length; i += offset)
-        SDL_RenderDrawPoint (main_renderer->renderer, x, i);
+    if (renderer) {
+        float original_scale_x = 0;
+        float original_scale_y = 0;
+
+        SDL_RenderGetScale (renderer->renderer, &original_scale_x, &original_scale_y);
+
+        SDL_RenderSetScale (renderer->renderer, x_scale, y_scale);
+        SDL_SetRenderDrawColor (renderer->renderer, color.r, color.g, color.b, color.a);
+
+        int scale_offset = (offset * x_scale);
+        for (unsigned int i = start; i < end; i += scale_offset)
+            SDL_RenderDrawPoint (renderer->renderer, x / x_scale, i / y_scale);
+
+        SDL_RenderSetScale (renderer->renderer, original_scale_x, original_scale_y);
+    }
 
 }
 
 // renders a filled rect
-void render_basic_filled_rect (SDL_Rect *rect, SDL_Color color) {
+void render_basic_filled_rect (Renderer *renderer, SDL_Rect *rect, SDL_Color color) {
 
-    if (rect) {
-        SDL_SetRenderDrawColor (main_renderer->renderer, color.r, color.g, color.b, color.a);        
-        SDL_RenderFillRect (main_renderer->renderer, rect);
+    if (renderer && rect) {
+        SDL_SetRenderDrawColor (renderer->renderer, color.r, color.g, color.b, color.a);        
+        SDL_RenderFillRect (renderer->renderer, rect);
     }
 
 }
 
 // renders an outline rect
-void render_basic_outline_rect (SDL_Rect *rect, SDL_Color color) {
+// scale works better with even numbers
+void render_basic_outline_rect (Renderer *renderer, SDL_Rect *rect, SDL_Color color, float scale_x, float scale_y) {
 
-    SDL_SetRenderDrawColor (main_renderer->renderer, color.r, color.g, color.b, color.a);        
-    SDL_RenderDrawRect (main_renderer->renderer, rect);
+    if (renderer && rect) {
+        float original_scale_x = 0;
+        float original_scale_y = 0;
+
+        SDL_RenderGetScale (renderer->renderer, &original_scale_x, &original_scale_y);
+
+        SDL_RenderSetScale (renderer->renderer, scale_x, scale_y);
+        SDL_SetRenderDrawColor (renderer->renderer, color.r, color.g, color.b, color.a);      
+
+        SDL_Rect temp_rect = { .x = rect->x / scale_x, .y = rect->y / scale_y, .w = rect->w / scale_x, .h = rect->h / scale_y };
+        SDL_RenderDrawRect (renderer->renderer, &temp_rect);
+
+        SDL_RenderSetScale (renderer->renderer, original_scale_x, original_scale_y);
+    }
 
 }
 
 // renders a line
-void render_basic_line (int x1, int x2, int y1, int y2, SDL_Color color) {
+// scale works better with even numbers
+void render_basic_line (Renderer *renderer, int x1, int x2, int y1, int y2, SDL_Color color, float scale_x, float scale_y) {
 
-    SDL_SetRenderDrawColor (main_renderer->renderer, color.r, color.g, color.b, color.a);        
-    SDL_RenderDrawLine (main_renderer->renderer, x1, y1, x2, y2);
+    if (renderer) {
+        float original_scale_x = 0;
+        float original_scale_y = 0;
+
+        SDL_RenderGetScale (renderer->renderer, &original_scale_x, &original_scale_y);
+
+        SDL_RenderSetScale (renderer->renderer, scale_x, scale_y);
+        SDL_SetRenderDrawColor (renderer->renderer, 255, 255, 255, 255);        
+
+        SDL_RenderDrawLine (renderer->renderer, x1 / scale_x, y1 / scale_y, x2 / scale_x, y2 / scale_y);
+
+        SDL_RenderSetScale (renderer->renderer, original_scale_x, original_scale_y);
+    }
 
 }
 
@@ -512,19 +638,27 @@ void render_basic_line (int x1, int x2, int y1, int y2, SDL_Color color) {
 #pragma region Complex
 
 // renders a rect with transparency
-SDL_Texture *render_complex_transparent_rect (SDL_Rect *rect, SDL_Color color) {
+void render_complex_transparent_rect (Renderer *renderer, SDL_Texture **texture, SDL_Rect *rect, SDL_Color color) {
 
-    SDL_Texture *texture = NULL;
+    if (renderer && texture && rect) {
+        SDL_Surface *surface = surface_create (rect->w, rect->h);
+        if (surface) {
+            (void) SDL_FillRect (surface, NULL, convert_rgba_to_hex (color.r, color.g, color.b, color.a));
 
-    SDL_Surface *surface = surface_create (rect->w, rect->h);
-    if (surface) {
-        (void) SDL_FillRect (surface, NULL, 
-            convert_rgba_to_hex (color.r, color.g, color.b, color.a));
-        texture = SDL_CreateTextureFromSurface (main_renderer->renderer, surface);
-        SDL_FreeSurface (surface); 
+            pthread_t thread_id = pthread_self ();
+            // printf ("Loading texture in thread: %ld\n", thread_id);
+            if (thread_id == renderer->thread_id) {
+                // load texture as always
+                *texture = SDL_CreateTextureFromSurface (renderer->renderer, surface);
+                SDL_FreeSurface (surface);
+            }
+
+            else {
+                // send image to renderer queue
+                renderer_queue_push (renderer, surface_texture_new (surface, texture));
+            }
+        }
     }
-
-    return texture;
 
 }
 
@@ -533,45 +667,72 @@ SDL_Texture *render_complex_transparent_rect (SDL_Rect *rect, SDL_Color color) {
 #pragma region Render
 
 // FIXME: we need to implement occlusion culling!
-// renders the game objects to the screen
-void render (void) {
+void render (Renderer *renderer) {
 
-    SDL_SetRenderDrawColor (main_renderer->renderer, 0, 0, 0, 255);
-    SDL_RenderClear (main_renderer->renderer);
+    if (renderer) {
+        renderer->render_count = 0;
 
-    // render by layers
-    Layer *layer = NULL;
-    GameObject *go = NULL;
-    Transform *transform = NULL;
-    Graphics *graphics = NULL;
-    for (ListElement *layer_le = dlist_start (gos_layers); layer_le; layer_le = layer_le->next) {
-        layer = (Layer *) layer_le->data;
+        // load any texture in background queue
+        if (renderer->textures_queue->num_els > 0) {
+            u32 count = 0;
+            while (count < renderer->bg_loading_factor) {
+                SurfaceTexture *st = NULL;
+                queue_get (renderer->textures_queue, (void **) &st);
+                if (st) {
+                    *st->texture = SDL_CreateTextureFromSurface (renderer->renderer, st->surface);
+                    surface_texture_delete (st);
+                } 
 
-        for (ListElement *le = dlist_start (layer->elements); le; le = le->next) {
-            go = (GameObject *) le->data;
-
-            transform = (Transform *) game_object_get_component (go, TRANSFORM_COMP);
-            graphics = (Graphics *) game_object_get_component (go, GRAPHICS_COMP);
-            if (transform && graphics) {
-                if (graphics->multipleSprites) {
-                    texture_draw_frame (main_camera, graphics->spriteSheet, 
-                        transform->position.x, transform->position.y, 
-                        graphics->x_sprite_offset, graphics->y_sprite_offset,
-                        graphics->flip);
-                }
-                
-                else {
-                    texture_draw (main_camera, graphics->sprite, 
-                        transform->position.x, transform->position.y, 
-                        graphics->flip);
-                }
+                count++;
             }
         }
+
+        SDL_SetRenderDrawColor (renderer->renderer, 0, 0, 0, 255);
+        SDL_RenderClear (renderer->renderer);
+
+        // FIXME: 20/11/2019 --- we are no longer creating the camera!!
+        // render by layers
+        // Layer *layer = NULL;
+        // GameObject *go = NULL;
+        // Transform *transform = NULL;
+        // Graphics *graphics = NULL;
+        // for (ListElement *layer_le = dlist_start (gos_layers); layer_le; layer_le = layer_le->next) {
+        //     layer = (Layer *) layer_le->data;
+
+        //     for (ListElement *le = dlist_start (layer->elements); le; le = le->next) {
+        //         go = (GameObject *) le->data;
+
+        //         transform = (Transform *) game_object_get_component (go, TRANSFORM_COMP);
+        //         graphics = (Graphics *) game_object_get_component (go, GRAPHICS_COMP);
+        //         if (transform && graphics) {
+        //             if (graphics->multipleSprites) {
+        //                 texture_draw_frame (main_camera, 
+        //                     renderer,
+        //                     graphics->spriteSheet, 
+        //                     transform->position.x, transform->position.y, 
+        //                     graphics->x_sprite_offset, graphics->y_sprite_offset,
+        //                     graphics->flip);
+        //             }
+                    
+        //             else {
+        //                 texture_draw (main_camera, 
+        //                     renderer,
+        //                     graphics->sprite, 
+        //                     transform->position.x, transform->position.y, 
+        //                     graphics->flip);
+        //             }
+        //         }
+        //     }
+        // }
+
+        ui_render (renderer);       // render ui elements
+
+        SDL_RenderPresent (renderer->renderer);
+
+        #ifdef CENGINE_DEBUG
+        // printf ("Renderer: %s render count: %d\n", renderer->name->str, renderer->render_count);
+        #endif
     }
-
-    ui_render ();       // render ui elements
-
-    SDL_RenderPresent (main_renderer->renderer);
 
 }
 
@@ -582,13 +743,29 @@ void render (void) {
 // inits cengine render capabilities
 u8 render_init (void) {
 
-    return layers_init ();
+    u8 errors = 0;
+
+    // errors |= layers_init ();
+
+    renderers = dlist_init (renderer_delete, renderer_comparator);
+    u8 retval = renderers ? 0 : 1;
+
+    errors |= retval;
+
+    windows = dlist_init (window_delete, window_comparator);
+    retval = windows ? 0 : 1;
+
+    return errors;
 
 }
 
 void render_end (void) {
 
-    layers_end ();
+    // layers_end ();
+
+    dlist_delete (renderers);
+
+    dlist_delete (windows);
 
 }
 

@@ -266,10 +266,10 @@ u8 ui_font_set_sizes (Font *font, u8 n_sizes, ...) {
 
 }
 
-static void ui_font_source_load_from_ttf (FontSource *source, TTF_Font *ttf) {
+static void ui_font_source_load_from_ttf (FontSource *source, TTF_Font *ttf, Renderer *renderer) {
 
     SDL_RendererInfo info;
-    SDL_GetRendererInfo (main_renderer->renderer, &info);
+    SDL_GetRendererInfo (renderer->renderer, &info);
     has_render_target_support = (info.flags & SDL_RENDERER_TARGETTEXTURE);
 
     source->ttf_source = ttf;
@@ -286,7 +286,7 @@ static void ui_font_source_load_from_ttf (FontSource *source, TTF_Font *ttf) {
 
 }
 
-static FontSource *ui_font_load_source (Font *font, SDL_RWops *file_rwops_ttf,
+static FontSource *ui_font_load_source (Renderer *renderer, Font *font, SDL_RWops *file_rwops_ttf,
     u8 own_rwops, u32 pointSize, int style) {
 
     FontSource *source = font_source_new ();
@@ -309,7 +309,7 @@ static FontSource *ui_font_load_source (Font *font, SDL_RWops *file_rwops_ttf,
                 source->ttf_source = NULL;
             }
             
-            ui_font_source_load_from_ttf (source, ttf);
+            ui_font_source_load_from_ttf (source, ttf, renderer);
         }
 
         else {
@@ -323,7 +323,7 @@ static FontSource *ui_font_load_source (Font *font, SDL_RWops *file_rwops_ttf,
 
 }
 
-u8 ui_font_load (Font *font, int style) {
+u8 ui_font_load (Font *font, Renderer *renderer, int style) {
 
     u8 errors = 0;
 
@@ -334,7 +334,7 @@ u8 ui_font_load (Font *font, int style) {
 
             // load the font for each set size
             for (unsigned int i = 0; i < font->n_sizes; i++) {
-                font->sources[i] = ui_font_load_source (font, rwops, 1, font->sizes[i], style);
+                font->sources[i] = ui_font_load_source (renderer, font, rwops, 1, font->sizes[i], style);
                 if (!font->sources[i]) {
                     cengine_log_msg (stderr, LOG_WARNING, LOG_NO_TYPE,
                         c_string_create ("Failed to load size: %d for font: %s",

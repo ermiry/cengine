@@ -10,6 +10,7 @@
 
 #include "cengine/cengine.h"
 #include "cengine/input.h"
+#include "cengine/window.h"
 
 #include "cengine/ui/inputfield.h"
 #include "cengine/ui/components/text.h"
@@ -53,6 +54,67 @@ static void input_on_mouse_button_up (SDL_Event event) {
         case SDL_BUTTON_RIGHT: mouse_button_states[MOUSE_RIGHT] = false; break;
 
         default: break;
+    }
+
+}
+
+static Action on_mouse_wheel_scroll_up = NULL;
+static Action on_mouse_wheel_scroll_down = NULL;
+static Action on_mouse_wheel_scroll_right = NULL;
+static Action on_mouse_wheel_scroll_left = NULL;
+
+// sets and action to be performed when the mouse scrolls up
+// expect a refrence to a positive integer referencing the amount scrolled
+void input_set_on_mouse_wheel_scroll_up (Action action) {
+    
+    on_mouse_wheel_scroll_up = action;
+
+}
+
+// sets and action to be performed when the mouse scrolls down
+// expect a refrence to a negative integer referencing the amount scrolled
+void input_set_on_mouse_wheel_scroll_down (Action action) {
+    
+    on_mouse_wheel_scroll_down = action;
+
+}
+
+// sets and action to be performed when the mouse scrolls right
+// expect a refrence to a positive integer referencing the amount scrolled
+void input_set_on_mouse_wheel_scroll_right (Action action) {
+    
+    on_mouse_wheel_scroll_right = action;
+
+}
+
+// sets and action to be performed when the mouse scrolls left
+// expect a refrence to a negative integer referencing the amount scrolled
+void input_set_on_mouse_wheel_scroll_left (Action action) {
+    
+    on_mouse_wheel_scroll_left = action;
+
+}
+
+static void input_on_mouse_scroll (SDL_Event event) {
+
+    // scroll up
+    if (event.wheel.y > 0) {
+        if (on_mouse_wheel_scroll_up) on_mouse_wheel_scroll_up (&event.wheel.y);
+    }
+
+    // scroll down
+    else if (event.wheel.y < 0) {
+        if (on_mouse_wheel_scroll_down) on_mouse_wheel_scroll_down (&event.wheel.y);
+    }
+
+    // scroll right
+    if (event.wheel.x > 0) {
+        if (on_mouse_wheel_scroll_right) on_mouse_wheel_scroll_right (&event.wheel.x);
+    }
+
+    // scroll left
+    else if (event.wheel.x < 0) {
+        if (on_mouse_wheel_scroll_left) on_mouse_wheel_scroll_left (&event.wheel.x);
     }
 
 }
@@ -193,7 +255,8 @@ static void input_key_down (SDL_Event event) {
             else
                 str_remove_last_char (active_text->text->text);
 
-            ui_input_field_update (active_text);
+            // FIXME:
+            // ui_input_field_update (active_text);
         }
     }
 
@@ -213,7 +276,8 @@ static void input_key_down (SDL_Event event) {
             else
                 str_append_c_string (active_text->text->text, SDL_GetClipboardText ());
             
-            ui_input_field_update (active_text);
+            // FIXME:
+            // ui_input_field_update (active_text);
         }
     }
 
@@ -295,7 +359,8 @@ static void input_handle_text_input (SDL_Event event) {
                 else 
                     str_append_c_string (active_text->text->text, event.text.text);
 
-                ui_input_field_update (active_text);
+                // FIXME:
+                // ui_input_field_update (active_text);
 
                 // printf ("%s\n", active_text->text->str);
             }
@@ -310,6 +375,9 @@ void input_handle (SDL_Event event) {
         switch (event.type) {
             case SDL_QUIT: if (cengine_quit) cengine_quit (); break;
 
+            // handle window events
+            case SDL_WINDOWEVENT: windows_handle_events (event); break;
+
             case SDL_MOUSEMOTION: 
                 mousePos.x = event.motion.x;
                 mousePos.y = event.motion.y;
@@ -317,6 +385,8 @@ void input_handle (SDL_Event event) {
 
             case SDL_MOUSEBUTTONDOWN: input_on_mouse_button_down (event); break;
             case SDL_MOUSEBUTTONUP: input_on_mouse_button_up (event); break;
+
+            case SDL_MOUSEWHEEL: input_on_mouse_scroll (event); break;
 
             case SDL_KEYDOWN: input_key_down (event); break;
             case SDL_KEYUP: input_key_up (); break;

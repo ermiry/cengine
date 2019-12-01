@@ -10,13 +10,13 @@
 
 Camera *main_camera = NULL;
 
-static void camera_init (Camera *cam, u32 windowWidth, u32 windowHeight);
+static void camera_init (Camera *cam, Renderer *renderer);
 
 // camera constructor
-Camera *camera_new (u32 windowWidth, u32 windowHeight) {
+Camera *camera_new (Renderer *renderer) {
 
     Camera *cam = (Camera *) malloc (sizeof (Camera));
-    if (cam) camera_init (cam, windowWidth, windowHeight);
+    if (cam) camera_init (cam, renderer);
 
     return cam;
 
@@ -68,18 +68,18 @@ void camera_set_target (Camera *cam, Transform *target) {
 }
 
 // set camera parameters to default
-static void camera_init (Camera *cam, u32 windowWidth, u32 windowHeight) {
+static void camera_init (Camera *cam, Renderer *renderer) {
 
     // position
-    cam->transform.position.x = main_renderer->window_size.width / 2;
-    cam->transform.position.y = main_renderer->window_size.height / 2;
+    cam->transform.position.x = renderer->window->window_size.width / 2;
+    cam->transform.position.y = renderer->window->window_size.height / 2;
 
-    cam->windowWidth = windowWidth;
-    cam->windowHeight = windowHeight;
+    cam->windowWidth = renderer->window->window_size.width;
+    cam->windowHeight = renderer->window->window_size.height;
 
     cam->bounds.x = cam->bounds.y = 0;
-    cam->bounds.w = windowWidth;
-    cam->bounds.h = windowHeight;
+    cam->bounds.w = renderer->window->window_size.width;
+    cam->bounds.h = renderer->window->window_size.height;
 
     // motion
     cam->accelerationRate = DEFAULT_CAM_ACCEL;

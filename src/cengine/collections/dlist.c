@@ -142,12 +142,12 @@ int dlist_insert_after (DoubleList *dlist, ListElement *element, void *data) {
 
 }
 
-// finds the data using the query and the list comparator and the removes it from the list
-// and deletes it using the list destroy method
+// finds the data using the query and the list comparator and then removes it from the list
+// returning the data
 // returns 0 on success, 1 on error or not found
-int dlist_remove (DoubleList *dlist, void *query) {
+void *dlist_remove (DoubleList *dlist, void *query) {
 
-    int retval = 1;
+    void *retval = NULL;
 
     if (dlist && query) {
         ListElement *ptr = dlist_start (dlist);
@@ -157,15 +157,16 @@ int dlist_remove (DoubleList *dlist, void *query) {
             while (ptr != NULL) {
                 if (!dlist->compare (ptr->data, query)) {
                     // remove the list element
-                     void *data = NULL;
-                    if (first) data = dlist_remove_element (dlist, NULL);
-                    else data = dlist_remove_element (dlist, ptr);
-                    if (data) {
-                        if (dlist->destroy) dlist->destroy (data);
-                        else free (data);
+                    // void *data = NULL;
+                    if (first) retval = dlist_remove_element (dlist, NULL);
+                    else retval = dlist_remove_element (dlist, ptr);
+                    // if (data) {
+                    //     if (dlist->destroy) dlist->destroy (data);
+                    //     else free (data);
 
-                        retval = 0;
-                    }
+                    //     retval = 0;
+                    // }
+                    break;
                 }
 
                 ptr = ptr->next;

@@ -4,26 +4,29 @@
 #include <SDL2/SDL.h>
 
 #include "cengine/types/types.h"
+
 #include "cengine/renderer.h"
+#include "cengine/graphics.h"
+#include "cengine/textures.h"
 
-typedef enum Flip {
+struct _Sprite {
 
-    NO_FLIP = 0x00000000,
-    FLIP_HORIZONTAL = 0x00000001,
-    FLIP_VERTICAL = 0x00000002
-
-} Flip;
-
-typedef struct Sprite {
+    ImageData *img_data;
 
     u32 w, h;
     SDL_Texture *texture;
     i32 scale_factor;
     SDL_Rect src_rect, dest_rect;
 
-} Sprite;
+};
+
+typedef struct _Sprite Sprite;
+
+extern Sprite *sprite_new (void);
 
 extern void sprite_destroy (Sprite *sprite);
+
+extern Sprite *sprite_load (const char *filename, Renderer *renderer);
 
 typedef struct IndividualSprite {
 
@@ -31,7 +34,9 @@ typedef struct IndividualSprite {
 
 } IndividualSprite;
 
-typedef struct SpriteSheet {
+struct _SpriteSheet {
+
+    struct _ImageData *img_data;
 
     u32 w, h;
     SDL_Texture *texture;
@@ -44,16 +49,18 @@ typedef struct SpriteSheet {
 
     IndividualSprite ***individual_sprites;
 
-} SpriteSheet;
+};
 
-extern SpriteSheet *sprite_sheet_new (void);
-extern void sprite_destroy (Sprite *sprite);
-extern Sprite *sprite_load (const char *filename, Renderer *renderer);
+typedef struct _SpriteSheet SpriteSheet;
 
 extern void sprite_sheet_destroy (SpriteSheet *sprite_sheet);
+
 extern SpriteSheet *sprite_sheet_load (const char *filename, Renderer *rendererr);
+
 extern void sprite_sheet_set_sprite_size (SpriteSheet *sprite_sheet, u32 w, u32 h);
+
 extern void sprite_sheet_set_scale_factor (SpriteSheet *sprite_sheet, i32 scale_factor);
+
 extern void sprite_sheet_crop (SpriteSheet *sprite_sheet);
 
 #endif

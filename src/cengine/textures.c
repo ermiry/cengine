@@ -1,27 +1,70 @@
+#include <stdlib.h>
+
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
+#include "cengine/types/types.h"
+#include "cengine/types/string.h"
+
 #include "cengine/renderer.h"
+#include "cengine/graphics.h"
 #include "cengine/sprites.h"
+#include "cengine/textures.h"
+
 #include "cengine/game/camera.h"
+
 #include "cengine/utils/log.h"
 #include "cengine/utils/utils.h"
 
-SDL_Texture *texture_load (const char *filename, Renderer *renderer) {
+void texture_create_from_surface (Renderer *renderer, SDL_Texture **texture, SDL_Surface *surface) {
 
-    if (filename && renderer) {
-        SDL_Surface *tmpSurface = IMG_Load (filename);
-        if (tmpSurface) {
-            SDL_Texture *texture = SDL_CreateTextureFromSurface (renderer->renderer, tmpSurface);
-            SDL_FreeSurface (tmpSurface);
-
-            return texture;
+    if (renderer && texture && surface) {
+        pthread_t thread_id = pthread_self ();
+        // printf ("Loading texture in thread: %ld\n", thread_id);
+        if (thread_id == renderer->thread_id) {
+            // load texture as always
+            *texture = SDL_CreateTextureFromSurface (renderer->renderer, surface);
+            SDL_FreeSurface (surface);
         }
 
-        cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, c_string_create ("Failed to load asset: %s!", filename));
+        else {
+            // send image to renderer queue
+            renderer_queue_push (renderer, surface_texture_new (surface, texture));
+        }
     }
 
-    return NULL;
+}
+
+ImageData *texture_load (Renderer *renderer, const char *filename, SDL_Texture **texture) {
+
+    ImageData *image_data = NULL;
+
+    if (filename && renderer && texture) {
+        SDL_Surface *temp_surface = IMG_Load (filename);
+        if (temp_surface) {
+            image_data = image_data_new (temp_surface->w, temp_surface->h, str_new (filename));
+
+            pthread_t thread_id = pthread_self ();
+            // printf ("Loading texture in thread: %ld\n", thread_id);
+            if (thread_id == renderer->thread_id) {
+                // load texture as always
+                *texture = SDL_CreateTextureFromSurface (renderer->renderer, temp_surface);
+                SDL_FreeSurface (temp_surface);
+            }
+
+            else {
+                // send image to renderer queue
+                renderer_queue_push (renderer, surface_texture_new (temp_surface, texture));
+            }
+        }
+
+        else {
+            cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, 
+                c_string_create ("Failed to load asset: %s!", filename));
+        } 
+    }
+
+    return image_data;
 
 }
 
@@ -31,7 +74,7 @@ void texture_get_dimensions (SDL_Texture *texture, u32 *w, u32 *h) {
 
 }
 
-void texture_draw (Camera *cam, Sprite *sprite, i32 x, i32 y, SDL_RendererFlip flip) {
+void texture_draw (Camera *cam, Renderer *renderer, Sprite *sprite, i32 x, i32 y, SDL_RendererFlip flip) {
 
     if (cam && sprite) {
         sprite->dest_rect.x = x;
@@ -39,13 +82,13 @@ void texture_draw (Camera *cam, Sprite *sprite, i32 x, i32 y, SDL_RendererFlip f
 
         CamRect screenRect = camera_world_to_screen (cam, sprite->dest_rect);
 
-        SDL_RenderCopyEx (main_renderer->renderer, sprite->texture, &sprite->src_rect, &screenRect, 
+        SDL_RenderCopyEx (renderer->renderer, sprite->texture, &sprite->src_rect, &screenRect, 
             0, 0, flip);    
     }
 
 }
 
-void texture_draw_frame (Camera *cam, SpriteSheet *spriteSheet, 
+void texture_draw_frame (Camera *cam, Renderer *renderer, SpriteSheet *spriteSheet, 
     i32 x, i32 y, u32 col, u32 row, SDL_RendererFlip flip) {
 
     if (cam && spriteSheet) {
@@ -57,7 +100,7 @@ void texture_draw_frame (Camera *cam, SpriteSheet *spriteSheet,
 
         CamRect screenRect = camera_world_to_screen (cam, spriteSheet->dest_rect);
 
-        SDL_RenderCopyEx (main_renderer->renderer, spriteSheet->texture, 
+        SDL_RenderCopyEx (renderer->renderer, spriteSheet->texture, 
             &spriteSheet->src_rect, &screenRect,
             0, 0, flip);
     }

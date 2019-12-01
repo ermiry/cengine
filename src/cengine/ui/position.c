@@ -1,15 +1,14 @@
 #include <stdbool.h>
 
-#include <SDL2/SDL_rect.h>
-
 #include "cengine/types/types.h"
 
 #include "cengine/renderer.h"
 
+#include "cengine/ui/types/types.h"
 #include "cengine/ui/position.h"
 #include "cengine/ui/components/transform.h"
 
-void ui_position_update (void *transform_ptr, SDL_Rect *ref_rect, bool offset) {
+void ui_position_update (Renderer *renderer, void *transform_ptr, UIRect *ref_rect, bool offset) {
 
     if (transform_ptr) {
         UITransform *transform = (UITransform *) transform_ptr;
@@ -27,8 +26,10 @@ void ui_position_update (void *transform_ptr, SDL_Rect *ref_rect, bool offset) {
         }
 
         else {
-            rect.w = main_renderer->window_size.width;
-            rect.h = main_renderer->window_size.height;
+            if (renderer) {
+                rect.w = renderer->window->window_size.width;
+                rect.h = renderer->window->window_size.height;
+            }
         }
 
         i32 x_offset = (rect.x - transform->rect.x);

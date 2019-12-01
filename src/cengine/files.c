@@ -5,13 +5,39 @@
 #define _XOPEN_SOURCE 700
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <dirent.h>
-
-#include <unistd.h>
 
 #include "cengine/utils/utils.h"
 #include "cengine/utils/log.h"
 #include "cengine/utils/json.h"
+
+// returns an allocated string with the file extensio
+// NULL if no file extension
+char *files_get_file_extension (const char *filename) {
+
+    char *retval = NULL;
+
+    if (filename) {
+        char *ptr = strrchr (filename, '.');
+        if (ptr) {
+            *ptr++;
+            size_t ext_len = 0;
+            char *p = ptr;
+            while (*p++) ext_len++;
+
+            char *ext = (char *) calloc (ext_len + 1, sizeof (char));
+            if (ext) {
+                memcpy (ext, ptr, ext_len);
+                ext[ext_len] = '\0';
+
+                retval = ext;
+            }
+        }
+        
+    }
+
+    return retval;
+
+}
 
 FILE *file_open (const char *filename, const char *modes, struct stat *filestatus) {
 

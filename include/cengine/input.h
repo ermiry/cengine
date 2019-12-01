@@ -28,10 +28,28 @@ extern Vector2D mousePos;
 
 extern bool input_get_mouse_button_state (MouseButton button);
 
+// sets and action to be performed when the mouse scrolls up
+// expect a refrence to a positive integer referencing the amount scrolled
+extern void input_set_on_mouse_wheel_scroll_up (Action action);
+
+// sets and action to be performed when the mouse scrolls down
+// expect a refrence to a negative integer referencing the amount scrolled
+extern void input_set_on_mouse_wheel_scroll_down (Action action);
+
+// sets and action to be performed when the mouse scrolls right
+// expect a refrence to a positive integer referencing the amount scrolled
+extern void input_set_on_mouse_wheel_scroll_right (Action action);
+
+// sets and action to be performed when the mouse scrolls left
+// expect a refrence to a negative integer referencing the amount scrolled
+extern void input_set_on_mouse_wheel_scroll_left (Action action);
+
 extern bool input_is_key_down (const SDL_Scancode key);
 
 extern void input_init (void);
+
 extern void input_end (void);
+
 extern void input_handle (SDL_Event event);
 
 /*** user defined events ***/

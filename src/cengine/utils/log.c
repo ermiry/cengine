@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <stdarg.h>
+
 #include "cengine/utils/utils.h"
 #include "cengine/utils/log.h"
 
@@ -27,29 +29,28 @@ static char *cengine_get_msg_type (LogMsgType type) {
 
 }
 
-void cengine_log_msg (FILE *__restrict __stream, LogMsgType firstType, LogMsgType secondType,
-    const char *msg) {
+void cengine_log_msg (FILE *__restrict __stream, LogMsgType first_type, LogMsgType second_type,
+    const char *msg, ...) {
 
-    char *first = cengine_get_msg_type (firstType);
+    char *first = cengine_get_msg_type (first_type);
     char *second = NULL;
     char *message = NULL;
 
-    if (secondType != 0) {
-        second = cengine_get_msg_type (secondType);
+    if (second_type != 0) {
+        second = cengine_get_msg_type (second_type);
 
-        if (firstType == LOG_DEBUG)
+        if (first_type == LOG_DEBUG)
             message = c_string_create ("%s: %s\n", second, msg);
         
         else message = c_string_create ("%s%s: %s\n", first, second, msg);
     }
 
-    else if (firstType != LOG_DEBUG)
+    else if (first_type != LOG_DEBUG)
         message = c_string_create ("%s: %s\n", first, msg);
 
     // log messages with color
-    switch (firstType) {
-        case LOG_DEBUG: 
-            fprintf (__stream, COLOR_MAGENTA "%s: " COLOR_RESET "%s\n", first, msg); break;
+    switch (first_type) {
+        case LOG_DEBUG: fprintf (__stream, COLOR_MAGENTA "%s: " COLOR_RESET "%s\n", first, msg); break;
 
         case LOG_ERROR: fprintf (__stream, COLOR_RED "%s" COLOR_RESET, message); break;
         case LOG_WARNING: fprintf (__stream, COLOR_YELLOW "%s" COLOR_RESET, message); break;
