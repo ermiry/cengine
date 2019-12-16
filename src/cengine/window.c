@@ -14,6 +14,7 @@
 #include "cengine/renderer.h"
 #include "cengine/window.h"
 #include "cengine/video.h"
+#include "cengine/input.h"
 
 #ifdef CENGINE_DEBUG
 #include "cengine/utils/utils.h"
@@ -53,6 +54,8 @@ void window_delete (void *window_ptr) {
         str_delete (window->window_title);
 
         surface_delete (window->icon);
+
+        input_delete (window->input);
 
         free (window);
     }
@@ -111,6 +114,8 @@ Window *window_create (const char *title, WindowSize window_size, Uint32 window_
                 window->window_title = title ? str_new (title) : NULL;
                 window->window_flags = window_flags;
                 window->fullscreen = window_flags & SDL_WINDOW_FULLSCREEN;
+
+                window->input = input_new ();
 
                 dlist_insert_after (windows, dlist_end (windows), window);
             }
@@ -277,6 +282,13 @@ void window_set_icon (Window *window, SDL_Surface *icon_surface) {
         window->icon = icon_surface;
         SDL_SetWindowIcon (window->window, window->icon);
     }
+
+}
+
+// sets the window's custom use rinput method
+void window_set_user_input (Window *window, void (*user_input)(void *)) {
+
+    if (window) window->input->user_input = user_input;
 
 }
 

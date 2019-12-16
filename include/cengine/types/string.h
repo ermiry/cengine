@@ -40,9 +40,9 @@ extern char **str_split (String *string, const char delim, int *n_tokens);
 extern void str_remove_char (String *string, char garbage);
 
 // removes the last char from a string
-extern void str_remove_last_char (String *s);
+extern void str_remove_last_char (String *string);
 
-// check if a string (to_find) is inside string
+// checks if a string (to_find) is inside string
 // returns 0 on exact match
 // returns 1 if it match the letters but len is different
 // returns -1 if no match

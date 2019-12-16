@@ -17,6 +17,7 @@
 #include "cengine/ui/ui.h"
 #include "cengine/ui/font.h"
 #include "cengine/ui/position.h"
+#include "cengine/ui/button.h"
 #include "cengine/ui/dropdown.h"
 #include "cengine/ui/components/transform.h"
 #include "cengine/ui/components/text.h"
@@ -32,13 +33,7 @@ static DropdownOption *ui_dropdown_option_new (void) {
     DropdownOption *option = (DropdownOption *) malloc (sizeof (DropdownOption));
     if (option) {
         memset (option, 0, sizeof (DropdownOption));
-        option->transform = NULL;
-        option->option = NULL;
-
-        option->colour = false;
-        option->bg_texture = NULL;
-
-        option->outline = false;
+        option->button = NULL;
         option->draw_selected = false;
     }
 
@@ -50,9 +45,7 @@ void ui_dropdown_option_delete (void *dropdown_option_ptr) {
 
     if (dropdown_option_ptr) {
         DropdownOption *option = (DropdownOption *) dropdown_option_ptr;
-        ui_transform_component_delete (option->transform);
-        ui_text_component_delete (option->option);
-        if (option->bg_texture) SDL_DestroyTexture (option->bg_texture);
+        ui_element_destroy (option->button->ui_element);
         free (option);
     }
 
@@ -62,7 +55,7 @@ void ui_dropdown_option_delete (void *dropdown_option_ptr) {
 int ui_dropdown_option_comparator (const void *one, const void *two) {
 
     if (one && two) 
-        return str_compare (((DropdownOption *) one)->option->text, ((DropdownOption *) two)->option->text);
+        return str_compare (((DropdownOption *) one)->button->text->text, ((DropdownOption *) two)->button->text->text);
 
     else if (one) return -1;
     else if (two) return 1;
@@ -77,11 +70,8 @@ DropdownOption *ui_dropdown_option_create (Renderer *renderer, const char *optio
 
     DropdownOption *option = ui_dropdown_option_new ();
     if (option) {
-        option->transform = ui_transform_component_create (0, 0, 0, 0);
+        option->button = ui_button_create (0, 0, 0, 0, UI_POS_FREE, renderer);
         ui_dropdown_option_set_text (option, renderer, option_text, font, size, color);
-
-        option->outline_scale_x = 1;
-        option->outline_scale_y = 1;
     }
 
     return option;
@@ -93,18 +83,7 @@ void ui_dropdown_option_set_text (DropdownOption *option, Renderer *renderer, co
     Font *font, u32 size, RGBA_Color color) {
 
     if (option) {
-        if (option->option) ui_text_component_delete (option->option);
-
-        option->option = option_text ? ui_text_component_new () : NULL;
-        if (option->option) {
-             ui_text_component_init (option->option, font, size, color, option_text);
-
-            // set the option's text position inside the dropdown option element
-            option->option->transform->rect.x = option->transform->rect.x;
-            option->option->transform->rect.y = option->transform->rect.y;
-
-            ui_text_component_draw (option->option, renderer);
-        }
+        ui_button_set_text (option->button, renderer, option_text, font, size, color);
     }
 
 }
@@ -112,94 +91,40 @@ void ui_dropdown_option_set_text (DropdownOption *option, Renderer *renderer, co
 // sets the option's outline colour
 void ui_dropdown_option_set_ouline_colour (DropdownOption *option, RGBA_Color colour) {
 
-    if (option) {
-        option->outline = true;
-        option->outline_colour = colour;
-    }
+    if (option) ui_button_set_ouline_colour (option->button, colour);
 
 }
 
 // sets the option's outline scale
 void ui_dropdown_option_set_outline_scale (DropdownOption *option, float x_scale, float y_scale) {
 
-    if (option) {
-        option->outline_scale_x = x_scale;
-        option->outline_scale_y = y_scale;
-    }
+    if (option) ui_button_set_ouline_scale (option->button, x_scale, y_scale);
 
 }
 
 // removes the ouline form the option
 void ui_dropdown_option_remove_outline (DropdownOption *option) {
 
-    if (option) {
-        memset (&option->outline_colour, 0, sizeof (RGBA_Color));
-        option->outline = false;
-    }
-
+    if (option) ui_button_remove_outline (option->button);
 }
 
 // sets the option's background color
 void ui_dropdown_option_set_bg_color (DropdownOption *option, Renderer *renderer, RGBA_Color color) {
 
-    if (option) {
-        option->bg_colour = color;
-        if (color.a < 255) {
-            render_complex_transparent_rect (renderer, &option->bg_texture, &option->transform->rect, color);
-            option->bg_texture_rect.w = option->transform->rect.w;
-            option->bg_texture_rect.h = option->transform->rect.h;
-        }
-
-        option->colour = true;
-    } 
+    if (option) ui_button_set_bg_color (option->button, renderer, color);
 
 }
 
 // removes the background from the option
 void ui_dropdown_option_remove_background (DropdownOption *option) {
 
-    if (option) {
-        if (option->bg_texture) {
-            SDL_DestroyTexture (option->bg_texture);
-            option->bg_texture = NULL;
-        }
-
-        memset (&option->bg_colour, 0, sizeof (RGBA_Color));
-        option->colour = false;
-    }
+    if (option) ui_button_remove_background (option->button);
 
 }
 
-static void ui_dropdown_option_render (DropdownOption *option, Renderer *renderer,
-    RGBA_Color *colour, SDL_Texture *texture) {
+static void ui_dropdown_option_render (DropdownOption *option, Renderer *renderer) {
 
-    if (option) {
-        // render hover background
-        if (texture) {
-            SDL_RenderCopyEx (renderer->renderer, texture, 
-                &option->bg_texture_rect, &option->transform->rect, 
-                0, 0, SDL_FLIP_NONE);
-        }
-
-        else if (colour) render_basic_filled_rect (renderer, &option->transform->rect, *colour);
-
-        // render the normal background
-        else if (option->bg_texture) {
-            SDL_RenderCopyEx (renderer->renderer, option->bg_texture, 
-                &option->bg_texture_rect, &option->transform->rect, 
-                0, 0, SDL_FLIP_NONE);
-        }
-
-        else if (option->colour) render_basic_filled_rect (renderer, &option->transform->rect, option->bg_colour);
-
-        // render the outline rect
-        if (option->outline) 
-            render_basic_outline_rect (renderer, &option->transform->rect, option->outline_colour, 
-                option->outline_scale_x, option->outline_scale_y);
-
-        // render the option's text
-        ui_text_component_render (option->option, renderer);
-    }
+    if (option) ui_button_draw (option->button, renderer);
 
 }
 
@@ -433,28 +358,28 @@ void ui_dropdown_extened_set_bg_colour (Dropdown *dropdown, Renderer *renderer, 
 void ui_dropdown_option_add (Dropdown *dropdown, DropdownOption *option) {
 
     if (dropdown && option) {
-        option->transform->pos = UI_POS_BOTTOM_CENTER;
-        option->option->transform->pos = UI_POS_MIDDLE_CENTER;
-        ui_position_update (NULL, option->transform, &dropdown->ui_element->transform->rect, false);
         dlist_insert_after (dropdown->options, dlist_end (dropdown->options), option);
+        ui_button_set_pos (option->button, &dropdown->ui_element->transform->rect, UI_POS_MIDDLE_CENTER, NULL);
 
-        // FIXME: 28/11/2019 -- refactor options to be ui elements
-        // ui_layout_vertical_add (dropdown->vertical_layout, option->transform);
+        ui_layout_vertical_add (dropdown->vertical_layout, option->button->ui_element);
 
+        // FIXME: move this to vertical layout
         DropdownOption *op = NULL;
         for (ListElement *le = dlist_start (dropdown->options); le; le = le->next) {
             op = (DropdownOption *) le->data;
-            ui_position_update (NULL, op->option->transform, &op->transform->rect, false);
+            // ui_position_update (NULL, op->option->transform, &op->transform->rect, false);
         }
     }
 
 }
 
+// TODO: 02/12/2019 -- check this is correct
 // removes a dropdown option from the dropdown
 void ui_dropdown_option_remove (Dropdown *dropdown, DropdownOption *option) {
 
     if (dropdown && option) {
-        // FIXME:
+        ui_layout_vertical_remove (dropdown->vertical_layout, option->button->ui_element);
+        dlist_remove_element (dropdown->options, dlist_get_element (dropdown->options, option));
     }
 
 }
@@ -466,7 +391,7 @@ String *ui_dropdown_option_selected (Dropdown *dropdown) {
 
     if (dropdown) {
         if (dropdown->option_selected) {
-            retval = dropdown->option_selected->option->text;
+            retval = dropdown->option_selected->button->text->text;
         }
     }
 
@@ -479,14 +404,7 @@ String *ui_dropdown_option_selected (Dropdown *dropdown) {
 void ui_dropdown_option_set_hover_color (Dropdown *dropdown, Renderer *renderer, RGBA_Color color) {
 
     if (dropdown) {
-        dropdown->option_hover_colour = color;
-        if (color.a < 255) {
-            DropdownOption *option = ((DropdownOption *) dlist_start (dropdown->options)->data);
-            render_complex_transparent_rect (renderer, &dropdown->option_hover_texture,
-                &option->transform->rect, color);
-            dropdown->bg_texture_rect.w = option->transform->rect.w;
-            dropdown->bg_texture_rect.h = option->transform->rect.h;
-        }
+        // FIXME: set the hover option to buttons!!
     } 
 
 }
@@ -542,35 +460,8 @@ void ui_dropdown_render (Dropdown *dropdown, Renderer *renderer) {
 
             // render the extended section (options)
             if (dropdown->extended) {
-                DropdownOption *option = NULL;
                 for (ListElement *le = dlist_start (dropdown->options); le; le = le->next) {
-                    option = (DropdownOption *) le->data;
-
-                    if (renderer->window->mouse) {
-                        if (mousePos.x >= option->transform->rect.x && mousePos.x <= (option->transform->rect.x + option->transform->rect.w) && 
-                            mousePos.y >= option->transform->rect.y && mousePos.y <= (option->transform->rect.y + option->transform->rect.h)) {
-                            // FIXME: create a colour ptr to check for colour!
-                            ui_dropdown_option_render (option, renderer, &dropdown->option_hover_colour, dropdown->option_hover_texture);
-
-                            // check if the user pressed the left button over the mouse
-                            if (input_get_mouse_button_state (MOUSE_LEFT)) {
-                                option->pressed = true;
-                            }
-                            
-                            else if (!input_get_mouse_button_state (MOUSE_LEFT)) {
-                                if (option->pressed) {
-                                    option->pressed = false;
-                                    dropdown->option_selected = option;
-                                    ui_dropdown_set_placeholder (dropdown, renderer,
-                                        option->option->text->str, 
-                                        dropdown->placeholder->font, dropdown->placeholder->size, dropdown->placeholder->text_color);
-                                    ui_dropdown_set_placeholder_pos (dropdown, renderer, UI_POS_MIDDLE_CENTER);
-                                }
-                            }
-                        }
-
-                        else ui_dropdown_option_render (option, renderer, NULL, NULL); 
-                    }
+                    ui_dropdown_option_render ((DropdownOption *) le->data, renderer);
                 }
             }
 

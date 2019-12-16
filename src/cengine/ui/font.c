@@ -5,7 +5,9 @@
 
 #include "cengine/types/types.h"
 #include "cengine/types/string.h"
+
 #include "cengine/renderer.h"
+
 #include "cengine/ui/ui.h"
 #include "cengine/ui/font.h"
 #include "cengine/utils/log.h"

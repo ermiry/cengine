@@ -8,7 +8,7 @@
 
 #include "cengine/utils/json.h"
 
-// returns an allocated string with the file extensio
+// returns an allocated string with the file extension
 // NULL if no file extension
 extern char *files_get_file_extension (const char *filename);
 

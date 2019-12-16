@@ -20,7 +20,7 @@ extern int point_x_comparator (const void *one, const void *two);
 
 // compares the two point's x and y values
 // retunrs 0 if they are exactly the same
-// uses x value to check for lower and higher values
-extern int point_x_comparator (const void *one, const void *two);
+// uses y value to check for lower and higher values
+extern int point_y_comparator (const void *one, const void *two);
 
 #endif

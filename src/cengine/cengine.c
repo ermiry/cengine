@@ -181,12 +181,12 @@ static void cengine_run (void) {
 
         input_handle (event);
 
-        // TODO: maybe create a new thread for every window
         // update input and renderer for each window
         Window *win = NULL;
         for (ListElement *le = dlist_start (windows); le; le = le->next) {
             win = (Window *) le->data;
-            if (win->input) win->input (win);
+            if (win->input->user_input) win->input->user_input (win);
+
             win->renderer->ui->ui_element_hover = NULL;
             render (win->renderer);
 

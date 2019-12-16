@@ -16,29 +16,14 @@
 #include "cengine/ui/ui.h"
 #include "cengine/ui/font.h"
 #include "cengine/ui/panel.h"
+#include "cengine/ui/button.h"
 #include "cengine/ui/components/transform.h"
 #include "cengine/ui/components/text.h"
 #include "cengine/ui/layout/vertical.h"
 
 typedef struct DropdownOption {
 
-    UITransform *transform;
-
-    Text *option;
-
-    bool pressed;
-
-    // background
-    bool colour;
-    RGBA_Color bg_colour;
-    SDL_Texture *bg_texture;
-    SDL_Rect bg_texture_rect;
-
-    // outline
-    bool outline;
-    RGBA_Color outline_colour;
-    float outline_scale_x;
-    float outline_scale_y;
+    Button *button;
 
     bool draw_selected;
     RGBA_Color selected_color;

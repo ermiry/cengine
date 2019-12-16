@@ -33,7 +33,7 @@ typedef enum UIElementType {
 
 #define DEFAULT_MAX_UI_ELEMENTS         256
 
-typedef struct UIElement {
+struct _UIElement {
 
     i32 id;
 
@@ -44,7 +44,9 @@ typedef struct UIElement {
     void *element;
     struct _UITransform *transform;
 
-} UIElement;
+};
+
+typedef struct _UIElement UIElement;
 
 // ui element constructor
 extern UIElement *ui_element_create (struct _UI *ui, UIElementType type);

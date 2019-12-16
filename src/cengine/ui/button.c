@@ -15,6 +15,7 @@
 #include "cengine/textures.h"
 #include "cengine/sprites.h"
 #include "cengine/input.h"
+#include "cengine/timer.h"
 
 #include "cengine/ui/ui.h"
 #include "cengine/ui/font.h"
@@ -48,6 +49,11 @@ static Button *ui_button_new (void) {
 
         button->action = NULL;
         button->args = NULL;
+
+        button->double_click_timer = NULL;
+        button->double_click_action = NULL;
+        button->double_click_args = NULL;
+        button->double_click_delay = BUTTON_DEFAULT_DOUBLE_CLICK_DELAY;
     }
 
     return button;
@@ -297,6 +303,23 @@ void ui_button_set_action (Button *button, Action action, void *args) {
 
 }
 
+// sets an action to be executed if double click is dected
+void ui_button_set_double_click_action (Button *button, Action action, void *args) {
+
+    if (button) {
+        button->double_click_action = action;
+        button->double_click_args = args;
+    }
+
+}
+
+// sets the max delay between two clicks to count as a double click (in mili secs), the default value is 500
+void ui_button_set_double_click_delay (Button *button, u32 double_click_delay) {
+
+    if (button) button->double_click_delay = double_click_delay;
+
+}
+
 // creates a new button
 Button *ui_button_create (i32 x, i32 y, u32 w, u32 h, UIPosition pos, Renderer *renderer) {
 
@@ -317,6 +340,8 @@ Button *ui_button_create (i32 x, i32 y, u32 w, u32 h, UIPosition pos, Renderer *
 
             button->original_w = w;
             button->original_h = h;
+
+            button->double_click_timer = timer_new ();
         }
 
         else ui_element_delete (ui_element);
@@ -367,6 +392,8 @@ void ui_button_draw (Button *button, Renderer *renderer) {
                     // check if the mouse is in the button
                     if (mousePos.x >= button->ui_element->transform->rect.x && mousePos.x <= (button->ui_element->transform->rect.x + button->ui_element->transform->rect.w) && 
                         mousePos.y >= button->ui_element->transform->rect.y && mousePos.y <= (button->ui_element->transform->rect.y + button->ui_element->transform->rect.h)) {
+                        renderer->ui->ui_element_hover = button->ui_element;
+                            
                         // check if the user pressed the left button over the mouse
                         if (input_get_mouse_button_state (MOUSE_LEFT)) {
                             button->pressed = true;
@@ -375,10 +402,35 @@ void ui_button_draw (Button *button, Renderer *renderer) {
                         
                         else if (!input_get_mouse_button_state (MOUSE_LEFT)) {
                             if (button->pressed) {
+                                if (!button->one_click) {
+                                    button->one_click = true;
+                                    timer_start (button->double_click_timer);
+                                    // button->selected = !button->selected;
+                                    if (button->action) button->action (button->args);
+                                    // printf ("One click!\n");
+                                }
+
+                                else {
+                                    u32 ticks = timer_get_ticks (button->double_click_timer);
+                                    if (ticks <= button->double_click_delay) {
+                                        button->one_click = false;
+                                        if (button->double_click_action) 
+                                            button->double_click_action (button->double_click_args);
+
+                                        // image->selected = !image->selected;
+                                        // printf ("Double click!\n");
+                                    }
+
+                                    else {
+                                        button->one_click = true;
+                                        timer_start (button->double_click_timer);
+                                        // button->selected = !button->selected;
+                                        if (button->action) button->action (button->args);
+                                        // printf ("One click again!\n");
+                                    }
+                                }
+                                
                                 button->pressed = false;
-                                selected_sprite = button->sprites[BUTTON_STATE_MOUSE_UP];
-                                if (button->action) button->action (button->args);
-                                // printf ("Pressed!\n");
                             }
                         }
 

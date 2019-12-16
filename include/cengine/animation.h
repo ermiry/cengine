@@ -60,7 +60,7 @@ typedef struct Animator {
 extern Animator *animator_new (u32 objectID);
 extern void animator_destroy (Animator *animator);
 
-void animator_set_default_animation (Animator *animator, Animation *animation);
+extern void animator_set_default_animation (Animator *animator, Animation *animation);
 extern void animator_set_current_animation (Animator *animator, Animation *animation);
 extern void animator_play_animation (Animator *animator, Animation *animation);
 

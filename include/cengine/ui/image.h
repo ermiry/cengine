@@ -13,6 +13,8 @@
 
 #include "cengine/ui/components/transform.h"
 
+#define IMAGE_DEFAULT_DOUBLE_CLICK_DELAY           500
+
 typedef struct Image {
 
     UIElement *ui_element;
@@ -43,6 +45,7 @@ typedef struct Image {
     Timer *double_click_timer;
     Action double_click_action;
     void *double_click_args;
+    u32 double_click_delay;
 
     bool overlay_reference;
     SDL_Texture *overlay_texture;
@@ -102,6 +105,9 @@ extern void ui_image_set_action (Image *image, Action action, void *args);
 
 // sets an action to be executed if double click is dected
 extern void ui_image_set_double_click_action (Image *image, Action action, void *args);
+
+// sets the max delay between two clicks to count as a double click (in mili secs), the default value is 500
+extern void ui_image_set_double_click_delay (Image *image, u32 double_click_delay);
 
 // sets an overlay to the image that only renders when you hover the image
 extern void ui_image_set_overlay (Image *image, Renderer *renderer, RGBA_Color color);

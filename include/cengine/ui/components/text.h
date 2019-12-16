@@ -15,9 +15,12 @@
 #include "cengine/ui/font.h"
 #include "cengine/ui/components/transform.h"
 
+struct _Renderer;
+struct _UITransform;
+
 typedef struct Text {
 
-    UITransform *transform;
+    struct _UITransform *transform;
 
     Font *font;
     FontSource *font_source;
@@ -50,9 +53,9 @@ extern void ui_text_component_update (Text *text, const char *text_str);
 extern void ui_text_component_set_wrap (Text *text, u32 wrap_lenght);
 
 // creates / updates the text texture
-extern void ui_text_component_draw (Text *text, Renderer *renderer);
+extern void ui_text_component_draw (Text *text, struct _Renderer *renderer);
 
 // renders the text component to the screen
-extern void ui_text_component_render (Text *text, Renderer *renderer);
+extern void ui_text_component_render (Text *text, struct _Renderer *renderer);
 
 #endif

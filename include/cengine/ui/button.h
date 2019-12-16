@@ -12,10 +12,13 @@
 #include "cengine/video.h"
 #include "cengine/renderer.h"
 #include "cengine/sprites.h"
+#include "cengine/timer.h"
 
 #include "cengine/ui/ui.h"
 #include "cengine/ui/font.h"
 #include "cengine/ui/components/text.h"
+
+#define BUTTON_DEFAULT_DOUBLE_CLICK_DELAY           500
 
 typedef enum ButtonState {
 
@@ -57,6 +60,13 @@ typedef struct Button {
 
     // media
     u32 original_w, original_h;
+
+    // double click
+    bool one_click;
+    Timer *double_click_timer;
+    Action double_click_action;
+    void *double_click_args;
+    u32 double_click_delay;
 
 } Button;
 
@@ -111,6 +121,12 @@ extern void ui_button_ref_sprite (Button *button, ButtonState state, Sprite *spr
 
 // sets an action to be triggered when the button is clicked
 extern void ui_button_set_action (Button *button, Action action, void *args);
+
+// sets an action to be executed if double click is dected
+extern void ui_button_set_double_click_action (Button *button, Action action, void *args);
+
+// sets the max delay between two clicks to count as a double click (in mili secs), the default value is 500
+extern void ui_button_set_double_click_delay (Button *button, u32 double_click_delay);
 
 // creates a new button
 extern Button *ui_button_create (i32 x, i32 y, u32 w, u32 h, UIPosition pos, Renderer *renderer);

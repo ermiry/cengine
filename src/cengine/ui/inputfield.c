@@ -75,6 +75,13 @@ void ui_input_field_toggle_active (InputField *input) {
 
 }
 
+// sets the inputs's UI position
+void ui_input_field_set_pos (InputField *input, UIRect *ref_rect, UIPosition pos, Renderer *renderer) {
+
+    if (input) ui_transform_component_set_pos (input->ui_element->transform, renderer, ref_rect, pos, false);
+
+}
+
 // sets the input placeholder text
 void ui_input_field_placeholder_text_set (InputField *input, Renderer *renderer, const char *text,
     Font *font, u32 size, RGBA_Color text_color) {
@@ -269,6 +276,17 @@ void ui_input_field_selected_set (InputField *input, RGBA_Color selected_color) 
 
 }
 
+// sets an action to be triggered every input
+// works for every keystroke, paste, delete
+void ui_input_field_set_on_key_input (InputField *input, Action on_key_input, void *on_key_input_args) {
+
+    if (input) {
+        input->on_key_input = on_key_input;
+        input->on_key_input_args = on_key_input_args;
+    }
+
+}
+
 // creates a new input field
 InputField *ui_input_field_create (i32 x, i32 y, u32 w, u32 h, UIPosition pos, Renderer *renderer) {
 
@@ -322,7 +340,7 @@ void ui_input_field_draw (InputField *input, Renderer *renderer) {
                         if (input->pressed) {
                             input->pressed = false;
                             // make this text active
-                            input_set_active_text (input);
+                            input_set_active_text (renderer->window->input, input);
                             // printf ("Pressed!\n");
                         }
                     }

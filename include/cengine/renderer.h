@@ -87,11 +87,6 @@ extern Renderer *renderer_create_with_window (const char *name, int display_idx,
 extern int renderer_window_attach (Renderer *renderer, Uint32 render_flags, int display_idx,
     const char *window_title, WindowSize window_size, Uint32 window_flags);
 
-extern int renderer_init_main (Uint32 flags,
-    const char *window_title, WindowSize window_size, Uint32 window_flags);
-
-extern void renderer_delete_main (void);
-
 extern void renderer_queue_push (Renderer *renderer, SurfaceTexture *st);
 
 // sets how many textures the renderer can create in the background every loop
@@ -171,7 +166,7 @@ extern void render_basic_dot_line_vertical (Renderer *renderer, int start, int e
     float x_scale, float y_scale);
 
 // renders a filled rect
-extern void render_basic_filled_rect (Renderer *renderer,SDL_Rect *rect, SDL_Color color);
+extern void render_basic_filled_rect (Renderer *renderer, SDL_Rect *rect, SDL_Color color);
 
 // renders an outline rect
 // scale works better with even numbers

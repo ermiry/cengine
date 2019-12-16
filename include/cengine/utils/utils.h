@@ -43,7 +43,7 @@ extern char **c_string_split (char *string, const char delim, int *n_tokens);
 // copies a c string into another one previuosly allocated
 extern void c_string_copy (char *to, const char *from);
 
-// revers a c string
+// reverses a c string
 extern char *c_string_reverse (char *str);
 
 // removes all ocurrances of a char from a string

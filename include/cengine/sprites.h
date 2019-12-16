@@ -55,7 +55,7 @@ typedef struct _SpriteSheet SpriteSheet;
 
 extern void sprite_sheet_destroy (SpriteSheet *sprite_sheet);
 
-extern SpriteSheet *sprite_sheet_load (const char *filename, Renderer *rendererr);
+extern SpriteSheet *sprite_sheet_load (const char *filename, Renderer *renderer);
 
 extern void sprite_sheet_set_sprite_size (SpriteSheet *sprite_sheet, u32 w, u32 h);
 

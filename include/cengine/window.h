@@ -14,8 +14,10 @@
 
 #include "cengine/video.h"
 #include "cengine/renderer.h"
+#include "cengine/input.h"
 
 struct _Renderer;
+struct _Input;
 
 struct _Window {
 
@@ -47,7 +49,8 @@ struct _Window {
     bool keyboard;
     bool mini;
 
-    void (*input)(void *);
+    // void (*input)(void *);
+    struct _Input *input;
 
 };
 
@@ -76,11 +79,17 @@ extern void window_toggle_full_screen (Window *window);
 // first removes border from window, and the scales to max resolution
 extern void window_toggle_fullscreen_soft (Window *window);
 
+// toggles window borders on and off
+extern void window_toggle_borders (Window *window);
+
 // resizes the window asscoaited with a renderer
 extern int window_resize (Window *window, u32 new_width, u32 new_height);
 
 // sets the window's icon, the surface gets destroyed when the window is destroyed
 extern void window_set_icon (Window *window, SDL_Surface *icon_surface);
+
+// sets the window's custom use rinput method
+extern void window_set_user_input (Window *window, void (*user_input)(void *));
 
 // sets the focus to the window
 extern void window_focus (Window *window);

@@ -41,6 +41,7 @@ static Image *ui_image_new (void) {
         image->double_click_timer = NULL;
         image->double_click_action = NULL;
         image->double_click_args = NULL;
+        image->double_click_delay = IMAGE_DEFAULT_DOUBLE_CLICK_DELAY;
     }
 
     return image;
@@ -244,6 +245,13 @@ void ui_image_set_double_click_action (Image *image, Action action, void *args) 
         image->double_click_action = action;
         image->double_click_args = args;
     }
+
+}
+
+// sets the max delay between two clicks to count as a double click (in mili secs), the default value is 500
+void ui_image_set_double_click_delay (Image *image, u32 double_click_delay) {
+
+    if (image) image->double_click_delay = double_click_delay;
 
 }
 
@@ -510,7 +518,7 @@ void ui_image_draw (Image *image, Renderer *renderer) {
 
                                 else {
                                     u32 ticks = timer_get_ticks (image->double_click_timer);
-                                    if (ticks <= 500) {
+                                    if (ticks <= image->double_click_delay) {
                                         image->one_click = false;
                                         if (image->double_click_action) 
                                             image->double_click_action (image->double_click_args);

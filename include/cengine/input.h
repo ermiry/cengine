@@ -10,9 +10,24 @@
 
 #include "cengine/ui/inputfield.h"
 
-extern bool typing;
+struct _Input {
 
-extern void input_set_active_text (InputField *text);
+    // current active input field
+    bool typing;
+    InputField *active_text;
+
+    // custom user input method
+    void (*user_input)(void *);
+
+};
+
+typedef struct _Input Input;
+
+extern Input *input_new (void);
+
+extern void input_delete (void *input_ptr);
+
+extern void input_set_active_text (Input *input, InputField *text);
 
 #define N_MOUSE_BUTTONS     3
 
@@ -29,19 +44,19 @@ extern Vector2D mousePos;
 extern bool input_get_mouse_button_state (MouseButton button);
 
 // sets and action to be performed when the mouse scrolls up
-// expect a refrence to a positive integer referencing the amount scrolled
+// wants a reference to a positive integer referencing the amount scrolled
 extern void input_set_on_mouse_wheel_scroll_up (Action action);
 
 // sets and action to be performed when the mouse scrolls down
-// expect a refrence to a negative integer referencing the amount scrolled
+// wants a reference to a negative integer referencing the amount scrolled
 extern void input_set_on_mouse_wheel_scroll_down (Action action);
 
 // sets and action to be performed when the mouse scrolls right
-// expect a refrence to a positive integer referencing the amount scrolled
+// wants a reference to a positive integer referencing the amount scrolled
 extern void input_set_on_mouse_wheel_scroll_right (Action action);
 
 // sets and action to be performed when the mouse scrolls left
-// expect a refrence to a negative integer referencing the amount scrolled
+// wants a reference to a negative integer referencing the amount scrolled
 extern void input_set_on_mouse_wheel_scroll_left (Action action);
 
 extern bool input_is_key_down (const SDL_Scancode key);
@@ -56,6 +71,8 @@ extern void input_handle (SDL_Event event);
 
 // creates a new command with an action to be triggered by ctrl + key
 extern u8 input_command_register (SDL_Keycode key, Action action, void *args);
+
+extern void input_command_unregister (SDL_Keycode key);
 
 // registers an action to be triggered whenever a key is pressed
 extern void input_key_event_register (const SDL_Keycode key, Action action, void *args);

@@ -9,23 +9,6 @@
 
 struct _Renderer;
 
-typedef enum UIPosition {
-
-    UI_POS_FREE = 0,
-
-    UI_POS_MIDDLE_CENTER,
-
-    UI_POS_UPPER_CENTER,
-    UI_POS_RIGHT_UPPER_CORNER,
-    UI_POS_RIGHT_CENTER,
-    UI_POS_RIGHT_BOTTOM_CORNER,
-    UI_POS_BOTTOM_CENTER,
-    UI_POS_LEFT_BOTTOM_CORNER,
-    UI_POS_LEFT_CENTER,
-    UI_POS_LEFT_UPPER_CORNER
-
-} UIPosition;
-
 extern void ui_position_update (struct _Renderer *renderer, void *transform_ptr, UIRect *ref_rect, bool offset);
 
 #endif
