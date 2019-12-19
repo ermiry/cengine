@@ -1,6 +1,6 @@
 # Cengine
 
-**Cengine** is a cross-platform development framework, developed by Ermiry, designed to provide you with easy access to audio, input, graphics, rendering and much more. It is developed on top of the SDL (Simple Direct Media) Library to access low level methods.
+**Cengine** is a cross-platform development framework, created by Ermiry, designed to provide you with easy access to audio, input, graphics, rendering and much more. It is developed on top of the SDL (Simple Direct Media) Library to access low level methods.
 
 **Cengine** was originally created to support the development of native Linux games, but over time it has expanded to have other modules and features as well.
 
