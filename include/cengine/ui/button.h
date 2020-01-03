@@ -122,7 +122,7 @@ extern void ui_button_ref_sprite (Button *button, ButtonState state, Sprite *spr
 // sets an action to be triggered when the button is clicked
 extern void ui_button_set_action (Button *button, Action action, void *args);
 
-// sets an action to be executed if double click is dected
+// sets an action to be executed if double click is detected
 extern void ui_button_set_double_click_action (Button *button, Action action, void *args);
 
 // sets the max delay between two clicks to count as a double click (in mili secs), the default value is 500

@@ -41,18 +41,28 @@ extern u32 new_go_id;
 // init our game objects array
 extern u8 game_objects_init_all (void);
 
+// creates a new GameObject, and you can give it a friendly name and add it directly to a tag
 extern GameObject *game_object_new (const char *name, const char *tag);
+
+// destroys a GameObject when you not longer need it
 extern void game_object_destroy (GameObject *go);
+
+// destroys a reference to a GameObject
 extern void game_object_destroy_ref (void *data);
 
 // this is used to avoid go destruction when destroying go's children
 extern void game_object_destroy_dummy (void *ptr);
 
+// compares two GameObjects by their ids
 extern int game_object_comparator (const void *one, const void *two);
 
+// adds a new child to the GameObject
 extern void game_object_add_child (GameObject *parent, GameObject *child);
+
+// removes a child from the GameObject
 extern GameObject *game_object_remove_child (GameObject *parent, GameObject *child);
 
+// gets a GameObject by its id
 extern GameObject *game_object_get_by_id (u32 id);
 
 // clean up game objects
@@ -61,6 +71,7 @@ extern void game_object_destroy_all (void);
 // update every game object
 extern void game_object_update_all (void);
 
+// sets a new name for the GameObject
 extern void game_object_set_name (GameObject *go, const char *name);
 
 // sets the tag for the gameobject
@@ -85,6 +96,7 @@ typedef struct GameObjectTag {
 // create a new go tag with that name
 extern void game_object_tag_create (const char *name);
 
+// gets the matching tag by its name
 extern GameObjectTag *game_object_tag_get_by_name (const char *tag_name);
 
 // adds a game object to a tag, returns 0 on success, 1 on error
@@ -104,8 +116,13 @@ typedef enum GameComponent {
 
 } GameComponent;
 
+// adds a new component to the GameObject
 extern void *game_object_add_component (GameObject *go, GameComponent component);
+
+// gets the matching component from the GameObject, returns NULL if no match
 extern void *game_object_get_component (GameObject *go, GameComponent component);
+
+// removes the component from the GameObject
 extern void game_object_remove_component (GameObject *go, GameComponent component);
 
 /*** User defined componets ***/
@@ -123,6 +140,8 @@ typedef struct UserComponent {
 // creates a new user component
 extern UserComponent *user_component_new (const char *name, 
     void *(*add)(u32), void (*remove)(void *), void (*update)(void *));
+
+// deletes the user component when you are doing using it
 extern void user_component_delete (void *ptr);
 
 // registers a new user component, returns 0 on success, 1 on error
@@ -131,8 +150,10 @@ extern int user_component_register (UserComponent *user_comp);
 // returns the component inside the user component for quick access
 extern void *game_object_add_user_component (GameObject *go, const char *component_name);
 
+// gets the matching user component from the GameObject
 extern void *game_object_get_user_component (GameObject *go, const char *name);
 
+// removes the matching user component from the GameObject
 extern void game_object_user_component_remove (GameObject *go, const char *name);
 
 #endif

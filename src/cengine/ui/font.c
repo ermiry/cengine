@@ -206,21 +206,6 @@ static Font *ui_font_new (void) {
 
 }
 
-// creates a new font structure that requires a font to be loaded
-Font *ui_font_create (const char *font_name, const char *font_filename) {
-
-    Font *font = ui_font_new ();
-    if (font) {
-        font->name = str_new (font_name);
-        font->filename = str_new (font_filename);
-
-        dlist_insert_after (fonts, dlist_end (fonts), font);
-    } 
-
-    return font;
-
-}
-
 void ui_font_delete (void *font_ptr) {
 
     if (font_ptr) {
@@ -238,6 +223,21 @@ void ui_font_delete (void *font_ptr) {
 
         free (font);
     }
+
+}
+
+// creates a new font structure that requires a font to be loaded
+Font *ui_font_create (const char *font_name, const char *font_filename) {
+
+    Font *font = ui_font_new ();
+    if (font) {
+        font->name = str_new (font_name);
+        font->filename = str_new (font_filename);
+
+        dlist_insert_after (fonts, dlist_end (fonts), font);
+    } 
+
+    return font;
 
 }
 
@@ -387,7 +387,7 @@ Font *ui_font_get_by_name (const char *name) {
 
 #pragma endregion
 
-#pragma region Font Main
+#pragma region main
 
 u8 ui_fonts_init (void) {
 

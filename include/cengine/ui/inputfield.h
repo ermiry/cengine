@@ -22,38 +22,38 @@ struct _UIElement;
 
 typedef struct InputField {
 
-    struct _UIElement *ui_element;
+	struct _UIElement *ui_element;
 
-    // background
-    bool colour;
-    RGBA_Color bg_colour;
-    SDL_Texture *bg_texture;
-    SDL_Rect bg_texture_rect;
+	// background
+	bool colour;
+	RGBA_Color bg_colour;
+	SDL_Texture *bg_texture;
+	SDL_Rect bg_texture_rect;
 
-    // outline
-    bool outline;
-    RGBA_Color outline_colour;
-    float outline_scale_x;
-    float outline_scale_y;
+	// outline
+	bool outline;
+	RGBA_Color outline_colour;
+	float outline_scale_x;
+	float outline_scale_y;
 
-    bool draw_selected;
-    RGBA_Color selected_color;
+	bool draw_selected;
+	RGBA_Color selected_color;
 
-    // placeholder text
-    Text *placeholder;
-    bool empty_text;
+	// placeholder text
+	Text *placeholder;
+	bool empty_text;
 
-    // text
-    Text *text;
-    bool is_password;
-    String *password;
+	// text
+	Text *text;
+	bool is_password;
+	String *password;
 
-    bool pressed;
-    bool active;
+	bool pressed;
+	bool active;
 
-    // action to be triggered every key input
-    Action on_key_input;
-    void *on_key_input_args;
+	// action to be triggered every key input
+	Action on_key_input;
+	void *on_key_input_args;
 
 } InputField;
 
@@ -70,7 +70,7 @@ extern void ui_input_field_set_pos (InputField *input, UIRect *ref_rect, UIPosit
 
 // sets the input placeholder text
 extern void ui_input_field_placeholder_text_set (InputField *input, struct _Renderer *renderer, const char *text,
-    Font *font, u32 size, RGBA_Color text_color);
+	Font *font, u32 size, RGBA_Color text_color);
 
 // updates the input's placeholder text
 extern void ui_input_field_placeholder_text_update (InputField *input, struct _Renderer *renderer, const char *text);
@@ -80,7 +80,7 @@ extern void ui_input_field_placeholder_text_pos_set (InputField *input, UIPositi
 
 // sets the input field's text
 extern void ui_input_field_text_set (InputField *input, struct _Renderer *renderer, const char *text,
-    Font *font, u32 size, RGBA_Color text_color, bool is_password);
+	Font *font, u32 size, RGBA_Color text_color, bool is_password);
 
 // updates the placeholder text (redraws the text component)
 extern void ui_input_field_text_update (InputField *input, struct _Renderer *renderer, const char *update_text);

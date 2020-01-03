@@ -31,14 +31,15 @@ typedef struct DoubleList {
 #define dlist_element_data(element) ((element)->data)
 #define dlist_element_next(element) ((element)->next)
 
+// correctly deletes a dlist and all of its elements using the destroy method
 extern void dlist_delete (void *dlist_ptr);
 
-// sets a list compare function
+// sets the dlist comparator method that will be used for searching and sorting
 // compare must return -1 if one < two, must return 0 if they are equal, and must return 1 if one > two
-extern void dlist_set_compare (DoubleList *list, int (*compare)(const void *one, const void *two));
+extern void dlist_set_compare (DoubleList *dlist, int (*compare)(const void *one, const void *two));
 
-// sets list destroy function
-extern void dlist_set_destroy (DoubleList *list, void (*destroy)(void *data));
+// sets the list destroy function that will be used to clean the elements when the list gets deleted
+extern void dlist_set_destroy (DoubleList *dlist, void (*destroy)(void *data));
 
 // creates a new double list (double linked list)
 // destroy is the method used to free up the data, NULL to use the default free
@@ -47,11 +48,11 @@ extern DoubleList *dlist_init (void (*destroy)(void *data),
     int (*compare)(const void *one, const void *two));
 
 // destroys all of the dlist's elements and their data but keeps the dlist
-extern void dlist_reset (DoubleList *);
+extern void dlist_reset (DoubleList *dlist);
 
 // only gets rid of the list elements, but the data is kept
 // this is usefull if another dlist or structure points to the same data
-extern void dlist_clean (DoubleList *);
+extern void dlist_clean (DoubleList *dlist);
 
 /*** Elements ***/
 
@@ -81,7 +82,7 @@ extern ListElement *dlist_get_element (DoubleList *dlist, void *data);
 /*** Sorting ***/
 
 // uses merge sort to sort the list using the comparator
-// return 0 on succes 1 on error
+// returns 0 on succes 1 on error
 extern int dlist_sort (DoubleList *list);
 
 #endif

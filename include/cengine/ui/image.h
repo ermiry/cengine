@@ -17,41 +17,41 @@
 
 typedef struct Image {
 
-    UIElement *ui_element;
+	UIElement *ui_element;
 
-    Sprite *sprite;
-    SDL_Texture *texture;
+	Sprite *sprite;
+	SDL_Texture *texture;
 
-    SpriteSheet *sprite_sheet;
-    u32 x_sprite_offset, y_sprite_offset;
-    
-    bool ref_sprite;
-    Flip flip;
+	SpriteSheet *sprite_sheet;
+	u32 x_sprite_offset, y_sprite_offset;
+	
+	bool ref_sprite;
+	Flip flip;
 
-    bool outline;
-    RGBA_Color outline_colour;
-    float outline_scale_x;
-    float outline_scale_y;
+	bool outline;
+	RGBA_Color outline_colour;
+	float outline_scale_x;
+	float outline_scale_y;
 
-    // event listener
-    bool active;
-    bool pressed;
-    bool selected;
-    Action action;
-    void *args;
+	// event listener
+	bool active;
+	bool pressed;
+	bool selected;
+	Action action;
+	void *args;
 
-    // double click
-    bool one_click;
-    Timer *double_click_timer;
-    Action double_click_action;
-    void *double_click_args;
-    u32 double_click_delay;
+	// double click
+	bool one_click;
+	Timer *double_click_timer;
+	Action double_click_action;
+	void *double_click_args;
+	u32 double_click_delay;
 
-    bool overlay_reference;
-    SDL_Texture *overlay_texture;
+	bool overlay_reference;
+	SDL_Texture *overlay_texture;
 
-    bool selected_reference;
-    SDL_Texture *selected_texture;
+	bool selected_reference;
+	SDL_Texture *selected_texture;
 
 } Image;
 
@@ -72,7 +72,7 @@ extern u8 ui_image_set_sprite (Image *image, Renderer *renderer, const char *fil
 
 // sets the image's sprite sheet to be rendered and loads it
 // returns 0 on success loading sprite sheet, 1 on error
-extern u8 ui_image_set_sprite_sheet (Image *image, Renderer *renderer, const char *filename) ;
+extern u8 ui_image_set_sprite_sheet (Image *image, Renderer *renderer, const char *filename);
 
 // sets the image's sprite from a refrence from an already loaded sprite
 extern void ui_image_ref_sprite (Image *image, Sprite *sprite);

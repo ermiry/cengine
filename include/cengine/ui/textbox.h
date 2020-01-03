@@ -17,22 +17,22 @@
 
 typedef struct TextBox {
 
-    UIElement *ui_element;
+	UIElement *ui_element;
 
-    bool outline;
-    RGBA_Color outline_colour;
-    float outline_scale_x;
-    float outline_scale_y;
+	bool outline;
+	RGBA_Color outline_colour;
+	float outline_scale_x;
+	float outline_scale_y;
 
-    bool colour;
-    RGBA_Color bg_colour;
-    SDL_Texture *bg_texture;
-    SDL_Rect bg_texture_rect;
+	bool colour;
+	RGBA_Color bg_colour;
+	SDL_Texture *bg_texture;
+	SDL_Rect bg_texture_rect;
 
-    Text *text;
+	Text *text;
 
-    // meida 
-    u32 original_w, original_h;
+	// meida 
+	u32 original_w, original_h;
 
 } TextBox;
 
@@ -46,7 +46,7 @@ extern void ui_textbox_set_pos (TextBox *textbox, UIRect *ref_rect, UIPosition p
 
 // sets the textbox's text
 extern void ui_textbox_set_text (TextBox *textbox, Renderer *renderer, const char *text, 
-    Font *font, u32 size, RGBA_Color color, bool adjust_to_text);
+	Font *font, u32 size, RGBA_Color color, bool adjust_to_text);
 
 // updates the textbox's text
 extern void ui_textbox_update_text (TextBox *textbox, Renderer *renderer, const char *text);

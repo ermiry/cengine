@@ -15,26 +15,26 @@
 
 typedef struct Panel {
 
-    UIElement *ui_element;
+	UIElement *ui_element;
 
-    // background
-    bool colour;
-    RGBA_Color bg_colour;
-    SDL_Texture *bg_texture;
-    SDL_Rect bg_texture_rect;
+	// background
+	bool colour;
+	RGBA_Color bg_colour;
+	SDL_Texture *bg_texture;
+	SDL_Rect bg_texture_rect;
 
-    // outline
-    bool outline;
-    RGBA_Color outline_colour;
-    float outline_scale_x;
-    float outline_scale_y;
+	// outline
+	bool outline;
+	RGBA_Color outline_colour;
+	float outline_scale_x;
+	float outline_scale_y;
 
-    // layout
-    LayoutType layout_type;
-    void *layout;
+	// layout
+	LayoutType layout_type;
+	void *layout;
 
-    // media
-    u32 original_w, original_h;
+	// media
+	u32 original_w, original_h;
 
 } Panel;
 

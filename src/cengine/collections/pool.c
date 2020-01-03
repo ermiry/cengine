@@ -63,7 +63,7 @@ void *pool_pop (Pool *pool) {
 
 }
 
-void pool_clear (Pool *pool) {
+void pool_delete (Pool *pool) {
 
     if (pool) {
         if (POOL_SIZE (pool) > 0) {

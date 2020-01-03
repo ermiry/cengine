@@ -15,17 +15,17 @@
 
 typedef struct Cursor {
 
-    SDL_Cursor *cursor; 
-    int w, h;
-    int hot_x, hot_y;
-    
-    Sprite *sprite;
-    SpriteSheet *sprite_sheet;
-    bool refSprite;
+	SDL_Cursor *cursor; 
+	int w, h;
+	int hot_x, hot_y;
+	
+	Sprite *sprite;
+	SpriteSheet *sprite_sheet;
+	bool refSprite;
 
-    u32 x_sprite_offset, y_sprite_offset;
-    bool multipleSprites;
-    Flip flip;
+	u32 x_sprite_offset, y_sprite_offset;
+	bool multipleSprites;
+	Flip flip;
 
 } Cursor;
 
@@ -38,7 +38,7 @@ extern void ui_cursor_delete (Cursor *cursor);
 // create a new ui cursor with a custom sprite or pass a spirtesheet to load different images
 // when performing different actions
 extern Cursor *ui_cursor_create (Renderer *renderer, const char *sprite, const char *sprite_sheet, 
-    int w, int h, int hot_x, int hot_y);
+	int w, int h, int hot_x, int hot_y);
 
 extern void ui_cursor_draw (Cursor *cursor, Renderer *renderer);
 
