@@ -229,13 +229,22 @@ void ui_font_delete (void *font_ptr) {
 // creates a new font structure that requires a font to be loaded
 Font *ui_font_create (const char *font_name, const char *font_filename) {
 
-    Font *font = ui_font_new ();
-    if (font) {
-        font->name = str_new (font_name);
-        font->filename = str_new (font_filename);
+    Font *font = NULL;
 
-        dlist_insert_after (fonts, dlist_end (fonts), font);
-    } 
+    if (font_name && font_filename) {
+        font = ui_font_new ();
+        if (font) {
+            font->name = str_new (font_name);
+            font->filename = str_new (font_filename);
+
+            dlist_insert_after (fonts, dlist_end (fonts), font);
+        }
+    }   
+
+    else {
+        cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, 
+            "Unable to create font! font_name and font_filename are required");
+    }
 
     return font;
 
@@ -330,26 +339,40 @@ u8 ui_font_load (Font *font, Renderer *renderer, int style) {
     u8 errors = 0;
 
     if (font) {
-        SDL_RWops *rwops = SDL_RWFromFile (font->filename->str, "rb");
-        if (rwops) {
-            font->sources = (FontSource **) calloc (font->n_sizes, sizeof (FontSource *));
+        // check first if font sizes had been set
+        if (font->n_sizes > 0) {
+            SDL_RWops *rwops = SDL_RWFromFile (font->filename->str, "rb");
+            if (rwops) {
+                font->sources = (FontSource **) calloc (font->n_sizes, sizeof (FontSource *));
 
-            // load the font for each set size
-            for (unsigned int i = 0; i < font->n_sizes; i++) {
-                font->sources[i] = ui_font_load_source (renderer, font, rwops, 1, font->sizes[i], style);
-                if (!font->sources[i]) {
-                    cengine_log_msg (stderr, LOG_WARNING, LOG_NO_TYPE,
-                        c_string_create ("Failed to load size: %d for font: %s",
-                        font->sizes[i], font->name->str));
-                    errors = 1;
+                // load the font for each set size
+                for (unsigned int i = 0; i < font->n_sizes; i++) {
+                    font->sources[i] = ui_font_load_source (renderer, font, rwops, 1, font->sizes[i], style);
+                    if (!font->sources[i]) {
+                        cengine_log_msg (stderr, LOG_WARNING, LOG_NO_TYPE,
+                            c_string_create ("Failed to load size: %d for font: %s",
+                            font->sizes[i], font->name->str));
+                        errors = 1;
+                    }
                 }
             }
+            
+            else {
+                cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, 
+                    c_string_create ("Failed to open font file: %s", font->filename->str));
+                errors = 1;
+            } 
         }
-        
+
         else {
-            cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, 
-                c_string_create ("Failed to open font file: %s", font->filename));
-        } 
+            char *status = c_string_create ("Failed to load font: %s, please set font sizes", font->name->str);
+            if (status) {
+                cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, status);
+                free (status);
+            }
+
+            errors = 1;
+        }
     }
 
     return errors;
