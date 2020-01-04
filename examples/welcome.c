@@ -4,24 +4,31 @@
 
 #include "cengine/utils/log.h"
 
-SDL_Surface *icon_surface = NULL;
+static SDL_Surface *icon_surface = NULL;
 
-void app_quit (void) { running = false; }
+// this method will be called when the SDL_QUIT event is detected 
+// (when you close the window for example)
+static void app_quit (void) { running = false; }
 
-int app_init () {
+static int app_init () {
 
 	unsigned int errors = 0;
 	unsigned int retval = 0;
 
+	// sets the function to be executed on SDL_QUIT event
 	cengine_set_quit (app_quit);
+
+	// set the directory to look for assets
 	cengine_assets_set_path ("./assets");
 
+	// init cengine capabilities
 	retval = cengine_init ();
 	if (retval) cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to init cengine!");
 	errors |= retval;
 
-	// create our main renderer
+	// create our main renderer and window
 	WindowSize window_size = { 1920, 1080 };
+	// we give our renderer the name "main" and that is how we will be able to get it at any place in the application
 	Renderer *main_renderer = renderer_create_with_window ("main", 0, SDL_RENDERER_SOFTWARE | SDL_RENDERER_ACCELERATED,
 		"Cengine", window_size, 0);
 
@@ -30,6 +37,7 @@ int app_init () {
 	// if (icon_surface) window_set_icon (main_renderer->window, icon_surface);
 	// else cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to load icon!");
 
+	// we load our main font that will be used for the ui elements
 	Font *main_font = ui_font_create ("roboto", "./assets/fonts/Roboto-Regular.ttf");
 	if (main_font) {
 		ui_font_set_sizes (main_font, 2, 24, 32);
@@ -46,7 +54,8 @@ int app_init () {
 
 }
 
-int app_end (void) {
+// this method will be called at the end of the application
+static int app_end (void) {
 
 	(void) cengine_end ();
 
@@ -62,7 +71,7 @@ int app_end (void) {
 #include "cengine/ui/panel.h"
 #include "cengine/ui/textbox.h"
 
-State *app_state = NULL;
+static State *app_state = NULL;
 
 static Panel *background_panel = NULL;
 static TextBox *title_text = NULL;
@@ -73,23 +82,28 @@ static void app_update (void) {
 
 }
 
+// this method is called when we enter the "app" state
 static void app_on_enter (void) { 
 
 	app_state->update = app_update;
 
+	// get our renderer
+	// this only works because we set the renderer to be named like that
 	Renderer *main_renderer = renderer_get_by_name ("main");
 
+	// get our default font (the first one we added)
 	Font *font = ui_font_get_default ();
 
 	u32 screen_width = main_renderer->window->window_size.width;
 	u32 screen_height = main_renderer->window->window_size.height;
 
-	/*** background ***/
+	// set a panel as the background element
 	RGBA_Color electromagnetic = { 47, 54, 64, 255 };
 	background_panel = ui_panel_create (0, 0, screen_width, screen_height, UI_POS_MIDDLE_CENTER, main_renderer);
 	ui_panel_set_bg_colour (background_panel, main_renderer, electromagnetic);
 	ui_element_set_layer (main_renderer->ui, background_panel->ui_element, "back");
 
+	// add a text title at the middle of the screen
 	title_text = ui_textbox_create (0, 0, 200, 50, UI_POS_MIDDLE_CENTER, main_renderer);
 	ui_textbox_set_text (title_text, main_renderer, "Welcome to Cengine!", font, 32, RGBA_WHITE, false);
 	ui_textbox_set_text_pos (title_text, UI_POS_MIDDLE_CENTER);
@@ -97,6 +111,9 @@ static void app_on_enter (void) {
 
 }
 
+// this method will be called when we exit the "app" state
+// in this particular example this will not happen until we 
+// exit the application
 static void app_on_exit (void) { 
 
 	if (background_panel) ui_element_destroy (background_panel->ui_element);
@@ -104,7 +121,8 @@ static void app_on_exit (void) {
 
 }
 
-State *app_state_new (void) {
+// we create our "app" state (our only one for this application)
+static State *app_state_new (void) {
 
 	State *new_app_state = (State *) malloc (sizeof (State));
 	if (new_app_state) {
@@ -122,10 +140,16 @@ State *app_state_new (void) {
 
 int main (void) {
 
+	// first we init everything related with our own application
 	if (!app_init ()) {
+		// if that succeded, we can now create a base app state and state manager
 		app_state = app_state_new ();
 		manager = manager_new (app_state);
 
+		// we are ready to start cengine
+		// cengine will run in two threads,   
+		// the main one is used for rendering and input
+		// and the second one, is used for updates (like GameObjects)
 		cengine_start (30);
 	}
 
