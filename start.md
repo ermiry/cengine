@@ -7,7 +7,7 @@ Your first need to install some dependencies to correctly compile Cengine source
 ### SDL2
 
 - libsdl2-dev - Simple DirectMedia Layer development files
-- libsdl2-dev - Image loading library for Simple DirectMedia Layer 2, development files
+- libsdl2-image-dev - Image loading library for Simple DirectMedia Layer 2, development files
 - libsdl2-ttf-dev - TrueType Font library for Simple DirectMedia Layer 2, development files
 
 In Ubuntu you can simply install the packages from the repos by typing:
