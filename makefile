@@ -1,4 +1,4 @@
-TARGET      := cimage
+TARGET      := example
 
 SDL2 	:= `sdl2-config --cflags --libs` -l SDL2_image -l SDL2_ttf
 MATH 	:= -lm 
