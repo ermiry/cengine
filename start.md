@@ -46,3 +46,7 @@ The are three basic commands for the Makefile:
 | make           | Compile your source code and tell you if there are some errors   |
 | make run       | Run the compilled binary                                         |
 | make clean     | Clean created objects (.o files) and binaries                    |
+
+You will see that a window like this gets created:
+
+![Welcome Example](./img/cengine-welcome-example.png)
