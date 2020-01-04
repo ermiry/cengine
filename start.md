@@ -50,3 +50,17 @@ The are three basic commands for the Makefile:
 You will see that a window like this gets created:
 
 ![Welcome Example](./img/cengine-welcome-example.png)
+
+## 4. Create Awesome Apps
+
+Now you can start creating your own app/game using Cengine. Feel free to navigate to the documentation and other tutorials in cengine.ermiry.com to get a better understanding on how Cengine works and how to get the most of it.
+
+Examples are updated constantly and are all open source, you can check them to see the awesome things that can be accomplished.
+
+If you find any bug in Cengine code, feel free to open a bug ticket explaining the problem and please include any screenshot you think can help or even code that can be used to replicate your issue.
+
+You can also make changes to the source code an open a pull request if you want your code to be part of Cengine.
+
+Finally, be sure to check the devblog at cengine.ermiry.com for any important changes that happen to Cengine.
+
+Happy coding, Erick Salas
