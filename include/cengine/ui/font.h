@@ -70,7 +70,7 @@ extern u8 ui_font_set_sizes (Font *font, u8 n_sizes, ...);
 
 // loads the font with the specified values
 // returns 0 on success, 1 on error
-extern u8 ui_font_load (Font *font, struct _Renderer *renderer, int style);
+extern int ui_font_load (Font *font, struct _Renderer *renderer, int style);
 
 // gets a refrence to the default font --> the first one that was added
 extern Font *ui_font_get_default (void);

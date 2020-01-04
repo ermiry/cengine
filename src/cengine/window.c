@@ -106,7 +106,10 @@ Window *window_create (const char *title, WindowSize window_size, Uint32 window_
 
                 // sets the actual window size in the correct places
                 window_get_size (window, &window->window_size);
-                window_get_size (window, &window->window_original_size);
+                // window_get_size (window, &window->window_original_size);
+                window->window_original_size.width = window->window_size.width;
+                window->window_original_size.height = window->window_size.height;
+                
                 SDL_Rect screen_rect = { .x = 0, .y = 0, 
                     .w = window->window_size.width, window->window_size.height };
                 window->screen_rect = screen_rect;

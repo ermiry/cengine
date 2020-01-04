@@ -77,8 +77,14 @@ int cengine_init (void) {
 
 int cengine_end (void) {
 
-    manager->curr_state->on_exit ();
-    manager_delete (manager);
+    if (manager) {
+        if (manager->curr_state) {
+            if (manager->curr_state->on_exit)
+                manager->curr_state->on_exit ();
+        }
+
+        manager_delete (manager);
+    }
 
     assets_end ();
     input_end ();
