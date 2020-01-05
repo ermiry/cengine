@@ -338,11 +338,11 @@ void ui_dropdown_set_placeholder (Dropdown *dropdown, Renderer *renderer,
 }
 
 // sets the dropdown's placeholder position
-void ui_dropdown_set_placeholder_pos (Dropdown *dropdown, Renderer *renderer, UIPosition pos) {
+void ui_dropdown_set_placeholder_pos (Dropdown *dropdown, UIPosition pos) {
 
     if (dropdown) {
         if (dropdown->placeholder) 
-            ui_transform_component_set_pos (dropdown->placeholder->transform, renderer, &dropdown->ui_element->transform->rect, pos, true);
+            ui_transform_component_set_pos (dropdown->placeholder->transform, NULL, &dropdown->ui_element->transform->rect, pos, true);
     }
 
 }
@@ -370,6 +370,24 @@ void ui_dropdown_option_add (Dropdown *dropdown, DropdownOption *option) {
             // ui_position_update (NULL, op->option->transform, &op->transform->rect, false);
         }
     }
+
+}
+
+// gets an option from a dropdown by its name
+DropdownOption *ui_dropdown_option_get (Dropdown *dropdown, const char *value) {
+
+    DropdownOption *retval = NULL;
+
+    if (dropdown && retval) {
+        DropdownOption *option = ui_dropdown_option_new ();
+        if (option) {
+            option->button->text->text = str_new (value);
+            retval = (DropdownOption *) dlist_search (dropdown->options, option);
+            ui_dropdown_option_delete (option);
+        }
+    }
+
+    return retval;
 
 }
 

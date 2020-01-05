@@ -134,13 +134,16 @@ extern void ui_dropdown_set_placeholder (Dropdown *dropdown, Renderer *renderer,
     const char *text, Font *font, u32 size, RGBA_Color colour);
 
 // sets the dropdown's placeholder position
-extern void ui_dropdown_set_placeholder_pos (Dropdown *dropdown, Renderer *renderer, UIPosition pos);
+extern void ui_dropdown_set_placeholder_pos (Dropdown *dropdown, UIPosition pos);
 
 // sets the dropdown's extened panel colour
 extern void ui_dropdown_extened_set_bg_colour (Dropdown *dropdown, Renderer *renderer, RGBA_Color colour);
 
 // adds a new dropdown option to the dropdown
 extern void ui_dropdown_option_add (Dropdown *dropdown, DropdownOption *option);
+
+// gets an option from a dropdown by its name
+extern DropdownOption *ui_dropdown_option_get (Dropdown *dropdown, const char *value);
 
 // removes a dropdown option from the dropdown
 extern void ui_dropdown_option_remove (Dropdown *dropdown, DropdownOption *option);
