@@ -18,7 +18,7 @@ If the pthreads library is not installed on your system, install it (in Ubuntu) 
 
 In Ubuntu you can simply install the packages from the repos by typing:
 
-`sudo apt-get install libsdl2-dev libsdl2-dev libsdl2-ttf-dev`
+`sudo apt-get install libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev`
 
 ## 2. Download Cengine Source Code
 
