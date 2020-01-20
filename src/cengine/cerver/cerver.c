@@ -124,7 +124,7 @@ static u8 cerver_check_info (Cerver *cerver, Connection *connection) {
 
                 if (!connection->auth_packet) connection_generate_auth_packet (connection);
 
-                if (packet_send (connection->auth_packet, 0, NULL)) {
+                if (packet_send (connection->auth_packet, 0, NULL, false)) {
                     cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to send connection auth packet!");
                 }
 

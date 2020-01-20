@@ -15,18 +15,30 @@ typedef enum LogMsgType {
 
 	LOG_NO_TYPE = 0,
 
-    LOG_ERROR = 1,
-    LOG_WARNING,
-    LOG_SUCCESS,
-    LOG_DEBUG,
+	LOG_ERROR = 1,
+	LOG_WARNING,
+	LOG_SUCCESS,
+	LOG_DEBUG,
 
-    LOG_CLIENT,
+	LOG_CLIENT,
 
-    LOG_TEST,
+	LOG_TEST,
 
 } LogMsgType;
 
 void cengine_log_msg (FILE *__restrict __stream, LogMsgType first_type, LogMsgType second_type,
-    const char *msg, ...);
+	const char *msg, ...);
+
+// prints a red error message to stderr
+void cengine_log_error (const char *msg);
+
+// prints a yellow warning message to stderr
+void cengine_log_warning (const char *msg);
+
+// prints a green success message to stdout
+void cengine_log_success (const char *msg);
+
+// prints a debug message to stdout
+void cengine_log_debug (const char *msg);
 
 #endif

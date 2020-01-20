@@ -40,7 +40,7 @@ void ui_text_component_delete (void *text_ptr) {
         ui_transform_component_delete (text->transform);
         text->font = NULL;
         text->font_source = NULL;
-        str_delete (text->text);
+        // str_delete (text->text);
         if (text->texture) SDL_DestroyTexture (text->texture);
 
         free (text);
@@ -62,6 +62,7 @@ void ui_text_component_init (Text *text, Font *font, unsigned int size, RGBA_Col
         text->font_source = font_source_get_by_size (text->font, text->size);
 
         text->text_color = color;
+
         text->text = text_str ? str_new (text_str) : NULL;
     }
 

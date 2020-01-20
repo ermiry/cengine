@@ -14,6 +14,7 @@
 
 struct _Client;
 struct _Connection;
+struct _Packet;
 struct _PacketsPerType;
 
 typedef struct ClientStats {
@@ -41,7 +42,7 @@ struct _Client {
     // all the actions that have been registered to a client
     DoubleList *registered_actions;
 
-    // custom packet hanlders
+    // custom packet handlers
     Action app_packet_handler;
     Action app_error_packet_handler;
     Action custom_packet_handler;
@@ -88,6 +89,14 @@ extern int client_connection_create (Client *client, const char *name,
 // registers an existing connection to a client
 // retuns 0 on success, 1 on error
 extern int client_connection_register (Client *client, struct _Connection *connection);
+
+// this is a blocking method and ONLY works for cerver packets
+// connects the client connection and makes a first request to the cerver
+// then listen for packets until the target one is received, 
+// then it returns the packet data as it is
+// returns 0 on success, 1 on error
+extern int client_connection_request_to_cerver (Client *client, struct _Connection *connection, 
+    struct _Packet *request_packet);
 
 // starts a client connection
 // returns 0 on success, 1 on error

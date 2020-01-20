@@ -409,7 +409,7 @@ u8 ui_end (void) {
 
     ui_cursor_delete (main_cursor);     // cursor
 
-    // ui_font_end ();     // fonts
+    ui_font_end ();     // fonts
 
     #ifdef CENGINE_DEBUG
     cengine_log_msg (stdout, LOG_SUCCESS, LOG_NO_TYPE, "Done cleaning cengine ui.");

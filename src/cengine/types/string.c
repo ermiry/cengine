@@ -22,7 +22,8 @@ String *str_new (const char *str) {
         if (str) {
             string->len = strlen (str);
             string->str = (char *) calloc (string->len + 1, sizeof (char));
-            char_copy (string->str, (char *) str);
+            if (string->len > 0) char_copy (string->str, (char *) str);
+            else string->str[0] = '\0';
         }
 
         else string->str = NULL;
