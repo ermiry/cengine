@@ -1,3 +1,5 @@
+#include "cengine/version.h"
+
 #include "cengine/cengine.h"
 #include "cengine/assets.h"
 #include "cengine/manager/manager.h"
@@ -139,6 +141,8 @@ static State *app_state_new (void) {
 #pragma endregion
 
 int main (void) {
+
+	version_print_full ();
 
 	// first we init everything related with our own application
 	if (!app_init ()) {
