@@ -14,7 +14,7 @@ void version_print_full (void) {
 // print the version id
 void version_print_version_id (void) {
 
-    printf ("\n\nCengine Version ID: %f\n", VERSION);
+    printf ("\n\nCengine Version ID: %s\n", VERSION);
 
 }
 

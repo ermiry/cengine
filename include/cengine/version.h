@@ -1,7 +1,7 @@
 #ifndef _CENGINE_VERSION_H_
 #define _CENGINE_VERSION_H_
 
-#define VERSION                 0.9
+#define VERSION                 "0.9.1"
 #define VERSION_NAME            "Pre-Release 0.9.1"
 #define VERSION_DATE			"20/01/2020"
 #define VERSION_TIME			"12:19 CST"
