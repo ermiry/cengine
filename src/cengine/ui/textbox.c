@@ -9,12 +9,16 @@
 #include "cengine/types/string.h"
 
 #include "cengine/renderer.h"
+#include "cengine/textures.h"
 
 #include "cengine/ui/ui.h"
 #include "cengine/ui/font.h"
 #include "cengine/ui/textbox.h"
 #include "cengine/ui/components/transform.h"
 #include "cengine/ui/components/text.h"
+
+void ui_textbox_set_text_pos (TextBox *textbox, UIPosition pos);
+void ui_textbox_update_text_pos (TextBox *textbox);
 
 static TextBox *ui_textbox_new (void) {
 
@@ -48,7 +52,24 @@ void ui_textbox_delete (void *textbox_ptr) {
 // sets the textbox's UI position
 void ui_textbox_set_pos (TextBox *textbox, UIRect *ref_rect, UIPosition pos, Renderer *renderer) {
 
-    if (textbox) ui_transform_component_set_pos (textbox->ui_element->transform, renderer, ref_rect, pos, false);
+    if (textbox) {
+        ui_transform_component_set_pos (textbox->ui_element->transform, 
+            renderer, 
+            ref_rect, 
+            pos, 
+            false);
+        ui_textbox_update_text_pos (textbox);
+    } 
+
+}
+
+// sets the textbox's position offset
+void ui_textbox_set_pos_offset (TextBox *textbox, int x_offset, int y_offset) {
+
+    if (textbox) {
+        textbox->ui_element->transform->x_offset = x_offset;
+        textbox->ui_element->transform->y_offset = y_offset;
+    }
 
 }
 
@@ -105,8 +126,45 @@ void ui_textbox_update_text (TextBox *textbox, Renderer *renderer, const char *t
 void ui_textbox_set_text_pos (TextBox *textbox, UIPosition pos) {
 
     if (textbox) {
-        if (textbox->text)
-            ui_transform_component_set_pos (textbox->text->transform, NULL, &textbox->ui_element->transform->rect, pos, true);
+        if (textbox->text) {
+            ui_transform_component_set_pos (textbox->text->transform, 
+                NULL, 
+                &textbox->ui_element->transform->rect, 
+                pos, 
+                true);
+        }
+    }
+
+}
+
+// sets the textbox's text offset
+void ui_textbox_set_text_pos_offset (TextBox *textbox, int x_offset, int y_offset) {
+
+    if (textbox) {
+        if (textbox->text) {
+            textbox->text->transform->x_offset = x_offset;
+            textbox->text->transform->y_offset = y_offset;
+        }
+    }
+
+}
+
+// 04/02/2020 -- 12:03 -- used when the parent component's position has been updated
+// NOTE: to work properly, a text pos needs to be set before calling this method
+void ui_textbox_update_text_pos (TextBox *textbox) {
+
+    if (textbox) {
+        if (textbox->text) {
+            // reset pos to 0
+            textbox->text->transform->rect.x = 0;
+            textbox->text->transform->rect.y = 0;
+
+            // use the previous set position
+            ui_position_update (NULL, 
+                textbox->text->transform, 
+                &textbox->ui_element->transform->rect, 
+                false);
+        }
     }
 
 }
@@ -180,11 +238,12 @@ void ui_textbox_set_bg_color (TextBox *textbox, Renderer *renderer, RGBA_Color c
 }
 
 // removes the background from the textbox
-void ui_textbox_remove_background (TextBox *textbox) {
+void ui_textbox_remove_background (TextBox *textbox, Renderer *renderer) {
 
     if (textbox) {
         if (textbox->bg_texture) {
-            SDL_DestroyTexture (textbox->bg_texture);
+            // SDL_DestroyTexture (textbox->bg_texture);
+            texture_destroy (renderer, textbox->bg_texture);
             textbox->bg_texture = NULL;
         }
 
@@ -215,7 +274,7 @@ TextBox *ui_textbox_create (i32 x, i32 y, u32 w, u32 h, UIPosition pos, Renderer
             textbox->original_h = h;
         }
 
-        else ui_element_delete (ui_element);
+        else ui_element_destroy (ui_element);
     }
 
     return textbox;

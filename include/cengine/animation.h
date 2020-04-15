@@ -5,9 +5,10 @@
 
 #include "cengine/types/types.h"
 #include "cengine/types/string.h"
+#include "cengine/collections/dlist.h"
+
 #include "cengine/timer.h"
 #include "cengine/sprites.h"
-#include "cengine/collections/dlist.h"
 
 #define DEFAULT_ANIM_SPEED      100
 
@@ -45,6 +46,9 @@ extern Animation *animation_get_by_name (DoubleList *animations, const char *nam
 
 typedef struct Animator {
 
+    // 03/02/2020 -- 9:57 -- unique animator id
+    u32 id;
+
     u32 go_id;
     bool start;
     bool playing;
@@ -67,6 +71,7 @@ extern void animator_play_animation (Animator *animator, Animation *animation);
 /*** ANIM THREAD ***/
 
 extern int animations_init (void);
-extern void animations_end (void);
+
+extern u8 animations_end (void);
 
 #endif

@@ -380,15 +380,47 @@ static Image *ui_image_create_common (Renderer *renderer) {
 
 // creates a new image to be displayed from a constant source, like using a sprite loaded from a file
 // x and y for position
-Image *ui_image_create_static (u32 x, u32 y, Renderer *renderer) {
+// w and h for dimensions
+Image *ui_image_create (u32 x, u32 y, u32 w, u32 h, Renderer *renderer) {
 
     Image *image = ui_image_create_common (renderer);
     if (image) {
-        image->ui_element->transform->rect.x = x;
-        image->ui_element->transform->rect.y = y;
+        ui_transform_component_set_values (image->ui_element->transform, x, y, w, h);
     }
 
     return image;
+
+}
+
+u8 ui_image_update_texture_from_mem (Image *image, Renderer *renderer, void *mem, int mem_size) {
+
+    u8 retval = 1;
+
+    if (image && mem) {
+        SDL_RWops *rw = SDL_RWFromConstMem (mem, mem_size);
+        if (rw) {
+            // printf ("Is jpeg? %d\n", IMG_isJPG (rw));
+            // SDL_Surface *surface = IMG_Load_RW (rw, 1);
+            SDL_Surface *surface = IMG_LoadTyped_RW (rw, 0, "JPG");
+            if (surface) {
+                // printf ("Pixel format: %s\n", SDL_GetPixelFormatName (surface->format->format));
+                // Uint32 format = 0;
+                // SDL_QueryTexture (image->texture, &format, NULL, NULL, NULL);
+                // printf ("%s\n", SDL_GetPixelFormatName (format));
+                // printf ("surface pitch: %d\n", surface->pitch);
+
+                if (image->texture) texture_destroy (renderer, image->texture);
+
+                texture_create_from_surface (renderer, &image->texture, surface);
+
+                retval = 0;
+            }
+
+            SDL_FreeRW (rw);
+        }
+    }
+
+    return retval;
 
 }
 
@@ -407,34 +439,36 @@ u8 ui_image_create_streaming_texture (Image *image, Renderer *renderer, Uint32 s
 
 }
 
-// TODO: what about the lock texture method?
+// FIXME: 27/01/2020 -- 1:05 --video memory leak -- or at least memory is filling up preatty quickly
+// TODO: 27/01/2020 -- 00:17 -- refernce this again https://wiki.libsdl.org/SDL_UpdateTexture
 // updates the streaming texture using an in memory buffer representing an image
 // NOTE: buffer is not freed
-u8 ui_image_update_streaming_texture_mem (Image *image, void *mem, int mem_size) {
+u8 ui_image_update_streaming_texture_mem (Image *image, Renderer *renderer, void *mem, int mem_size) {
 
     u8 retval = 1;
 
     if (image && mem) {
         SDL_RWops *rw = SDL_RWFromConstMem (mem, mem_size);
-        // printf ("Is jpeg? %d\n", IMG_isJPG (rw));
-        // SDL_Surface *surface = IMG_Load_RW (rw, 1);
-        SDL_Surface *surface = IMG_LoadTyped_RW (rw, 0, "JPG");
-        // printf ("Pixel format: %s\n", SDL_GetPixelFormatName (surface->format->format));
-        // Uint32 format = 0;
-        // SDL_QueryTexture (image->texture, &format, NULL, NULL, NULL);
-        // printf ("%s\n", SDL_GetPixelFormatName (format));
-        // printf ("surface pitch: %d\n", surface->pitch);
+        if (rw) {
+            // printf ("Is jpeg? %d\n", IMG_isJPG (rw));
+            // SDL_Surface *surface = IMG_Load_RW (rw, 1);
+            SDL_Surface *surface = IMG_LoadTyped_RW (rw, 0, "JPG");
+            if (surface) {
+                // printf ("Pixel format: %s\n", SDL_GetPixelFormatName (surface->format->format));
+                // Uint32 format = 0;
+                // SDL_QueryTexture (image->texture, &format, NULL, NULL, NULL);
+                // printf ("%s\n", SDL_GetPixelFormatName (format));
+                // printf ("surface pitch: %d\n", surface->pitch);
 
-        // update the texture
-        if (!SDL_UpdateTexture (image->texture, NULL, surface->pixels, surface->pitch)) {
-            // SDL_RenderClear (main_renderer->renderer);
-            // SDL_RenderCopy (main_renderer->renderer, image->texture, NULL, &image->transform->rect);
-            // SDL_RenderPresent (main_renderer->renderer);
+                // SDL_DestroyTexture (image->texture);
+                // texture_create_from_surface (renderer, &image->texture, surface);
+                texture_update (renderer, &image->texture, surface);
 
-            retval = 0;
+                retval = 0;
+            }
+
+            SDL_FreeRW (rw);
         }
-
-        // SDL_FreeSurface (surface);
     }
 
     return retval;

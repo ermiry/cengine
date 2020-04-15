@@ -387,8 +387,8 @@ void windows_handle_events (SDL_Event event) {
 
     if (window_to_remove) {
         // printf ("%s\n", (window_to_remove)->renderer->name->str);
-        renderer_delete (dlist_remove (renderers, (window_to_remove)->renderer));
-        window_delete (dlist_remove (windows, window_to_remove));
+        renderer_delete (dlist_remove (renderers, (window_to_remove)->renderer, NULL));
+        window_delete (dlist_remove (windows, window_to_remove, NULL));
         window_to_remove = NULL;
     } 
 

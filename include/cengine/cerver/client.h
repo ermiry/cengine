@@ -106,6 +106,13 @@ extern int client_connection_start (Client *client, struct _Connection *connecti
 // returns 0 on success, 1 on error
 extern int client_connection_end (Client *client, struct _Connection *connection);
 
+// terminates all of the client connections and deletes them
+// return 0 on success, 1 on error
+extern int client_disconnect (Client *client);
+
+// the client got disconnected from the cerver, so correctly clear our data
+extern void client_got_disconnected (Client *client);
+
 /*** Files ***/
 
 // requests a file from the server

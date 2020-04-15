@@ -88,7 +88,24 @@ void ui_button_delete (void *button_ptr) {
 // sets the buttons's UI position
 void ui_button_set_pos (Button *button, UIRect *ref_rect, UIPosition pos, Renderer *renderer) {
 
-    if (button) ui_transform_component_set_pos (button->ui_element->transform, renderer, ref_rect, pos, false);
+    if (button) {
+        ui_transform_component_set_pos (button->ui_element->transform, 
+            renderer, 
+            ref_rect, 
+            pos, 
+            false);
+        ui_button_update_text_pos (button);
+    }
+
+}
+
+// sets the button's position offset
+void ui_button_set_pos_offset (Button *button, int x_offset, int y_offset) {
+
+    if (button) {
+        button->ui_element->transform->x_offset = x_offset;
+        button->ui_element->transform->y_offset = y_offset;
+    }
 
 }
 
@@ -151,12 +168,68 @@ void ui_button_set_text (Button *button, Renderer *renderer, const char *text,
 
 }
 
+// updates the button's text
+void ui_button_update_text (Button *button, Renderer *renderer, const char *text) {
+
+    if (button) {
+        if (button->text) {
+            ui_text_component_update (button->text, text);
+            ui_text_component_draw (button->text, renderer);
+            // ui_transform_component_set_pos (textbox->text->transform, 
+            //     &textbox->transform->rect, textbox->text->transform->pos, true);
+        }
+    }
+
+}
+
 // sets the button's text position
 void ui_button_set_text_pos (Button *button, UIPosition pos) {
 
     if (button) {
         if (button->text)
             ui_transform_component_set_pos (button->text->transform, NULL, &button->ui_element->transform->rect, pos, true);
+    }
+
+}
+
+// sets the button's text offset
+void ui_button_set_text_pos_offset (Button *button, int x_offset, int y_offset) {
+
+    if (button) {
+        if (button->text) {
+            button->text->transform->x_offset = x_offset;
+            button->text->transform->y_offset = y_offset;
+        }
+    }
+
+}
+
+// 16/03/2020 -- used when the parent component's position has been updated
+// NOTE: to work properly, a text pos needs to be set before calling this method
+void ui_button_update_text_pos (Button *button) {
+
+    if (button) {
+        if (button->text) {
+            // reset pos to 0
+            button->text->transform->rect.x = 0;
+            button->text->transform->rect.y = 0;
+
+            // use the previous set position
+            ui_position_update (NULL, 
+                button->text->transform, 
+                &button->ui_element->transform->rect, 
+                false);
+        }
+    }
+
+}
+
+// sets the button font
+void ui_button_set_font (Button *button, Renderer *renderer, Font *font) {
+
+    if (button) {
+        button->text->font = font;
+        ui_text_component_draw (button->text, renderer);
     }
 
 }
@@ -344,7 +417,7 @@ Button *ui_button_create (i32 x, i32 y, u32 w, u32 h, UIPosition pos, Renderer *
             button->double_click_timer = timer_new ();
         }
 
-        else ui_element_delete (ui_element);
+        else ui_element_destroy (ui_element);
     }
 
     return button;
@@ -389,9 +462,16 @@ void ui_button_draw (Button *button, Renderer *renderer) {
 
             if (button->active) {
                 if (renderer->window->mouse) {
+                    UITransform real_position = { 0 };
+                    // real_position.rect.x = button->ui_element->parent ? button->ui_element->parent->transform->rect.x + button->ui_element->transform->rect.x : button->ui_element->transform->rect.x;
+                    real_position.rect.x = button->ui_element->transform->rect.x;
+                    // real_position.rect.y = button->ui_element->parent ? button->ui_element->parent->transform->rect.y + button->ui_element->transform->rect.y : button->ui_element->transform->rect.y;
+                    real_position.rect.y = button->ui_element->transform->rect.y;
+                    if (button->ui_element->parent) parent_ui_element_get_position (button->ui_element->parent, &real_position.rect.x, &real_position.rect.y);
+
                     // check if the mouse is in the button
-                    if (mousePos.x >= button->ui_element->transform->rect.x && mousePos.x <= (button->ui_element->transform->rect.x + button->ui_element->transform->rect.w) && 
-                        mousePos.y >= button->ui_element->transform->rect.y && mousePos.y <= (button->ui_element->transform->rect.y + button->ui_element->transform->rect.h)) {
+                    if (mousePos.x >= real_position.rect.x && mousePos.x <= (real_position.rect.x + button->ui_element->transform->rect.w) && 
+                        mousePos.y >= real_position.rect.y && mousePos.y <= (real_position.rect.y + button->ui_element->transform->rect.h)) {
                         renderer->ui->ui_element_hover = button->ui_element;
                             
                         // check if the user pressed the left button over the mouse

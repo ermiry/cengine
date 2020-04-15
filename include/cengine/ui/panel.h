@@ -5,6 +5,7 @@
 #include <SDL2/SDL_render.h>
 
 #include "cengine/types/types.h"
+#include "cengine/collections/dlist.h"
 
 #include "cengine/video.h"
 #include "cengine/renderer.h"
@@ -12,8 +13,16 @@
 #include "cengine/ui/ui.h"
 #include "cengine/ui/components/transform.h"
 #include "cengine/ui/layout/layout.h"
+#include "cengine/ui/layout/horizontal.h"
+#include "cengine/ui/layout/vertical.h"
+#include "cengine/ui/layout/grid.h"
 
-typedef struct Panel {
+struct _Renderer;
+
+struct _Panel {
+
+	// 08/02/2020 -- aux pointer
+	struct _Renderer *renderer;
 
 	UIElement *ui_element;
 
@@ -33,12 +42,25 @@ typedef struct Panel {
 	LayoutType layout_type;
 	void *layout;
 
+	DoubleList *children;
+
 	// media
 	u32 original_w, original_h;
 
-} Panel;
+};
+
+typedef struct _Panel Panel;
 
 extern void ui_panel_delete (void *panel_ptr);
+
+// sets the panel's UI position
+extern void ui_panel_set_pos (Panel *panel, UIRect *ref_rect, UIPosition pos, Renderer *renderer);
+
+// sets the panel's UI position offset
+extern void ui_panel_set_pos_offset (Panel *panel, int x_offset, int y_offset);
+
+// updates the panel's children positions
+extern void ui_panel_children_update_pos (Panel *panel);
 
 // sets the background colour of the panel
 extern void ui_panel_set_bg_colour (Panel *panel, Renderer *renderer, RGBA_Color colour);
@@ -56,16 +78,26 @@ extern void ui_panel_set_ouline_scale (Panel *panel, float x_scale, float y_scal
 extern void ui_panel_remove_outline (Panel *panel);
 
 // sets the layout for the panel
-extern void ui_panel_layout_set (Panel *panel, LayoutType type);
+extern void ui_panel_layout_set (Panel *panel, LayoutType type, struct _Renderer *renderer);
 
 // removes the existing layout form the panel
 extern void ui_panel_layout_remove (Panel *panel);
 
-// adds a new ui elment to the layout of the panel
-extern void ui_panel_layout_add_element (Panel *panel, UIElement *ui_element);
+// adds a new ui element to the panel's layout's in the specified position (0 indexed)
+extern void ui_panel_layout_add_element_at_pos (Panel *panel, UIElement *ui_element, u32 pos);
+
+// adds a new ui element to the panel's layout's END
+extern void ui_panel_layout_add_element_at_end (Panel *panel, UIElement *ui_element);
 
 // removes a ui element form the panel layout
 extern void ui_panel_layout_remove_element (Panel *panel, UIElement *ui_element);
+
+// adds a new child to the panel
+extern void ui_panel_child_add (Panel *panel, UIElement *ui_element);
+
+// removes a child from the panel (the dlist uses a ui element ids comparator)
+// returns the ui element that was removed
+extern UIElement *ui_panel_child_remove (Panel *panel, UIElement *ui_element);
 
 // creates a new panel
 // x and y for position

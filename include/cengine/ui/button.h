@@ -75,6 +75,9 @@ extern void ui_button_delete (void *button_ptr);
 // sets the buttons's UI position
 extern void ui_button_set_pos (Button *button, UIRect *ref_rect, UIPosition pos, Renderer *renderer);
 
+// sets the button's position offset
+extern void ui_button_set_pos_offset (Button *button, int x_offset, int y_offset);
+
 // sets the button's render dimensions
 extern void ui_button_set_dimensions (Button *button, unsigned int width, unsigned int height);
 
@@ -91,8 +94,21 @@ extern void ui_button_toggle_active (Button *button);
 extern void ui_button_set_text (Button *button, Renderer *renderer, const char *text, 
     Font *font, u32 size, RGBA_Color text_color);
 
+// updates the button's text
+extern void ui_button_update_text (Button *button, Renderer *renderer, const char *text);
+
 // sets the button's text position
 extern void ui_button_set_text_pos (Button *button, UIPosition pos);
+
+// sets the button's text offset
+extern void ui_button_set_text_pos_offset (Button *button, int x_offset, int y_offset);
+
+// 16/03/2020 -- used when the parent component's position has been updated
+// NOTE: to work properly, a text pos needs to be set before calling this method
+extern void ui_button_update_text_pos (Button *button);
+
+// sets the button font
+extern void ui_button_set_font (Button *button, Renderer *renderer, Font *font);
 
 // sets the button's text color
 extern void ui_button_set_text_color (Button *button, Renderer *renderer, RGBA_Color color);

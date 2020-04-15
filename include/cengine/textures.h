@@ -24,6 +24,17 @@ extern void texture_create_from_surface (Renderer *renderer, SDL_Texture **textu
 // the image data msut be freed using image_data_delete
 extern ImageData *texture_load (Renderer *renderer, const char *filename, SDL_Texture **texture);
 
+// thread safe wrapper method for SDL_UpdateTexture () using SDL_LockTexture () and SDL_UnlockTexture ()
+// mostly intended for internal cengine usage
+// previous texture is not destroyed, surface is destroyed
+extern void texture_update (Renderer *renderer, SDL_Texture **texture, SDL_Surface *surface);
+
+// 27/01/2020 -- 7:11 -- wrapper method for SDL_DestroyTexture () as it is not thread safe
+// this method should be called instead of SDL_DestroyTexture () to avoid video memory leaks
+extern void texture_destroy (Renderer *renderer, SDL_Texture *texture);
+
+extern void texture_destroy_wrapper (void *texture_ptr);
+
 // gets the texture's width and height
 extern void texture_get_dimensions (SDL_Texture *texture, u32 *w, u32 *h);
 

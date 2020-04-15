@@ -9,6 +9,7 @@
 #include "cengine/collections/dlist.h"
 
 #include "cengine/cengine.h"
+#include "cengine/events.h"
 #include "cengine/input.h"
 #include "cengine/window.h"
 
@@ -113,11 +114,13 @@ static void input_on_mouse_scroll (SDL_Event event) {
 
     // scroll up
     if (event.wheel.y > 0) {
+        cengine_event_trigger (CENGINE_EVENT_SCROLL_UP, &event.wheel.y);
         if (on_mouse_wheel_scroll_up) on_mouse_wheel_scroll_up (&event.wheel.y);
     }
 
     // scroll down
     else if (event.wheel.y < 0) {
+        cengine_event_trigger (CENGINE_EVENT_SCROLL_DOWN, &event.wheel.y);
         if (on_mouse_wheel_scroll_down) on_mouse_wheel_scroll_down (&event.wheel.y);
     }
 
@@ -358,13 +361,15 @@ void input_init (void) {
 
 }
 
-void input_end (void) {
+u8 input_end (void) {
 
     SDL_StopTextInput ();
 
     dlist_delete (command_actions);
 
     dlist_delete (keys_events);
+
+    return 0;
 
 }
 

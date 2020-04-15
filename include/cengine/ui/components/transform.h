@@ -17,6 +17,9 @@ struct _UITransform {
     UIRect rect;
     int x_scale, y_scale;
 
+    // 06/02/2020
+    int x_offset, y_offset;
+
 };
 
 typedef struct _UITransform UITransform;

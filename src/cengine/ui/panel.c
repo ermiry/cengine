@@ -2,19 +2,30 @@
 #include <string.h>
 
 #include "cengine/types/types.h"
+#include "cengine/collections/dlist.h"
 
 #include "cengine/video.h"
 #include "cengine/renderer.h"
+#include "cengine/textures.h"
 
 #include "cengine/ui/ui.h"
 #include "cengine/ui/panel.h"
 #include "cengine/ui/components/transform.h"
+
+// used for children
+#include "cengine/ui/inputfield.h"
+#include "cengine/ui/button.h"
+#include "cengine/ui/image.h"
+#include "cengine/ui/textbox.h"
 
 #include "cengine/ui/layout/layout.h"
 #include "cengine/ui/layout/horizontal.h"
 #include "cengine/ui/layout/vertical.h"
 #include "cengine/ui/layout/grid.h"
 
+void ui_panel_child_add (Panel *panel, UIElement *ui_element);
+UIElement *ui_panel_child_remove (Panel *panel, UIElement *ui_element);
+void ui_panel_children_update_pos (Panel *panel);
 void ui_panel_layout_remove (Panel *panel);
 
 static Panel *ui_panel_new (void) {
@@ -22,6 +33,9 @@ static Panel *ui_panel_new (void) {
     Panel *panel = (Panel *) malloc (sizeof (Panel));
     if (panel) {
         memset (panel, 0, sizeof (Panel));
+
+        panel->renderer = NULL;
+
         panel->ui_element = NULL;
 
         panel->colour = false;
@@ -29,6 +43,8 @@ static Panel *ui_panel_new (void) {
         panel->outline = false;
 
         panel->layout = NULL;
+
+        panel->children = NULL;
     }
 
     return panel;
@@ -41,11 +57,100 @@ void ui_panel_delete (void *panel_ptr) {
         Panel *panel = (Panel *) panel_ptr;
 
         panel->ui_element = NULL;
-        if (panel->bg_texture) SDL_DestroyTexture (panel->bg_texture);
+
+        texture_destroy (panel->renderer, panel->bg_texture);
 
         ui_panel_layout_remove (panel);
 
+        dlist_delete (panel->children);
+
         free (panel);
+    }
+
+}
+
+// sets the panel's UI position
+void ui_panel_set_pos (Panel *panel, UIRect *ref_rect, UIPosition pos, Renderer *renderer) {
+
+    if (panel) {
+        ui_transform_component_set_pos (panel->ui_element->transform, 
+            renderer, 
+            ref_rect, 
+            pos, 
+            false);
+        ui_panel_children_update_pos (panel);
+    }
+
+}
+
+// sets the panel's UI position offset
+void ui_panel_set_pos_offset (Panel *panel, int x_offset, int y_offset) {
+
+    if (panel) {
+        panel->ui_element->transform->x_offset = x_offset;
+        panel->ui_element->transform->y_offset = y_offset;
+    }
+
+}
+
+// updates the panel's children positions
+void ui_panel_children_update_pos (Panel *panel) {
+
+    if (panel) {
+        for (ListElement *le = dlist_start (panel->children); le; le = le->next) {
+            UIElement *child = (UIElement *) le->data;
+
+            // update the element's transform values
+            switch (child->type) {
+                case UI_BUTTON: {
+                    // FIXME: make sure that all values are updated as well
+                    ui_button_set_pos ((Button *) child->element,
+                        &panel->ui_element->transform->rect,
+                        child->transform->pos,
+                        NULL);
+                } break;
+
+                case UI_IMAGE: {
+                    ui_image_set_pos ((Image *) child->element,
+                        &panel->ui_element->transform->rect, 
+                        child->transform->pos, 
+                        NULL);
+                }
+
+                case UI_INPUT: {
+                    // FIXME: 04/02/2020 -- 18:03 -- update children's pos
+                    ui_input_field_set_pos ((InputField *) child->element,
+                        &panel->ui_element->transform->rect, 
+                        child->transform->pos, 
+                        NULL);
+                } break;
+
+                case UI_PANEL: {
+                    // FIXME: 04/02/2020 -- 18:03 -- update children's pos
+                    ui_panel_set_pos ((Panel *) child->element, 
+                        &panel->ui_element->transform->rect, 
+                        child->transform->pos, 
+                        NULL);
+                    // ui_position_update_to_parent (panel->ui_element->transform,
+                    //     ((Panel *) child->element)->ui_element->transform, false);
+                } break;
+
+                case UI_TEXTBOX: {
+                    TextBox *textbox = (TextBox *) child->element;
+                    ui_textbox_set_pos (textbox,
+                        &panel->ui_element->transform->rect, 
+                        child->transform->pos, 
+                        NULL);
+                    // FIXME:
+                    // ui_position_update_to_parent (panel->ui_element->transform,
+                    //     textbox->ui_element->transform, false);
+                    // ui_textbox_update_text_pos (textbox);
+                    // printf ("%d - %d\n", textbox->ui_element->transform->rect.x, textbox->ui_element->transform->rect.y);
+                }
+
+                default: break;
+            }
+        }
     }
 
 }
@@ -70,7 +175,7 @@ void ui_panel_remove_background (Panel *panel) {
 
     if (panel) {
         if (panel->bg_texture) {
-            SDL_DestroyTexture (panel->bg_texture);
+            texture_destroy (panel->renderer, panel->bg_texture);
             panel->bg_texture = NULL;
         }
 
@@ -111,7 +216,7 @@ void ui_panel_remove_outline (Panel *panel) {
 }
 
 // sets the layout for the panel
-void ui_panel_layout_set (Panel *panel, LayoutType type) {
+void ui_panel_layout_set (Panel *panel, LayoutType type, Renderer *renderer) {
 
     if (panel) {
         if (panel->layout) ui_panel_layout_remove (panel);
@@ -119,16 +224,20 @@ void ui_panel_layout_set (Panel *panel, LayoutType type) {
         panel->layout_type = type;
         switch (panel->layout_type) {
             case LAYOUT_TYPE_HORIZONTAL: 
-                panel->layout = ui_layout_horizontal_create (panel->ui_element->transform->rect.y, panel->ui_element->transform->rect.x, 
-                    panel->ui_element->transform->rect.w, panel->ui_element->transform->rect.h);
+                panel->layout = ui_layout_horizontal_create (panel->ui_element->transform->rect.x, panel->ui_element->transform->rect.y, 
+                    panel->ui_element->transform->rect.w, panel->ui_element->transform->rect.h,
+                    // panel,
+                    renderer);
                 break;
             case LAYOUT_TYPE_VERTICAL:
-                panel->layout = ui_layout_vertical_create (panel->ui_element->transform->rect.y, panel->ui_element->transform->rect.x, 
-                    panel->ui_element->transform->rect.w, panel->ui_element->transform->rect.h);
+                panel->layout = ui_layout_vertical_create (panel->ui_element->transform->rect.x, panel->ui_element->transform->rect.y, 
+                    panel->ui_element->transform->rect.w, panel->ui_element->transform->rect.h, 
+                    renderer);
                 break;
             case LAYOUT_TYPE_GRID: 
                 panel->layout = ui_layout_grid_create (panel->ui_element->transform->rect.x, panel->ui_element->transform->rect.y, 
-                    panel->ui_element->transform->rect.w, panel->ui_element->transform->rect.h);
+                    panel->ui_element->transform->rect.w, panel->ui_element->transform->rect.h,
+                    renderer);
                 break;
 
             default: break;
@@ -157,18 +266,60 @@ void ui_panel_layout_remove (Panel *panel) {
 
 }
 
-// adds a new ui elment to the layout of the panel
-void ui_panel_layout_add_element (Panel *panel, UIElement *ui_element) {
+// adds a new ui element to the panel's layout's in the specified position (0 indexed)
+void ui_panel_layout_add_element_at_pos (Panel *panel, UIElement *ui_element, u32 pos) {
 
     if (panel && ui_element) {
         if (panel->layout) {
             switch (panel->layout_type) {
-                case LAYOUT_TYPE_HORIZONTAL: break;
-                case LAYOUT_TYPE_VERTICAL: break;
+                case LAYOUT_TYPE_HORIZONTAL: 
+                    ui_layout_horizontal_add_at_pos ((HorizontalLayout *) panel->layout, ui_element, pos);
+                    break;
+                case LAYOUT_TYPE_VERTICAL: 
+                    ui_layout_vertical_add_at_pos ((VerticalLayout *) panel->layout, ui_element, pos);
+                    break;
                 case LAYOUT_TYPE_GRID: 
-                    ui_layout_grid_add_element ((GridLayout *) panel->layout, ui_element); 
+                    ui_layout_grid_add_element_at_pos ((GridLayout *) panel->layout, ui_element, pos);
                     break;
 
+                default: break;
+            }
+
+            switch (ui_element->type) {
+                case UI_PANEL: ui_panel_children_update_pos ((Panel *) ui_element->element); break;
+                
+                default: break;
+            }
+        }
+    }
+
+}
+
+// adds a new ui element to the panel's layout's END
+void ui_panel_layout_add_element_at_end (Panel *panel, UIElement *ui_element) {
+
+    if (panel && ui_element) {
+        if (panel->layout) {
+            // add the element to the panel's children
+            ui_panel_child_add (panel, ui_element);
+
+            switch (panel->layout_type) {
+                case LAYOUT_TYPE_HORIZONTAL: 
+                    ui_layout_horizontal_add_at_end ((HorizontalLayout *) panel->layout, ui_element);
+                    break;
+                case LAYOUT_TYPE_VERTICAL:
+                    ui_layout_vertical_add_at_end ((VerticalLayout *) panel->layout, ui_element);
+                    break;
+                case LAYOUT_TYPE_GRID: 
+                    ui_layout_grid_add_element_at_end ((GridLayout *) panel->layout, ui_element);
+                    break;
+
+                default: break;
+            }
+
+            switch (ui_element->type) {
+                case UI_PANEL: ui_panel_children_update_pos ((Panel *) ui_element->element); break;
+                
                 default: break;
             }
         }
@@ -182,16 +333,67 @@ void ui_panel_layout_remove_element (Panel *panel, UIElement *ui_element) {
     if (panel && ui_element) {
         if (panel->layout) {
             switch (panel->layout_type) {
-                case LAYOUT_TYPE_HORIZONTAL: break;
-                case LAYOUT_TYPE_VERTICAL: break;
+                case LAYOUT_TYPE_HORIZONTAL: 
+                    ui_layout_horizontal_remove ((HorizontalLayout *) panel->layout, ui_element);
+                    break;
+                case LAYOUT_TYPE_VERTICAL: 
+                    ui_layout_vertical_remove ((VerticalLayout *) panel->layout, ui_element);
+                    break;
                 case LAYOUT_TYPE_GRID: 
                     ui_layout_grid_remove_element ((GridLayout *) panel->layout, ui_element); 
                     break;
 
                 default: break;
             }
+
+            // remove the element from the panel's children
+            ui_panel_child_remove (panel, ui_element);
         }
     }
+
+}
+
+// adds a new child to the panel
+// the element's position will be manage by the panel
+// when the panel gets destroyed, all of their children get destroyed as well 
+void ui_panel_child_add (Panel *panel, UIElement *ui_element) {
+
+    if (panel && ui_element) {
+        // remove the element from the ui elements
+        ui_remove_element (panel->renderer->ui, ui_element);
+
+        // remove element from its layers to let the panel manage how the element gets renderer
+        Layer *layer = layer_get_by_pos (panel->renderer->ui->ui_elements_layers, 
+            ui_element->layer_id);
+        layer_remove_element (layer, ui_element);
+
+        dlist_insert_after (panel->children, dlist_end (panel->children), ui_element);
+
+        ui_element->parent = panel->ui_element;
+    }
+
+}
+
+// removes a child from the panel (the dlist uses a ui element ids comparator)
+// returns the ui element that was removed
+UIElement *ui_panel_child_remove (Panel *panel, UIElement *ui_element) {
+
+    UIElement *retval = NULL;
+
+    if (panel && ui_element) {
+        retval = (UIElement *) dlist_remove (panel->children, ui_element, NULL);
+
+        // add the element back to its original layer
+        layer_add_element (layer_get_by_pos (panel->renderer->ui->ui_elements_layers,
+            ui_element->layer_id), ui_element);
+
+        // add the element back to the UI
+        ui_add_element (panel->renderer->ui, ui_element);
+
+        ui_element->parent = NULL;
+    }
+
+    return retval;
 
 }
 
@@ -205,6 +407,8 @@ Panel *ui_panel_create (i32 x, i32 y, u32 w, u32 h, UIPosition pos, Renderer *re
     if (ui_element) {
         panel = ui_panel_new ();
         if (panel) {
+            panel->renderer = renderer;
+
             panel->ui_element = ui_element;
             ui_transform_component_set_values (panel->ui_element->transform, x, y, w, h);
             ui_transform_component_set_pos (panel->ui_element->transform, renderer, NULL, pos, true);
@@ -213,6 +417,8 @@ Panel *ui_panel_create (i32 x, i32 y, u32 w, u32 h, UIPosition pos, Renderer *re
 
             panel->outline_scale_x = 1;
             panel->outline_scale_y = 1;
+
+            panel->children = dlist_init (ui_element_delete, ui_element_comparator);
 
             panel->original_w = w;
             panel->original_h = h;
@@ -260,10 +466,26 @@ void ui_panel_draw (Panel *panel, Renderer *renderer) {
                 }
             }
 
+            // 08/02/2020 - render the panel's children
+            if (panel->children) {
+                // SDL_Rect viewport;
+                // SDL_RenderGetViewport (renderer->renderer, &viewport);
+
+                if (panel->layout) SDL_RenderSetViewport (renderer->renderer, &panel->ui_element->transform->rect);
+                for (ListElement *le = dlist_start (panel->children); le; le = le->next)
+                    ui_render_element (renderer, (UIElement *) le->data);
+                
+                // renderer_set_viewport (renderer, viewport.x, viewport.y, viewport.w, viewport.h);
+                if (panel->layout) renderer_set_viewport_to_window_size (renderer);
+                // renderer_set_viewport_to_previous_size (renderer);
+            }
+
             // render the outline
-            if (panel->outline) 
+            if (panel->outline) {
                 render_basic_outline_rect (renderer, &panel->ui_element->transform->rect, panel->outline_colour,
                     panel->outline_scale_x, panel->outline_scale_y);
+            }
+                
 
             renderer->render_count += 1;
         }

@@ -100,7 +100,8 @@ void ui_text_component_draw (Text *text, Renderer *renderer) {
 
     if (text) {
         if (text->texture) {
-            SDL_DestroyTexture (text->texture);
+            // SDL_DestroyTexture (text->texture);
+            texture_destroy (renderer, text->texture);
             text->texture = NULL;
         }
 

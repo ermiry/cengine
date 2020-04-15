@@ -15,6 +15,8 @@ typedef enum ClientEventType {
     EVENT_CONNECTION_FAILED,    // failed to connect to cerver
     EVENT_DISCONNECTED,         // disconnected from the cerver, either by the cerver or by losing connection
 
+    EVENT_CONNECTION_CLOSE,     // this happens when a call to a recv () methods returns <= 0, the connection is clossed directly by cengine
+
     EVENT_CERVER_INFO,          // received cerver info from the cerver
     EVENT_CERVER_TEARDOWN,      // the cerver is going to teardown (disconnect happens automatically)
     EVENT_CERVER_STATS,         // received cerver stats
@@ -51,6 +53,7 @@ typedef struct ClientEvent {
 } ClientEvent;
 
 extern u8 client_events_init (struct _Client *client);
+
 extern void client_events_end (struct _Client *client);
 
 // register to trigger an action when the specified event occurs

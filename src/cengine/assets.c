@@ -15,23 +15,13 @@ void cengine_assets_set_path (const char *pathname) {
 
 }
 
-static const String *ui_default_assets_path = NULL;
+const String *ui_default_assets_path = NULL;
 
 // sets the location of cengine's default ui assets
-void ui_default_assets_set_path (const char *pathname) {
+void cengine_default_assets_set_path (const char *pathname) {
 
     str_delete ((String *) ui_default_assets_path);
     ui_default_assets_path = pathname ? str_new (pathname) : NULL;
-
-}
-
-static u8 ui_default_assets_load_checks (void) {
-
-    u8 retval = 1;
-
-    // TODO:
-
-    return retval;
 
 }
 
@@ -55,10 +45,12 @@ u8 ui_default_assets_load (void) {
 
 }
 
-void assets_end (void) {
+u8 assets_end (void) {
 
     str_delete ((String *) cengine_assets_path);
 
     str_delete ((String *) ui_default_assets_path);
+
+    return 0;
 
 }

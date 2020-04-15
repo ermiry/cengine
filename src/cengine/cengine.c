@@ -11,6 +11,7 @@
 
 #include "cengine/animation.h"
 #include "cengine/assets.h"
+#include "cengine/events.h"
 #include "cengine/input.h"
 #include "cengine/renderer.h"
 #include "cengine/window.h"
@@ -41,6 +42,10 @@ int cengine_init (void) {
 
         retval = animations_init ();
         if (retval) cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to init cengine's animations!");
+        errors |= retval;
+
+        retval = cengine_events_init ();
+        if (retval) cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to init cengine's events!");
         errors |= retval;
 
         retval = render_init ();
@@ -77,6 +82,9 @@ int cengine_init (void) {
 
 int cengine_end (void) {
 
+    u8 errors = 0;
+    // u8 retval = 0;
+
     if (manager) {
         if (manager->curr_state) {
             if (manager->curr_state->on_exit)
@@ -86,18 +94,27 @@ int cengine_end (void) {
         manager_delete (manager);
     }
 
-    assets_end ();
-    input_end ();
+    errors |= assets_end ();
+
+    errors |= cengine_events_end ();
+
+    errors |= input_end ();
+
+    // TODO: change to game_end ()
     camera_destroy (main_camera);
-    ui_end ();
-    render_end ();
     game_object_destroy_all ();
-    animations_end ();
+
+    errors |= ui_end ();
+
+    errors |= render_end ();
+    
+    errors |= animations_end ();
+
     thread_hub_end_global ();
 
     SDL_Quit ();
 
-    return 0;
+    return errors;
 
 }
 

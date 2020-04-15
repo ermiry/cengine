@@ -14,7 +14,7 @@
 struct _Window;
 struct _Renderer;
 struct _UI;
-// struct _UITransform;
+struct _UITransform;
 
 typedef enum UIElementType {
 
@@ -35,6 +35,9 @@ typedef enum UIElementType {
 
 struct _UIElement {
 
+    // 09/02/2020 - aux reference to the UI this element belongs to
+    struct _UI *ui;
+
     i32 id;
 
     bool active;
@@ -44,6 +47,8 @@ struct _UIElement {
     void *element;
     struct _UITransform *transform;
 
+    struct _UIElement *parent;
+
 };
 
 typedef struct _UIElement UIElement;
@@ -51,15 +56,13 @@ typedef struct _UIElement UIElement;
 // ui element constructor
 extern UIElement *ui_element_create (struct _UI *ui, UIElementType type);
 
-// deactivates the ui element and destroys its component (this is what the user should call)
-extern void ui_element_destroy (UIElement *ui_element);
-
-// completely deletes the UI element (only called by dengine functions)
-extern void ui_element_delete (UIElement *ui_element);
-
-extern void ui_element_delete (UIElement *ui_element);
+// deletes the ui element directly
+extern void ui_element_delete (void *ui_element_ptr);
 
 extern void ui_element_delete_dummy (void *ui_element_ptr);
+
+// removes the element from the ui and then deletes it
+extern void ui_element_destroy (void *ui_element_ptr);
 
 extern int ui_element_comparator (const void *one, const void *two);
 
@@ -72,12 +75,13 @@ extern void ui_element_toggle_active (UIElement *ui_element);
 
 extern void ui_element_set_active (UIElement *ui_element, bool active);
 
+extern void parent_ui_element_get_position (UIElement *parent, int *x, int *y);
+
 struct _UI {
 
-    UIElement **ui_elements;
-    u32 max_ui_elements;
-    u32 curr_max_ui_elements;
-    u32 new_ui_element_id;
+    // 08/02/2020 -- 21:17
+    i32 new_ui_element_id;
+    DoubleList *ui_elements;
 
     DoubleList *ui_elements_layers;
 
@@ -94,13 +98,25 @@ extern UI *ui_create (void);
 
 extern UIElement *ui_element_hover_get (UI *ui);
 
-/*** Public ui funcs ***/
+// adds a new ui element back to the UI
+// returns 0 on success, 1 on error
+extern u8 ui_add_element (UI *ui, UIElement *ui_element);
+
+// removes a ui element from the UI
+extern UIElement *ui_remove_element (UI *ui, UIElement *ui_element);
+
+/*** render ***/
 
 // resize the ui elements to fit new window
 extern void ui_resize (struct _Window *window);
 
+// renders the ui element to the screen
+extern void ui_render_element (struct _Renderer *renderer, UIElement *ui_element);
+
 // renders all the current active ui to the screen
 extern void ui_render (struct _Renderer *renderer);
+
+/*** main ***/
 
 // initializes cengine's ui capabilities
 extern u8 ui_init (void);

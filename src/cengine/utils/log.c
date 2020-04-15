@@ -66,21 +66,21 @@ void cengine_log_msg (FILE *__restrict __stream, LogMsgType first_type, LogMsgTy
 // prints a red error message to stderr
 void cengine_log_error (const char *msg) {
 
-	if (msg) fprintf (stderr, COLOR_RED "%s\n" COLOR_RESET, msg);
+	if (msg) fprintf (stderr, COLOR_RED "[ERROR]: " "%s\n" COLOR_RESET, msg);
 
 }
 
 // prints a yellow warning message to stderr
 void cengine_log_warning (const char *msg) {
 
-	if (msg) fprintf (stderr, COLOR_YELLOW "%s\n" COLOR_RESET, msg);
+	if (msg) fprintf (stderr, COLOR_YELLOW "[WARNING]: " "%s\n" COLOR_RESET, msg);
 
 }
 
 // prints a green success message to stdout
 void cengine_log_success (const char *msg) {
 
-	if (msg) fprintf (stdout, COLOR_GREEN "%s\n" COLOR_RESET, msg);
+	if (msg) fprintf (stdout, COLOR_GREEN "[SUCCESS]: " "%s\n" COLOR_RESET, msg);
 
 }
 

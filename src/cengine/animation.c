@@ -210,12 +210,17 @@ Animation *animation_get_by_name (DoubleList *animations, const char *name) {
 
 /*** Animator ***/
 
+static u32 next_animator_id = 0;
+
 DoubleList *animators = NULL;
 
 Animator *animator_new (u32 objectID) {
 
     Animator *new_animator = (Animator *) malloc (sizeof (Animator));
     if (new_animator) {
+        new_animator->id = next_animator_id;
+        next_animator_id += 1;
+
         new_animator->go_id = objectID;
         new_animator->start = true;
         new_animator->playing = false;
@@ -246,7 +251,8 @@ void animator_destroy (Animator *animator) {
 
         timer_destroy (animator->timer);
 
-        void *data = dlist_remove_element (animators, dlist_get_element (animators, animator));
+        void *data = dlist_remove (animators, animator, NULL);
+        // void *data = dlist_remove_element (animators, dlist_get_element (animators, animator));
         if (data) free (data);
         else free (animator);
     }
@@ -259,14 +265,14 @@ static void animator_destroy_ref (void *data) {
     
 }
 
-static int animator_comparator (const void *one, const void *two) {
+static int animator_comparator_by_id (const void *one, const void *two) {
 
     if (one && two) {
         Animator *anim_one = (Animator *) one;
         Animator *anim_two = (Animator *) two;
 
-        if (anim_one->go_id < anim_two->go_id) return -1;
-        else if (anim_one->go_id == anim_two->go_id) return 0;
+        if (anim_one->id < anim_two->id) return -1;
+        else if (anim_one->id == anim_two->id) return 0;
         else return 1;
     }
 }
@@ -370,7 +376,7 @@ int animations_init (void) {
 
     int errors = 0;
 
-    animators = dlist_init (animator_destroy_ref, animator_comparator);
+    animators = dlist_init (animator_destroy_ref, animator_comparator_by_id);
     if (animators) {
         if (thread_create_detachable (animations_update, NULL)) {
             cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to create animations thread!");
@@ -389,8 +395,14 @@ int animations_init (void) {
 
 }
 
-void animations_end (void) {
+u8 animations_end (void) {
 
     dlist_delete (animators);
+
+    #ifdef CENGINE_DEBUG
+    cengine_log_msg (stdout, LOG_SUCCESS, LOG_NO_TYPE, "Done cleaning cengine animations.");
+    #endif
+
+    return 0;
 
 }

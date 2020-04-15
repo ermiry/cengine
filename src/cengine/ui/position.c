@@ -86,10 +86,29 @@ void ui_position_update (Renderer *renderer, void *transform_ptr, UIRect *ref_re
             default: break;
         }
 
+        transform->rect.x += transform->x_offset;
+        transform->rect.y += transform->y_offset;
+
         if (transform->pos != UI_POS_FREE && offset) {
             transform->rect.x -= x_offset;
             transform->rect.y -= y_offset;
         }
     }
+
+}
+
+// updates the transform's position relative to be relative to its parent (x && y = 0)
+void ui_position_update_to_parent (void *parent_transform_ptr, void *transform_ptr, bool offset) {
+
+    UITransform *parent_transform = (UITransform *) parent_transform_ptr;
+
+    SDL_Rect rect = {
+        .x = 0,
+        .y = 0,
+        .w = parent_transform->rect.w,
+        .h = parent_transform->rect.h
+    };
+
+    ui_position_update (NULL, transform_ptr, &rect, offset);
 
 }

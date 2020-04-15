@@ -63,7 +63,7 @@ extern bool input_is_key_down (const SDL_Scancode key);
 
 extern void input_init (void);
 
-extern void input_end (void);
+extern u8 input_end (void);
 
 extern void input_handle (SDL_Event event);
 

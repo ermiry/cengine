@@ -24,6 +24,7 @@
 #include "cengine/utils/log.h"
 #include "cengine/utils/utils.h"
 
+int client_disconnect (Client *client);
 int client_connection_end (Client *client, Connection *connection);
 Connection *client_connection_get_by_socket (Client *client, i32 sock_fd);
 
@@ -185,14 +186,7 @@ u8 client_teardown (Client *client) {
     u8 retval = 1;
 
     if (client) {
-        // end any ongoing connection
-        for (ListElement *le = dlist_start (client->connections); le; le = le->next) {
-            // connection_end ((Connection *) le->data);
-            client_connection_end (client, (Connection *) le->data);
-            le->data = NULL;
-        }
-
-        client->running = false;
+        client_disconnect (client);
 
         client_delete (client);
 
@@ -352,13 +346,57 @@ int client_connection_end (Client *client, Connection *connection) {
     if (client && connection) {
         connection_end (connection);
 
-        connection_delete (dlist_remove_element (client->connections, 
-            dlist_get_element (client->connections, connection)));
+        // connection_delete (dlist_remove_element (client->connections, 
+        //     dlist_get_element (client->connections, connection, NULL)));
+        connection_delete (dlist_remove (client->connections, connection, NULL));
 
         retval = 0;
     }
 
     return retval;
+
+}
+
+// terminates all of the client connections and deletes them
+// return 0 on success, 1 on error
+int client_disconnect (Client *client) {
+
+    int retval = 1;
+
+    if (client) {
+        // end any ongoing connection
+        for (ListElement *le = dlist_start (client->connections); le; le = le->next) {
+            connection_end ((Connection *) le->data);
+        }
+
+        dlist_reset (client->connections);
+
+        // reset client
+        client->running = false;
+        client->time_started = 0;
+
+        retval = 0;
+    }
+
+    return retval;
+
+}
+
+// the client got disconnected from the cerver, so correctly clear our data
+void client_got_disconnected (Client *client) {
+
+    if (client) {
+        // close any ongoing connection
+        for (ListElement *le = dlist_start (client->connections); le; le = le->next) {
+            connection_close ((Connection *) le->data);
+        }
+
+        dlist_reset (client->connections);
+
+        // reset client
+        client->running = false;
+        client->time_started = 0;
+    }
 
 }
 

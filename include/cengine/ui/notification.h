@@ -127,8 +127,8 @@ extern void ui_notification_create_and_display (struct _NotiCenter *noti_center,
 /*** Notification Center ***/
 
 // FIXME: change to work with percentages!!
-#define NOTI_CENTER_DEFAULT_WIDTH           300
-#define NOTI_CENTER_DEFAULT_HEIGHT          300
+#define NOTI_CENTER_DEFAULT_WIDTH           400
+#define NOTI_CENTER_DEFAULT_HEIGHT          1000
 
 struct _NotiCenter {
 

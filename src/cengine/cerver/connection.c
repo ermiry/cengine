@@ -407,3 +407,16 @@ void connection_end (Connection *connection) {
     }
 
 }
+
+// closes a connection directly
+void connection_close (Connection *connection) {
+
+    if (connection) {
+        if (connection->connected) {
+            close (connection->sock_fd);
+            // connection->sock_fd = -1;
+            connection->connected = false;
+        }
+    }
+
+}

@@ -44,6 +44,9 @@ extern String *ui_textbox_get_text (TextBox *textbox);
 // sets the textbox's UI position
 extern void ui_textbox_set_pos (TextBox *textbox, UIRect *ref_rect, UIPosition pos, Renderer *renderer);
 
+// sets the textbox's position offset
+extern void ui_textbox_set_pos_offset (TextBox *textbox, int x_offset, int y_offset);
+
 // sets the textbox's text
 extern void ui_textbox_set_text (TextBox *textbox, Renderer *renderer, const char *text, 
 	Font *font, u32 size, RGBA_Color color, bool adjust_to_text);
@@ -53,6 +56,13 @@ extern void ui_textbox_update_text (TextBox *textbox, Renderer *renderer, const 
 
 // sets the textbox's text position
 extern void ui_textbox_set_text_pos (TextBox *textbox, UIPosition pos);
+
+// sets the textbox's text offset
+extern void ui_textbox_set_text_pos_offset (TextBox *textbox, int x_offset, int y_offset);
+
+// 04/02/2020 -- 12:03 -- used when the parent component's position has been updated
+// NOTE: to work properly, a text pos needs to be set before calling this method
+extern void ui_textbox_update_text_pos (TextBox *textbox);
 
 // sets the textbox font
 extern void ui_textbox_set_font (TextBox *textbox, Renderer *renderer, Font *font);
@@ -73,7 +83,7 @@ extern void ui_textbox_remove_outline (TextBox *textbox);
 extern void ui_textbox_set_bg_color (TextBox *textbox, Renderer *renderer, RGBA_Color color);
 
 // removes the background from the textbox
-extern void ui_textbox_remove_background (TextBox *textbox);
+extern void ui_textbox_remove_background (TextBox *textbox, Renderer *renderer);
 
 // creates a new textbox
 extern TextBox *ui_textbox_create (i32 x, i32 y, u32 w, u32 h, UIPosition pos, Renderer *renderer);

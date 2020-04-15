@@ -122,7 +122,7 @@ int game_object_remove_from_tag (GameObject *go, const char *tag_name) {
         GameObjectTag *tag = game_object_tag_get_by_name (tag_name);
         if (tag) {
             // search the game object inside the tag
-            ListElement *le = dlist_get_element (tag->gos, go);
+            ListElement *le = dlist_get_element (tag->gos, go, NULL);
             if (le) {
                 void *data = dlist_remove_element (tag->gos, le);
                 if (data) retval = 0;

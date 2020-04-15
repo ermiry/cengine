@@ -13,6 +13,89 @@
 #include "cengine/utils/utils.h"
 #include "cengine/utils/log.h"
 
+#pragma region cerver stats
+
+static CerverStats *cerver_stats_new (void) {
+
+    CerverStats *cerver_stats = (CerverStats *) malloc (sizeof (CerverStats));
+    if (cerver_stats) {
+        memset (cerver_stats, 0, sizeof (CerverStats));
+        cerver_stats->received_packets = packets_per_type_new ();
+        cerver_stats->sent_packets = packets_per_type_new ();
+    } 
+
+    return cerver_stats;
+
+}
+
+static void cerver_stats_delete (CerverStats *cerver_stats) {
+
+    if (cerver_stats) {
+        packets_per_type_delete (cerver_stats->received_packets);
+        packets_per_type_delete (cerver_stats->sent_packets);
+        
+        free (cerver_stats);
+    } 
+
+}
+
+void cerver_stats_print (Cerver *cerver) {
+
+    if (cerver) {
+        if (cerver->stats) {
+            printf ("\nCerver's %s stats: ", cerver->name->str);
+            printf ("\nThreshold time:            %ld\n", cerver->stats->threshold_time);
+
+            if (cerver->auth_required) {
+                printf ("\nClient packets received:       %ld\n", cerver->stats->client_n_packets_received);
+                printf ("Client receives done:          %ld\n", cerver->stats->client_receives_done);
+                printf ("Client bytes received:         %ld\n\n", cerver->stats->client_bytes_received);
+
+                printf ("On hold packets received:       %ld\n", cerver->stats->on_hold_n_packets_received);
+                printf ("On hold receives done:          %ld\n", cerver->stats->on_hold_receives_done);
+                printf ("On hold bytes received:         %ld\n\n", cerver->stats->on_hold_bytes_received);
+            }
+
+            printf ("Total packets received:        %ld\n", cerver->stats->total_n_packets_received);
+            printf ("Total receives done:           %ld\n", cerver->stats->total_n_receives_done);
+            printf ("Total bytes received:          %ld\n\n", cerver->stats->total_bytes_received);
+
+            printf ("N packets sent:                %ld\n", cerver->stats->n_packets_sent);
+            printf ("Total bytes sent:              %ld\n", cerver->stats->total_bytes_sent);
+
+            printf ("\nCurrent active client connections:         %ld\n", cerver->stats->current_active_client_connections);
+            printf ("Current connected clients:                 %ld\n", cerver->stats->current_n_connected_clients);
+            printf ("Current on hold connections:               %ld\n", cerver->stats->current_n_hold_connections);
+            printf ("Total clients:                             %ld\n", cerver->stats->total_n_clients);
+            printf ("Unique clients:                            %ld\n", cerver->stats->unique_clients);
+            printf ("Total client connections:                  %ld\n", cerver->stats->total_client_connections);
+
+            printf ("\nReceived packets:\n");
+            packets_per_type_print (cerver->stats->received_packets);
+
+            printf ("\nSent packets:\n");
+            packets_per_type_print (cerver->stats->sent_packets);
+        }
+
+        else {
+            char *status = c_string_create ("Cerver %s does not have a reference to cerver stats!",
+                cerver->name->str);
+            if (status) {
+                cengine_log_msg (stderr, LOG_ERROR, LOG_ERROR, status);
+                free (status);
+            }
+        }
+    }
+
+    else {
+        cengine_log_msg (stderr, LOG_WARNING, LOG_NO_TYPE, 
+            "Cant print stats of a NULL cerver!");
+    }
+
+}
+
+#pragma endregion
+
 Cerver *cerver_new (void) {
 
     Cerver *cerver = (Cerver *) malloc (sizeof (Cerver));
@@ -21,6 +104,7 @@ Cerver *cerver_new (void) {
         cerver->ip = NULL;
         cerver->name = NULL;
         cerver->token = NULL;
+        cerver->stats = NULL;
     }
 
     return cerver;
@@ -55,6 +139,8 @@ static Cerver *cerver_deserialize (SCerver *scerver) {
             cerver->type = scerver->type;
             cerver->auth_required = scerver->auth_required;
             cerver->uses_sessions = scerver->uses_sessions;
+
+            cerver->stats = cerver_stats_new ();
         }
     }
 
@@ -168,14 +254,20 @@ void cerver_packet_handler (Packet *packet) {
                     #ifdef CLIENT_DEBUG
                     cengine_log_msg (stdout, LOG_WARNING, LOG_NO_TYPE, "---> Server teardown! <---");
                     #endif
-                    client_connection_end (packet->client, packet->connection);
+                    client_got_disconnected (packet->client);
                     client_event_trigger (packet->client, EVENT_DISCONNECTED);
                     break;
 
                 case CERVER_INFO_STATS:
+                    // #ifdef CLIENT_DEBUG
+                    // cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Received a cerver stats packet.");
+                    // #endif
                     break;
 
                 case CERVER_GAME_STATS:
+                    // #ifdef CLIENT_DEBUG
+                    // cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Received a cerver game stats packet.");
+                    // #endif
                     break;
 
                 default: 

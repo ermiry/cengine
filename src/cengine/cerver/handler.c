@@ -50,16 +50,52 @@ void sock_receive_delete (void *sock_receive_ptr) {
 
 #pragma region handlers
 
+// handles a client type packet
+static void client_client_packet_handler (Packet *packet) {
+
+    if (packet) {
+        if (packet->data_size >= sizeof (RequestData)) {
+            char *end = (char *) packet->data;
+            RequestData *req = (RequestData *) packet->data;
+
+            switch (req->type) {
+                // the cerver close our connection
+                case CLIENT_CLOSE_CONNECTION:
+                    client_connection_end (packet->client, packet->connection);
+                    client_event_trigger (packet->client, EVENT_DISCONNECTED);
+                    break;
+
+                // the cerver has disconneted us
+                case CLIENT_DISCONNET:
+                    client_got_disconnected (packet->client);
+                    client_event_trigger (packet->client, EVENT_DISCONNECTED);
+                    break;
+
+                default: 
+                    cengine_log_msg (stderr, LOG_WARNING, LOG_NO_TYPE, "Unknown client packet type.");
+                    break;
+            }
+        }
+    }
+
+}
+
 static void client_auth_packet_handler (Packet *packet) {
 
     if (packet) {
-        if (packet->packet_size >= (sizeof (PacketHeader) + sizeof (RequestData))) {
-            char *end = (char *) packet->packet;
-            RequestData *req = (RequestData *) (end += sizeof (PacketHeader));
+        if (packet->data_size >= sizeof (RequestData)) {
+            char *end = (char *) packet->data;
+            RequestData *req = (RequestData *) packet->data;
 
             switch (req->type) {
+                // 24/01/2020 -- cerver requested authentication, if not, we will be disconnected
+                case REQ_AUTH_CLIENT:
+                    // TODO: 24/01/2020 -- 17:03
+                    break;
+
                 // we recieve a token from the cerver to use in sessions
                 case CLIENT_AUTH_DATA:
+                    // TODO: 24/01/2020 -- 17:03
                     break;
 
                 // we have successfully authenticated with the server
@@ -68,7 +104,7 @@ static void client_auth_packet_handler (Packet *packet) {
                     break;
 
                 default: 
-                    cengine_log_msg (stderr, LOG_WARNING, LOG_NO_TYPE, "Unknown authentication request.");
+                    cengine_log_msg (stderr, LOG_WARNING, LOG_NO_TYPE, "Unknown auth packet type.");
                     break;
             }
         }
@@ -80,7 +116,16 @@ static void client_auth_packet_handler (Packet *packet) {
 static void client_request_packet_handler (Packet *packet) {
 
     if (packet) {
+        if (packet->data_size >= sizeof (RequestData)) {
+            char *end = (char *) packet->data;
+            RequestData *req = (RequestData *) packet->data;
 
+            switch (req->type) {
+                default: 
+                    cengine_log_msg (stderr, LOG_WARNING, LOG_NO_TYPE, "Unknown request from cerver");
+                    break;
+            }
+        }
     }
 
 }
@@ -99,6 +144,11 @@ static void client_packet_handler (void *data) {
                     packet->client->stats->received_packets->n_cerver_packets += 1;
                     packet->connection->stats->received_packets->n_cerver_packets += 1;
                     cerver_packet_handler (packet); 
+                    break;
+
+                // handles a client type packet
+                case CLIENT_PACKET:
+                    client_client_packet_handler (packet);
                     break;
 
                 // handles an error from the server
@@ -413,6 +463,8 @@ void client_receive (Client *client, Connection *connection) {
                     perror ("Error");
                     #endif
 
+                    // FIXME: pass the connection that stopped
+                    client_event_trigger (client, EVENT_CONNECTION_CLOSE);
                     client_receive_handle_failed (client, connection);
                 }
             }
@@ -427,19 +479,9 @@ void client_receive (Client *client, Connection *connection) {
                 // perror ("Error");
                 #endif
 
-                switch (errno) {
-                    case EAGAIN: 
-                        printf ("Is the connection still opened?\n"); 
-                        client_receive_handle_failed (client, connection);
-                        break;
-                    case EBADF:
-                    case ENOTSOCK: {
-                        #ifdef CLIENT_DEBUG
-                        perror ("Error ");
-                        #endif
-                        client_receive_handle_failed (client, connection);
-                    }
-                }
+                // FIXME: pass the connection that stopped
+                client_event_trigger (client, EVENT_CONNECTION_CLOSE);
+                client_receive_handle_failed (client, connection);
             }
 
             else {

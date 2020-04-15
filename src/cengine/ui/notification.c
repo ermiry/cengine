@@ -551,7 +551,7 @@ NotiCenter *ui_noti_center_create (UI *ui, u8 max_display, UIPosition pos, Rende
             noti_center->outline_scale_y = 1;
         }
 
-        else ui_element_delete (ui_element);
+        else ui_element_destroy (ui_element);
     }
 
     return noti_center;

@@ -68,6 +68,9 @@ extern void ui_input_field_toggle_active (InputField *input);
 // sets the inputs's UI position
 extern void ui_input_field_set_pos (InputField *input, UIRect *ref_rect, UIPosition pos, struct _Renderer *renderer);
 
+// sets the input's position offset
+extern void ui_input_set_pos_offset (InputField *input, int x_offset, int y_offset);
+
 // sets the input placeholder text
 extern void ui_input_field_placeholder_text_set (InputField *input, struct _Renderer *renderer, const char *text,
 	Font *font, u32 size, RGBA_Color text_color);
@@ -78,6 +81,12 @@ extern void ui_input_field_placeholder_text_update (InputField *input, struct _R
 // sets the input placeholder text position
 extern void ui_input_field_placeholder_text_pos_set (InputField *input, UIPosition pos);
 
+// sets the input placeholder text position offset
+extern void ui_input_field_placeholder_text_pos_offset_set (InputField *input, int x_offset, int y_offset);
+
+// updates the input's placeholder text position
+extern void ui_input_field_placeholder_text_pos_update (InputField *input);
+
 // sets the input field's text
 extern void ui_input_field_text_set (InputField *input, struct _Renderer *renderer, const char *text,
 	Font *font, u32 size, RGBA_Color text_color, bool is_password);
@@ -87,6 +96,12 @@ extern void ui_input_field_text_update (InputField *input, struct _Renderer *ren
 
 // sets the input field's text position
 extern void ui_input_field_text_pos_set (InputField *input, UIPosition pos);
+
+// sets the input text position offset
+extern void ui_input_field_text_pos_offset_set (InputField *input, int x_offset, int y_offset);
+
+// updates the input's text position
+extern void ui_input_field_text_pos_update (InputField *input);
 
 // sets the input field's text color
 extern void ui_input_field_text_color_set (InputField *input, struct _Renderer *renderer, RGBA_Color color);

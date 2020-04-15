@@ -28,8 +28,8 @@ void texture_create_from_surface (Renderer *renderer, SDL_Texture **texture, SDL
         }
 
         else {
-            // send image to renderer queue
-            renderer_queue_push (renderer, surface_texture_new (surface, texture));
+            // send texture to renderer queue
+            renderer_load_queue_push (renderer, surface_texture_new (surface, texture, false));
         }
     }
 
@@ -53,8 +53,8 @@ ImageData *texture_load (Renderer *renderer, const char *filename, SDL_Texture *
             }
 
             else {
-                // send image to renderer queue
-                renderer_queue_push (renderer, surface_texture_new (temp_surface, texture));
+                // send texture to renderer queue
+                renderer_load_queue_push (renderer, surface_texture_new (temp_surface, texture, false));
             }
         }
 
@@ -65,6 +65,49 @@ ImageData *texture_load (Renderer *renderer, const char *filename, SDL_Texture *
     }
 
     return image_data;
+
+}
+
+void texture_update (Renderer *renderer, SDL_Texture **texture, SDL_Surface *surface) {
+
+    if (renderer && texture && surface) {
+        pthread_t thread_id = pthread_self ();
+        // printf ("Updating texture in thread: %ld\n", thread_id);
+        if (thread_id == renderer->thread_id) {
+            SDL_UpdateTexture (*texture, NULL, surface->pixels, surface->pitch);
+            SDL_FreeSurface (surface);
+        }
+
+        else {
+            // send texture to renderer queue
+            renderer_load_queue_push (renderer, surface_texture_new (surface, texture, true));
+        }
+    }
+
+}
+
+// 27/01/2020 -- 7:11 -- wrapper method for SDL_DestroyTexture () as it is not thread safe
+// this method should be called instead of SDL_DestroyTexture () to avoid video memory leaks
+void texture_destroy (Renderer *renderer, SDL_Texture *texture) {
+
+    if (renderer && texture) {
+        pthread_t thread_id = pthread_self ();
+        // printf ("Destroying texture in thread: %ld\n", thread_id);
+        if (thread_id == renderer->thread_id) {
+            SDL_DestroyTexture (texture);
+        }
+
+        else {
+            // send texture to destroy queue
+            renderer_destroy_queue_push (renderer, texture);
+        }
+    }
+
+}
+
+void texture_destroy_wrapper (void *texture_ptr) {
+
+    if (texture_ptr) SDL_DestroyTexture ((SDL_Texture *) texture_ptr);
 
 }
 

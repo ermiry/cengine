@@ -201,7 +201,7 @@ Dropdown *ui_dropdown_create (i32 x, i32 y, u32 w, u32 h, UIPosition pos, Render
             dropdown->outline_scale_y = 1;
         }
 
-        else ui_element_delete (ui_element);
+        else ui_element_destroy (ui_element);
     }
 
     return dropdown;
@@ -227,7 +227,7 @@ void ui_dropdown_set_options (Dropdown *dropdown, i32 x, i32 y,
         dropdown->extended_panel->ui_element->active = false;
 
         // the layout group contains the transforms of the options that render on top of the extended panel
-        dropdown->vertical_layout = ui_layout_vertical_create (x, y, options_width, options_max_height);
+        dropdown->vertical_layout = ui_layout_vertical_create (x, y, options_width, options_max_height, renderer);
         ui_transform_component_set_pos (dropdown->vertical_layout->transform, NULL, &dropdown->ui_element->transform->rect, pos, false);
         dropdown->vertical_layout->transform->rect.y += options_max_height;
     }
@@ -361,7 +361,7 @@ void ui_dropdown_option_add (Dropdown *dropdown, DropdownOption *option) {
         dlist_insert_after (dropdown->options, dlist_end (dropdown->options), option);
         ui_button_set_pos (option->button, &dropdown->ui_element->transform->rect, UI_POS_MIDDLE_CENTER, NULL);
 
-        ui_layout_vertical_add (dropdown->vertical_layout, option->button->ui_element);
+        ui_layout_vertical_add_at_end (dropdown->vertical_layout, option->button->ui_element);
 
         // FIXME: move this to vertical layout
         DropdownOption *op = NULL;
@@ -382,7 +382,7 @@ DropdownOption *ui_dropdown_option_get (Dropdown *dropdown, const char *value) {
         DropdownOption *option = ui_dropdown_option_new ();
         if (option) {
             option->button->text->text = str_new (value);
-            retval = (DropdownOption *) dlist_search (dropdown->options, option);
+            retval = (DropdownOption *) dlist_search (dropdown->options, option, NULL);
             ui_dropdown_option_delete (option);
         }
     }
@@ -397,7 +397,7 @@ void ui_dropdown_option_remove (Dropdown *dropdown, DropdownOption *option) {
 
     if (dropdown && option) {
         ui_layout_vertical_remove (dropdown->vertical_layout, option->button->ui_element);
-        dlist_remove_element (dropdown->options, dlist_get_element (dropdown->options, option));
+        dlist_remove_element (dropdown->options, dlist_get_element (dropdown->options, option, NULL));
     }
 
 }

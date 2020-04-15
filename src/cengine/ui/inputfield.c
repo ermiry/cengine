@@ -82,6 +82,16 @@ void ui_input_field_set_pos (InputField *input, UIRect *ref_rect, UIPosition pos
 
 }
 
+// sets the input's position offset
+void ui_input_set_pos_offset (InputField *input, int x_offset, int y_offset) {
+
+    if (input) {
+        input->ui_element->transform->x_offset = x_offset;
+        input->ui_element->transform->y_offset = y_offset;
+    }
+
+}
+
 // sets the input placeholder text
 void ui_input_field_placeholder_text_set (InputField *input, Renderer *renderer, const char *text,
     Font *font, u32 size, RGBA_Color text_color) {
@@ -124,6 +134,37 @@ void ui_input_field_placeholder_text_pos_set (InputField *input, UIPosition pos)
     if (input) {
         if (input->placeholder) 
             ui_transform_component_set_pos (input->placeholder->transform, NULL, &input->ui_element->transform->rect, pos, true);
+    }
+
+}
+
+// sets the input placeholder text position offset
+void ui_input_field_placeholder_text_pos_offset_set (InputField *input, int x_offset, int y_offset) {
+
+    if (input) {
+        if (input->placeholder) {
+            input->placeholder->transform->x_offset = x_offset;
+            input->placeholder->transform->y_offset = y_offset;
+        }
+    }
+
+}
+
+// updates the input's placeholder text position
+void ui_input_field_placeholder_text_pos_update (InputField *input) {
+
+    if (input) {
+        if (input->placeholder) {
+            // reset pos to 0
+            input->placeholder->transform->rect.x = 0;
+            input->placeholder->transform->rect.y = 0;
+
+            // use the previous set position
+            ui_position_update (NULL, 
+                input->placeholder->transform, 
+                &input->ui_element->transform->rect, 
+                false);
+        }
     }
 
 }
@@ -176,6 +217,37 @@ void ui_input_field_text_pos_set (InputField *input, UIPosition pos) {
     if (input) {
         if (input->text) 
             ui_transform_component_set_pos (input->text->transform, NULL, &input->ui_element->transform->rect, pos, true);
+    }
+
+}
+
+// sets the input text position offset
+void ui_input_field_text_pos_offset_set (InputField *input, int x_offset, int y_offset) {
+
+    if (input) {
+        if (input->text) {
+            input->text->transform->x_offset = x_offset;
+            input->text->transform->y_offset = y_offset;
+        }
+    }
+
+}
+
+// updates the input's text position
+void ui_input_field_text_pos_update (InputField *input) {
+
+    if (input) {
+        if (input->text) {
+            // reset pos to 0
+            input->text->transform->rect.x = 0;
+            input->text->transform->rect.y = 0;
+
+            // use the previous set position
+            ui_position_update (NULL, 
+                input->text->transform, 
+                &input->ui_element->transform->rect, 
+                false);
+        }
     }
 
 }
@@ -305,7 +377,7 @@ InputField *ui_input_field_create (i32 x, i32 y, u32 w, u32 h, UIPosition pos, R
             input->outline_scale_y = 1;
         }
 
-        else ui_element_delete (ui_element);
+        else ui_element_destroy (ui_element);
     }
 
     return input;

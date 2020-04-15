@@ -37,7 +37,9 @@ typedef enum PacketType {
 
     CERVER_PACKET       = 0,
     CLIENT_PACKET       = 1,
+
     ERROR_PACKET        = 2,
+
 	REQUEST_PACKET      = 3,
     AUTH_PACKET         = 4,
     GAME_PACKET         = 5,
@@ -94,19 +96,11 @@ extern void packet_header_print (PacketHeader *header);
 // returns 0 on success, 1 on error
 extern u8 packet_header_copy (PacketHeader **dest, PacketHeader *source);
 
-// these indicate the data and more info about the packet type
 typedef enum RequestType {
 
-    CLIENT_CLOSE_CONNECTION     = 2,
-    CLIENT_DISCONNET            = 3,
-
-    REQ_GET_FILE                = 4,
-    POST_SEND_FILE              = 5,
+    REQ_GET_FILE                = 1,
+    POST_SEND_FILE              = 2,
     
-    REQ_AUTH_CLIENT             = 6,
-    CLIENT_AUTH_DATA            = 7,
-    SUCCESS_AUTH                = 8,
-
 } RequestType;
 
 typedef enum CerverPacket {
@@ -118,6 +112,22 @@ typedef enum CerverPacket {
     CERVER_GAME_STATS           = 3
 
 } CerverPacket;
+
+typedef enum ClientPacket {
+
+	CLIENT_CLOSE_CONNECTION     = 1,
+	CLIENT_DISCONNET            = 2,
+
+} ClientPacket;
+
+typedef enum AuthPacket {
+
+    REQ_AUTH_CLIENT             = 1,
+
+    CLIENT_AUTH_DATA            = 2,
+    SUCCESS_AUTH                = 3,
+
+} AuthPacket;
 
 typedef enum GamePacket {
 
