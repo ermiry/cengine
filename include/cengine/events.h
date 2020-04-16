@@ -6,6 +6,8 @@
 
 typedef enum CengineEventType {
 
+	CENGINE_EVENT_NONE				= 0,
+
 	CENGINE_EVENT_SCROLL_UP			= 1,
 	CENGINE_EVENT_SCROLL_DOWN		= 2,
 

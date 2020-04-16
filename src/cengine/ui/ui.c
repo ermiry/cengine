@@ -267,7 +267,11 @@ UI *ui_create (void) {
 }
 
 // gets the current ui element that is below the mouse
-UIElement *ui_element_hover_get (UI *ui) { if (ui) return ui->ui_element_hover; }
+UIElement *ui_element_hover_get (UI *ui) { 
+
+    return ui ? ui->ui_element_hover : NULL;
+    
+}
 
 // adds a new ui element back to the UI
 // returns 0 on success, 1 on error
@@ -288,7 +292,7 @@ UIElement *ui_remove_element (UI *ui, UIElement *ui_element) {
     UIElement *retval = NULL;
 
     if (ui && ui_element)
-        retval = dlist_remove (ui->ui_elements, ui_element, NULL);
+        retval = (UIElement *) dlist_remove (ui->ui_elements, ui_element, NULL);
     
     return retval;
 

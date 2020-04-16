@@ -140,14 +140,15 @@ void timer_unpause (Timer *timer) {
 
 u32 timer_get_ticks (Timer *timer) {
 
+    u32 time_ret = 0;
     if (timer) {
-        u32 time_ret = 0;
         if (timer->started) {
             if (timer->isPaused) time_ret = timer->pausedTicks;
             else time_ret = SDL_GetTicks () - timer->startTicks;
         }
 
-        return time_ret;
     }
 
+    return time_ret;
+    
 }

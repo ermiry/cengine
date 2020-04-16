@@ -262,7 +262,7 @@ u8 ui_font_set_sizes (Font *font, u8 n_sizes, ...) {
 
         font->n_sizes = n_sizes;
 
-        font->sizes = (int *) calloc (n_sizes, sizeof (int));
+        font->sizes = (unsigned int *) calloc (n_sizes, sizeof (int));
         if (font->sizes) {
             for (u8 i = 0; i < n_sizes; i++)
                 font->sizes[i] = va_arg (valist, int);

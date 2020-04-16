@@ -2,6 +2,8 @@
 
 #include "cengine/manager/manager.h"
 
+SessionType sessionType;
+
 Manager *manager = NULL;
 
 Manager *manager_new (State *init_state) {

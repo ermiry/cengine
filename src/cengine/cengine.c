@@ -184,6 +184,8 @@ static void *cengine_update (void *args) {
 
         else update_fps++;
     }
+
+    return NULL;
     
 }
 

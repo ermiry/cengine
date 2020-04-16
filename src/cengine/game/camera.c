@@ -119,6 +119,8 @@ static Point2D point_world_to_screen (Camera *cam, const Point2D p,
 
 CamRect camera_world_to_screen (Camera *cam, const CamRect destRect) {
 
+    CamRect screenRect = { 0 };
+
     if (cam) {
         CamRect screenRect = destRect;
 
@@ -132,9 +134,9 @@ CamRect camera_world_to_screen (Camera *cam, const CamRect destRect) {
         screenRect.y = screenPoint.y;
         screenRect.w = (int) (screenRect.w * xScale);
         screenRect.h = (int) (screenRect.h * yScale);
-
-        return screenRect;
     }
+
+    return screenRect;
 
 }
 

@@ -496,14 +496,14 @@ void ui_image_draw (Image *image, Renderer *renderer) {
             if (image->texture) {
                 SDL_RenderCopyEx (renderer->renderer, image->texture, 
                     NULL, &image->ui_element->transform->rect, 
-                    0, 0, image->flip);
+                    0, 0, (const SDL_RendererFlip) image->flip);
             }
 
             else {
                 if (image->sprite) {
                     SDL_RenderCopyEx (renderer->renderer, image->sprite->texture, 
                         &image->sprite->src_rect, &image->ui_element->transform->rect, 
-                        0, 0, image->flip);
+                        0, 0, (const SDL_RendererFlip) image->flip);
                 }
                 
                 else if (image->sprite_sheet) {
@@ -512,7 +512,7 @@ void ui_image_draw (Image *image, Renderer *renderer) {
 
                     SDL_RenderCopyEx (renderer->renderer, image->sprite_sheet->texture, 
                         &image->sprite_sheet->src_rect, &image->ui_element->transform->rect, 
-                        0, 0, image->flip);
+                        0, 0, (const SDL_RendererFlip) image->flip);
                 }
             }
 
@@ -532,7 +532,7 @@ void ui_image_draw (Image *image, Renderer *renderer) {
                         if (image->overlay_texture && !image->selected) {
                             SDL_RenderCopyEx (renderer->renderer, image->overlay_texture, 
                                 NULL, &image->ui_element->transform->rect, 
-                                0, 0, image->flip);
+                                0, 0, (const SDL_RendererFlip) image->flip);
                         }
 
                         // check if the user pressed the left button over the image
@@ -584,7 +584,7 @@ void ui_image_draw (Image *image, Renderer *renderer) {
             if (image->selected && image->selected_texture) {
                 SDL_RenderCopyEx (renderer->renderer, image->selected_texture, 
                     NULL, &image->ui_element->transform->rect, 
-                    0, 0, image->flip);
+                    0, 0, (const SDL_RendererFlip) image->flip);
             }
 
             renderer->render_count += 1;

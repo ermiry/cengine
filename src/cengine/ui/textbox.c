@@ -76,7 +76,7 @@ void ui_textbox_set_pos_offset (TextBox *textbox, int x_offset, int y_offset) {
 // returns the string representing the text in the textbox
 String *ui_textbox_get_text (TextBox *textbox) {
 
-    if (textbox) return textbox->text->text;
+    return textbox ? textbox->text->text : NULL;
 
 }
 

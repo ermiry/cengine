@@ -10,7 +10,7 @@ typedef enum SessionType {
 
 } SessionType;
 
-SessionType sessionType; 
+extern SessionType sessionType; 
 
 typedef struct Manager {
 

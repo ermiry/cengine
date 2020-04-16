@@ -111,7 +111,7 @@ void texture_destroy_wrapper (void *texture_ptr) {
 
 }
 
-void texture_get_dimensions (SDL_Texture *texture, u32 *w, u32 *h) {
+void texture_get_dimensions (SDL_Texture *texture, int *w, int *h) {
 
     if (texture) SDL_QueryTexture (texture, NULL, NULL, w, h);
 

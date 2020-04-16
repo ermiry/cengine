@@ -100,7 +100,7 @@ void ui_cursor_draw (Cursor *cursor, Renderer *renderer) {
 
         SDL_RenderCopyEx (renderer->renderer, cursor->sprite->texture, 
             &cursor->sprite->src_rect, &cursor->sprite->dest_rect, 
-            0, 0, NO_FLIP);   
+            0, 0, (const SDL_RendererFlip) NO_FLIP);   
     }
 
 }
@@ -126,7 +126,11 @@ int ui_cursor_update (Cursor *c, int w, int h, int hot_x, int hot_y) {
 
 /*** Getters & Setters ***/
 
-int ui_cursor_get_width (Cursor *c) { if (c) return c->w; }
+int ui_cursor_get_width (Cursor *c) { 
+
+    return c ? c->w : -1;
+
+}
 
 int ui_cursor_set_width (Cursor *c, int new_width) {
 
@@ -139,7 +143,11 @@ int ui_cursor_set_width (Cursor *c, int new_width) {
 
 }
 
-int ui_cursor_get_height (Cursor *c) { if (c) return c->h; }
+int ui_cursor_get_height (Cursor *c) { 
+
+    return c ? c->h : -1;
+
+}
 
 int ui_cursor_set_height (Cursor *c, int new_height) {
 
@@ -152,6 +160,14 @@ int ui_cursor_set_height (Cursor *c, int new_height) {
 
 }
 
-int ui_cursor_get_hot_x (Cursor *c) { if (c) return c->hot_x; }
+int ui_cursor_get_hot_x (Cursor *c) { 
 
-int ui_cursor_get_hot_y (Cursor *c) { if (c) return c->hot_y; }
+    return c ? c->hot_x : -1;
+
+}
+
+int ui_cursor_get_hot_y (Cursor *c) { 
+    
+    return c ? c->hot_y : -1;
+    
+}

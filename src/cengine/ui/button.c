@@ -462,7 +462,9 @@ void ui_button_draw (Button *button, Renderer *renderer) {
 
             if (button->active) {
                 if (renderer->window->mouse) {
-                    UITransform real_position = { 0 };
+                    UITransform real_position;
+                    memset (&real_position, 0, sizeof (UITransform));
+
                     // real_position.rect.x = button->ui_element->parent ? button->ui_element->parent->transform->rect.x + button->ui_element->transform->rect.x : button->ui_element->transform->rect.x;
                     real_position.rect.x = button->ui_element->transform->rect.x;
                     // real_position.rect.y = button->ui_element->parent ? button->ui_element->parent->transform->rect.y + button->ui_element->transform->rect.y : button->ui_element->transform->rect.y;
@@ -537,7 +539,7 @@ void ui_button_draw (Button *button, Renderer *renderer) {
                 SDL_RenderCopyEx (renderer->renderer, selected_sprite->texture, 
                     &selected_sprite->src_rect, 
                     &button->ui_element->transform->rect, 
-                    0, 0, NO_FLIP);
+                    0, 0, (const SDL_RendererFlip) NO_FLIP);
             } 
 
             // draw button text

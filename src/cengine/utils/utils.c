@@ -498,4 +498,6 @@ char *c_string_remove_sub_different_token (char *str, const char token_one, cons
 
 	// TODO:
 
+    return NULL;
+
 }

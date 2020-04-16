@@ -158,8 +158,8 @@ int window_get_size (Window *window, WindowSize *window_size) {
 void window_toggle_full_screen (Window *window) {
 
     if (window) {
-        u32 new_width = 0;
-        u32 new_height = 0;
+        int new_width = 0;
+        int new_height = 0;
 
         // return window to original size before the fullscreen
         if (window->fullscreen) {
@@ -183,7 +183,7 @@ void window_toggle_full_screen (Window *window) {
 
         window_get_size (window, &window->window_size);
         SDL_Rect screen_rect = { .x = 0, .y = 0, 
-            .w = window->window_size.width, window->window_size.height };
+            .w = window->window_size.width, .h = window->window_size.height };
         window->screen_rect = screen_rect;
 
         // int w, h;
@@ -201,8 +201,8 @@ void window_toggle_full_screen (Window *window) {
 void window_toggle_fullscreen_soft (Window *window) {
 
     if (window) {
-        u32 new_width = 0;
-        u32 new_height = 0;
+        int new_width = 0;
+        int new_height = 0;
 
         // return window to original size before the fullscreen
         if (window->fullscreen) {
@@ -227,7 +227,7 @@ void window_toggle_fullscreen_soft (Window *window) {
 
         window_get_size (window, &window->window_size);
         SDL_Rect screen_rect = { .x = 0, .y = 0, 
-            .w = window->window_size.width, window->window_size.height };
+            .w = window->window_size.width, .h = window->window_size.height };
         window->screen_rect = screen_rect;
 
         SDL_SetWindowPosition (window->window, 
@@ -244,7 +244,7 @@ void window_toggle_borders (Window *window) {
 
     if (window) {
         window->borders = SDL_GetWindowFlags (window->window) & SDL_WINDOW_BORDERLESS;
-        SDL_SetWindowBordered (window->window, window->borders ? SDL_WINDOW_BORDERLESS : 0);
+        SDL_SetWindowBordered (window->window, (SDL_bool) (window->borders ? SDL_WINDOW_BORDERLESS : 0));
         window->borders = SDL_GetWindowFlags (window->window) & SDL_WINDOW_BORDERLESS;
     }
 

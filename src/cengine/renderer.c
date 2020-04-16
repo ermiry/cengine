@@ -212,8 +212,8 @@ int renderer_window_attach (Renderer *renderer, Uint32 render_flags, int display
                 SDL_Rect viewport = { 
                     .x = 0, 
                     .y = 0, 
-                    .w = renderer->window->window_size.width, 
-                    .h = renderer->window->window_size.height 
+                    .w = (int) renderer->window->window_size.width, 
+                    .h = (int) renderer->window->window_size.height 
                 };
 
                 memcpy (&renderer->previous_viewport, &viewport, sizeof (SDL_Rect));
@@ -291,10 +291,10 @@ void renderer_set_viewport (Renderer *renderer, u32 x, u32 y, u32 width, u32 hei
         memcpy (&renderer->previous_viewport, &renderer->current_viewport, sizeof (SDL_Rect));
 
         SDL_Rect viewport = { 
-            .x = x, 
-            .y = y, 
-            .w = width, 
-            .h = height 
+            .x = (int) x, 
+            .y = (int) y, 
+            .w = (int) width, 
+            .h = (int) height 
         };
 
         SDL_RenderSetViewport (renderer->renderer, &viewport);
@@ -402,6 +402,8 @@ static int layer_comparator (const void *one, const void *two) {
         else if (layer_one->pos == layer_two->pos) return 0;
         else return 1;
     }
+
+    return -1;
 
 }
 
@@ -747,7 +749,12 @@ void render_basic_outline_rect (Renderer *renderer, SDL_Rect *rect, SDL_Color co
         SDL_RenderSetScale (renderer->renderer, scale_x, scale_y);
         SDL_SetRenderDrawColor (renderer->renderer, color.r, color.g, color.b, color.a);      
 
-        SDL_Rect temp_rect = { .x = rect->x / scale_x, .y = rect->y / scale_y, .w = rect->w / scale_x, .h = rect->h / scale_y };
+        SDL_Rect temp_rect = { 
+            .x = (int) (rect->x / scale_x), 
+            .y = (int) (rect->y / scale_y), 
+            .w = (int) (rect->w / scale_x), 
+            .h = (int) (rect->h / scale_y)
+        };
         SDL_RenderDrawRect (renderer->renderer, &temp_rect);
 
         SDL_RenderSetScale (renderer->renderer, original_scale_x, original_scale_y);

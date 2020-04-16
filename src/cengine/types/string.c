@@ -174,6 +174,8 @@ int str_comparator (const void *a, const void *b) {
 
     if (a && b) return strcmp (((String *) a)->str, ((String *) b)->str);
 
+    return -1;
+
 }
 
 char **str_split (String *string, const char delim, int *n_tokens) {

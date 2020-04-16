@@ -7,7 +7,7 @@
 
 typedef struct WindowSize {
 
-    u32 width, height;
+    int width, height;
 
 } WindowSize;
 

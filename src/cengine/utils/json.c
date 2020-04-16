@@ -40,7 +40,7 @@
    #endif
 #endif
 
-const struct _json_value json_value_none;
+const struct _json_value json_value_none = { 0 };
 
 typedef unsigned int json_uchar;
 

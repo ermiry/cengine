@@ -1,10 +1,10 @@
 #ifndef _CENGINE_VERSION_H_
 #define _CENGINE_VERSION_H_
 
-#define VERSION                 "0.9.2"
-#define VERSION_NAME            "Pre-Release 0.9.2"
+#define VERSION                 "0.9.3"
+#define VERSION_NAME            "Pre-Release 0.9.3"
 #define VERSION_DATE			"15/04/2020"
-#define VERSION_TIME			"07:06 CST"
+#define VERSION_TIME			"23:46 CST"
 #define VERSION_AUTHOR			"Erick Salas"
 
 // print full cengine version information 

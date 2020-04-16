@@ -143,6 +143,8 @@ static ThreadHub *thread_hub_new (const char *name) {
         hub->threads = dlist_init (hub_worker_destroy, NULL);
     }
 
+    return hub;
+
 }
 
 // inits a new thread hub

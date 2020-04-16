@@ -275,6 +275,8 @@ static int animator_comparator_by_id (const void *one, const void *two) {
         else if (anim_one->id == anim_two->id) return 0;
         else return 1;
     }
+
+    return -1;
 }
 
 void animator_set_default_animation (Animator *animator, Animation *animation) {
@@ -367,6 +369,8 @@ void *animations_update (void *data) {
             fps = 0;
         }
     }
+
+    return NULL;
 
 }
 

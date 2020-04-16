@@ -265,14 +265,14 @@ void ui_input_field_text_color_set (InputField *input, Renderer *renderer, RGBA_
 // returns the current input text
 String *ui_input_field_input_get (InputField *input) {
 
-    if (input) return input->text->text;
+    return input ? input->text->text : NULL;
 
 }
 
 // returns the actual password value
 String *ui_input_field_password_get (InputField *input) {
 
-    if (input) return input->password;
+    return input ? input->password : NULL;
 
 }
 

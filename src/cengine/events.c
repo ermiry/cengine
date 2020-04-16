@@ -55,7 +55,7 @@ static Event *event_new (void) {
 
 	Event *e = (Event *) malloc (sizeof (Event));
 	if (e) {
-		e->type = 0;
+		e->type = CENGINE_EVENT_NONE;
 		e->event_actions = NULL;
 	}
 
