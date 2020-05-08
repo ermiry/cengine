@@ -39,8 +39,6 @@ Finally there is the examples directory, where you will find some examples to ge
 
 We will focus on compiling the welcome example (welcome.c). To do this, first we need to compile the cengine library into a shared object (.so). The are three basic commands for the Makefile:
 
-The are three basic commands for the Makefile:
-
 | Command        | Description   |
 | -------------  |:-------------:|
 | make           | Compile cengine's source code into a shared object (.so)          |
