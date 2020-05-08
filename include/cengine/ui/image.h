@@ -19,9 +19,11 @@ typedef struct Image {
 
 	UIElement *ui_element;
 
-	Sprite *sprite;
+	bool texture_reference;
 	SDL_Texture *texture;
+	SDL_Rect *texture_src_rect;
 
+	Sprite *sprite;
 	SpriteSheet *sprite_sheet;
 	u32 x_sprite_offset, y_sprite_offset;
 	
@@ -59,6 +61,17 @@ extern void ui_image_delete (void *image_ptr);
 
 // sets the image's UI position
 extern void ui_image_set_pos (Image *image, UIRect *ref_rect, UIPosition pos, Renderer *renderer);
+
+// directly sets the image's texture
+extern void ui_image_set_texture (Image *image, SDL_Texture *texture);
+
+// sets the image's texture using a refrence to another texture; when the image gets destroyted,
+// the texture won't be deleted
+extern void ui_image_set_texture_ref (Image *image, SDL_Texture *texture_ref);
+
+// sets the image's texture's source rect (used to give an offset to the texture)
+extern void ui_image_set_texture_src_rect (Image *image,
+    int x, int y, int w, int h);
 
 // sets the image's render dimensions
 extern void ui_image_set_dimensions (Image *image, unsigned int width, unsigned int height);

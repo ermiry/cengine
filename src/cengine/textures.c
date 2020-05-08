@@ -1,6 +1,8 @@
 #include <stdlib.h>
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_rwops.h>
+#include <SDL2/SDL_surface.h>
 #include <SDL2/SDL_image.h>
 
 #include "cengine/types/types.h"
@@ -16,6 +18,7 @@
 #include "cengine/utils/log.h"
 #include "cengine/utils/utils.h"
 
+// creates a new texture based on a surface
 void texture_create_from_surface (Renderer *renderer, SDL_Texture **texture, SDL_Surface *surface) {
 
     if (renderer && texture && surface) {
@@ -30,6 +33,31 @@ void texture_create_from_surface (Renderer *renderer, SDL_Texture **texture, SDL
         else {
             // send texture to renderer queue
             renderer_load_queue_push (renderer, surface_texture_new (surface, texture, false));
+        }
+    }
+
+}
+
+// creates a new texture based on a memory buffer represeinting an image
+void texture_create_from_mem_image (Renderer *renderer, SDL_Texture **texture, 
+    const void *mem, int mem_size, 
+    const char *image_type) {
+
+    if (renderer && texture && mem && image_type) {
+        SDL_RWops *rw = SDL_RWFromConstMem (mem, mem_size);
+        if (rw) {
+            SDL_Surface *surface = IMG_LoadTyped_RW (rw, 0, image_type);
+            if (surface) {
+                // printf ("Pixel format: %s\n", SDL_GetPixelFormatName (surface->format->format));
+                // Uint32 format = 0;
+                // SDL_QueryTexture (image->texture, &format, NULL, NULL, NULL);
+                // printf ("%s\n", SDL_GetPixelFormatName (format));
+                // printf ("surface pitch: %d\n", surface->pitch);
+
+                texture_create_from_surface (renderer, texture, surface);
+            }
+
+            SDL_FreeRW (rw);
         }
     }
 

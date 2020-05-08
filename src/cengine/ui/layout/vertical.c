@@ -202,6 +202,13 @@ u8 ui_layout_vertical_add_at_end (VerticalLayout *vertical, UIElement *ui_elemen
 
 }
 
+// returns the ui element that is at the required position in the layout
+UIElement *ui_layout_vertical_get_element_at (VerticalLayout *vertical, unsigned int pos) {
+
+    return vertical ? (UIElement *) dlist_get_at (vertical->ui_elements, pos) : NULL;
+
+}
+
 // removes an element from the vertical layout group
 void ui_layout_vertical_remove (VerticalLayout *vertical, UIElement *ui_element) {
 

@@ -66,3 +66,10 @@ UITransform *ui_transform_component_create (int x, int y, int w, int h) {
     return transform;
 
 }
+
+void ui_transform_component_print (UITransform *trans) {
+
+    if (trans)
+        printf ("x: %d y: %d w: %d h: %d", trans->rect.x, trans->rect.y, trans->rect.w, trans->rect.h);
+
+}

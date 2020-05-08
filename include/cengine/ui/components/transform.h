@@ -39,4 +39,6 @@ extern void ui_transform_component_set_scale (UITransform *transform, int x_scal
 
 extern UITransform *ui_transform_component_create (int x, int y, int w, int h);
 
+extern void ui_transform_component_print (UITransform *trans);
+
 #endif

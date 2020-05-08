@@ -24,10 +24,13 @@ static Image *ui_image_new (void) {
     Image *image = (Image *) malloc (sizeof (Image));
     if (image) {
         memset (image, 0, sizeof (Image));
+
         image->ui_element = NULL;
 
-        image->sprite = NULL;
         image->texture = NULL;
+        image->texture_src_rect = NULL;
+
+        image->sprite = NULL;
         image->sprite_sheet = NULL;
 
         image->active = NULL;
@@ -55,6 +58,11 @@ void ui_image_delete (void *image_ptr) {
 
         image->ui_element = NULL;
 
+        if (image->texture && ! image->texture_reference) 
+            SDL_DestroyTexture (image->texture);
+
+        if (image->texture_src_rect) free (image->texture_src_rect);
+
         if (image->ref_sprite) {
             image->sprite = NULL;
             image->sprite_sheet = NULL;
@@ -64,8 +72,6 @@ void ui_image_delete (void *image_ptr) {
             sprite_destroy (image->sprite);
             sprite_sheet_destroy (image->sprite_sheet);
         }
-
-        if (image->texture) SDL_DestroyTexture (image->texture);
 
         if (image->overlay_texture && !image->overlay_reference) 
             SDL_DestroyTexture (image->overlay_texture);
@@ -84,6 +90,52 @@ void ui_image_delete (void *image_ptr) {
 void ui_image_set_pos (Image *image, UIRect *ref_rect, UIPosition pos, Renderer *renderer) {
 
     if (image) ui_transform_component_set_pos (image->ui_element->transform, renderer, ref_rect, pos, false);
+
+}
+
+// directly sets the image's texture
+void ui_image_set_texture (Image *image, SDL_Texture *texture) {
+
+    if (image && texture) {
+        // detsroy prevuis texture
+        if (image->texture) {
+            if (!image->texture_reference) {
+                SDL_DestroyTexture (image->texture);
+                image->texture = NULL;
+            }
+        }
+
+        image->texture = texture;
+    }
+
+}
+
+// sets the image's texture using a refrence to another texture; when the image gets destroyted,
+// the texture won't be deleted
+void ui_image_set_texture_ref (Image *image, SDL_Texture *texture_ref) {
+
+    if (image && texture_ref) {
+        ui_image_set_texture (image, texture_ref);
+        image->texture_reference = true;
+    }
+
+}
+
+// sets the image's texture's source rect (used to give an offset to the texture)
+void ui_image_set_texture_src_rect (Image *image,
+    int x, int y, int w, int h) {
+
+    if (image) {
+        if (image->texture_src_rect) free (image->texture_src_rect);
+
+        image->texture_src_rect = (SDL_Rect *) malloc (sizeof (SDL_Rect));
+        if (image->texture_src_rect) {
+            image->texture_src_rect->x = x;
+            image->texture_src_rect->y = y;
+            image->texture_src_rect->w = w;
+            image->texture_src_rect->h = h;
+        }
+    }
 
 }
 
@@ -392,6 +444,7 @@ Image *ui_image_create (u32 x, u32 y, u32 w, u32 h, Renderer *renderer) {
 
 }
 
+// FIXME: 17/04/2020 -- only loading jpeg images
 u8 ui_image_update_texture_from_mem (Image *image, Renderer *renderer, void *mem, int mem_size) {
 
     u8 retval = 1;
@@ -495,7 +548,7 @@ void ui_image_draw (Image *image, Renderer *renderer) {
         if (SDL_HasIntersection (&image->ui_element->transform->rect, &renderer->window->screen_rect)) {
             if (image->texture) {
                 SDL_RenderCopyEx (renderer->renderer, image->texture, 
-                    NULL, &image->ui_element->transform->rect, 
+                    image->texture_src_rect, &image->ui_element->transform->rect, 
                     0, 0, (const SDL_RendererFlip) image->flip);
             }
 

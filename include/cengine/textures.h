@@ -14,7 +14,13 @@ struct _Sprite;
 struct _SpriteSheet;
 
 // solves issue of loading texture in a different thread, see texture load
+// creates a new texture based on a surface
 extern void texture_create_from_surface (Renderer *renderer, SDL_Texture **texture, SDL_Surface *surface);
+
+// creates a new texture based on a memory buffer represeinting an image
+extern void texture_create_from_mem_image (Renderer *renderer, SDL_Texture **texture, 
+    const void *mem, int mem_size, 
+    const char *image_type);
 
 // loads an image file into a texture
 // NOTE: uses the renderer to create a new texture from a surface
@@ -36,7 +42,7 @@ extern void texture_destroy (Renderer *renderer, SDL_Texture *texture);
 extern void texture_destroy_wrapper (void *texture_ptr);
 
 // gets the texture's width and height
-extern void texture_get_dimensions (SDL_Texture *texture, u32 *w, u32 *h);
+extern void texture_get_dimensions (SDL_Texture *texture, int *w, int *h);
 
 #include "cengine/game/camera.h"
 

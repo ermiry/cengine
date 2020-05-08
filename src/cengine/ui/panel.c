@@ -93,6 +93,64 @@ void ui_panel_set_pos_offset (Panel *panel, int x_offset, int y_offset) {
 
 }
 
+// updates one panel's child position
+void ui_panel_child_update_pos (Panel *panel, UIElement *child) {
+
+    if (panel && child) {
+         // update the element's transform values
+        switch (child->type) {
+            case UI_BUTTON: {
+                // FIXME: make sure that all values are updated as well
+                ui_button_set_pos ((Button *) child->element,
+                    &panel->ui_element->transform->rect,
+                    child->transform->pos,
+                    NULL);
+            } break;
+
+            case UI_IMAGE: {
+                ui_image_set_pos ((Image *) child->element,
+                    &panel->ui_element->transform->rect, 
+                    child->transform->pos, 
+                    NULL);
+            }
+
+            case UI_INPUT: {
+                // FIXME: 04/02/2020 -- 18:03 -- update children's pos
+                ui_input_field_set_pos ((InputField *) child->element,
+                    &panel->ui_element->transform->rect, 
+                    child->transform->pos, 
+                    NULL);
+            } break;
+
+            case UI_PANEL: {
+                // FIXME: 04/02/2020 -- 18:03 -- update children's pos
+                ui_panel_set_pos ((Panel *) child->element, 
+                    &panel->ui_element->transform->rect, 
+                    child->transform->pos, 
+                    NULL);
+                // ui_position_update_to_parent (panel->ui_element->transform,
+                //     ((Panel *) child->element)->ui_element->transform, false);
+            } break;
+
+            case UI_TEXTBOX: {
+                TextBox *textbox = (TextBox *) child->element;
+                ui_textbox_set_pos (textbox,
+                    &panel->ui_element->transform->rect, 
+                    child->transform->pos, 
+                    NULL);
+                // FIXME:
+                // ui_position_update_to_parent (panel->ui_element->transform,
+                //     textbox->ui_element->transform, false);
+                // ui_textbox_update_text_pos (textbox);
+                // printf ("%d - %d\n", textbox->ui_element->transform->rect.x, textbox->ui_element->transform->rect.y);
+            }
+
+            default: break;
+        }
+    }
+
+}
+
 // updates the panel's children positions
 void ui_panel_children_update_pos (Panel *panel) {
 
@@ -100,56 +158,7 @@ void ui_panel_children_update_pos (Panel *panel) {
         for (ListElement *le = dlist_start (panel->children); le; le = le->next) {
             UIElement *child = (UIElement *) le->data;
 
-            // update the element's transform values
-            switch (child->type) {
-                case UI_BUTTON: {
-                    // FIXME: make sure that all values are updated as well
-                    ui_button_set_pos ((Button *) child->element,
-                        &panel->ui_element->transform->rect,
-                        child->transform->pos,
-                        NULL);
-                } break;
-
-                case UI_IMAGE: {
-                    ui_image_set_pos ((Image *) child->element,
-                        &panel->ui_element->transform->rect, 
-                        child->transform->pos, 
-                        NULL);
-                }
-
-                case UI_INPUT: {
-                    // FIXME: 04/02/2020 -- 18:03 -- update children's pos
-                    ui_input_field_set_pos ((InputField *) child->element,
-                        &panel->ui_element->transform->rect, 
-                        child->transform->pos, 
-                        NULL);
-                } break;
-
-                case UI_PANEL: {
-                    // FIXME: 04/02/2020 -- 18:03 -- update children's pos
-                    ui_panel_set_pos ((Panel *) child->element, 
-                        &panel->ui_element->transform->rect, 
-                        child->transform->pos, 
-                        NULL);
-                    // ui_position_update_to_parent (panel->ui_element->transform,
-                    //     ((Panel *) child->element)->ui_element->transform, false);
-                } break;
-
-                case UI_TEXTBOX: {
-                    TextBox *textbox = (TextBox *) child->element;
-                    ui_textbox_set_pos (textbox,
-                        &panel->ui_element->transform->rect, 
-                        child->transform->pos, 
-                        NULL);
-                    // FIXME:
-                    // ui_position_update_to_parent (panel->ui_element->transform,
-                    //     textbox->ui_element->transform, false);
-                    // ui_textbox_update_text_pos (textbox);
-                    // printf ("%d - %d\n", textbox->ui_element->transform->rect.x, textbox->ui_element->transform->rect.y);
-                }
-
-                default: break;
-            }
+            ui_panel_child_update_pos (panel, child);
         }
     }
 
@@ -326,6 +335,32 @@ void ui_panel_layout_add_element_at_end (Panel *panel, UIElement *ui_element) {
     }
 
 }
+ // returns the ui element that is at the required position in the panel's layout
+UIElement *ui_panel_layout_get_element_at (Panel *panel, unsigned int pos) {
+
+    UIElement *retval = NULL;
+
+    if (panel) {
+        if (panel->layout) {
+            switch (panel->layout_type) {
+                case LAYOUT_TYPE_HORIZONTAL: 
+                    retval = ui_layout_horizontal_get_element_at ((HorizontalLayout *) panel->layout, pos);
+                    break;
+                case LAYOUT_TYPE_VERTICAL:
+                    retval = ui_layout_vertical_get_element_at ((VerticalLayout *) panel->layout, pos);
+                    break;
+                case LAYOUT_TYPE_GRID: 
+                     retval = ui_layout_grid_get_element_at ((GridLayout *) panel->layout, pos);
+                    break;
+
+                default: break;
+            }
+        }
+    }
+
+    return retval;
+
+}
 
 // removes a ui element form the panel layout
 void ui_panel_layout_remove_element (Panel *panel, UIElement *ui_element) {
@@ -368,6 +403,8 @@ void ui_panel_child_add (Panel *panel, UIElement *ui_element) {
         layer_remove_element (layer, ui_element);
 
         dlist_insert_after (panel->children, dlist_end (panel->children), ui_element);
+
+        ui_panel_child_update_pos (panel, ui_element);
 
         ui_element->parent = panel->ui_element;
     }

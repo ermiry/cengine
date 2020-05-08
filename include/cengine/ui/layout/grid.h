@@ -101,6 +101,9 @@ extern u8 ui_layout_grid_add_element_at_pos (GridLayout *grid, UIElement *ui_ele
 // returns 0 on success, 1 on error
 extern u8 ui_layout_grid_add_element_at_end (GridLayout *grid, UIElement *ui_element);
 
+// returns the ui element that is at the required position in the layout
+extern UIElement *ui_layout_grid_get_element_at (GridLayout *grid, unsigned int pos);
+
 // removes an element from the grid
 extern void ui_layout_grid_remove_element (GridLayout *grid, UIElement *ui_element);
 

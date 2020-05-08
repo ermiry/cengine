@@ -69,6 +69,9 @@ extern u8 ui_layout_vertical_add_at_pos (VerticalLayout *vertical, UIElement *ui
 // returns 0 on success, 1 on error
 extern u8 ui_layout_vertical_add_at_end (VerticalLayout *vertical, UIElement *ui_element);
 
+// returns the ui element that is at the required position in the layout
+extern UIElement *ui_layout_vertical_get_element_at (VerticalLayout *vertical, unsigned int pos);
+
 // removes an element from the vertical layout group
 extern void ui_layout_vertical_remove (VerticalLayout *vertical, UIElement *ui_element);
 

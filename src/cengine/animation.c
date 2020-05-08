@@ -158,7 +158,7 @@ Animation *animation_create (const char *name, u8 n_frames, DoubleList *anim_poi
             i++;
         }
 
-        dlist_clean (anim_points);
+        dlist_clear (anim_points);
     }
 
     return anim;

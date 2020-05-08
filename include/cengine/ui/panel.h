@@ -59,6 +59,9 @@ extern void ui_panel_set_pos (Panel *panel, UIRect *ref_rect, UIPosition pos, Re
 // sets the panel's UI position offset
 extern void ui_panel_set_pos_offset (Panel *panel, int x_offset, int y_offset);
 
+// updates one panel's child position
+extern void ui_panel_child_update_pos (Panel *panel, UIElement *child);
+
 // updates the panel's children positions
 extern void ui_panel_children_update_pos (Panel *panel);
 
@@ -88,6 +91,9 @@ extern void ui_panel_layout_add_element_at_pos (Panel *panel, UIElement *ui_elem
 
 // adds a new ui element to the panel's layout's END
 extern void ui_panel_layout_add_element_at_end (Panel *panel, UIElement *ui_element);
+
+ // returns the ui element that is at the required position in the panel's layout
+extern UIElement *ui_panel_layout_get_element_at (Panel *panel, unsigned int pos);
 
 // removes a ui element form the panel layout
 extern void ui_panel_layout_remove_element (Panel *panel, UIElement *ui_element);

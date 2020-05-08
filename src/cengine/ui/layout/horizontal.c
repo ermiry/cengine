@@ -9,6 +9,7 @@
 
 #include "cengine/ui/components/transform.h"
 #include "cengine/ui/layout/horizontal.h"
+#include "cengine/ui/panel.h"
 
 static void ui_layout_horizontal_scroll_up (void *event_data);
 static void ui_layout_horizontal_scroll_down (void *event_data);
@@ -146,11 +147,18 @@ static void ui_layout_horizontal_update (HorizontalLayout *horizontal) {
                     offset += (horizontal->curr_element_width + padding);
                 } 
 
-                // switch (ui_element->type) {
-                //     case UI_TEXTBOX:
-                //         ui_textbox_update_text_pos ((TextBox *) ui_element->element);
-                //         break;
-                // }
+                // FIXME: 16/04/2020 -- 02:43 -- handle all ui elements
+                switch (ui_element->type) {
+                    case UI_PANEL: ui_panel_children_update_pos ((Panel *) ui_element->element); break;
+
+                    case UI_TEXTBOX:
+                        // ui_textbox_update_text_pos ((TextBox *) ui_element->element);
+                        break;
+
+                    // case UI_IMAGE: ui_image_update break;
+
+                    default: break;
+                }
             }
         }
     }
@@ -189,6 +197,13 @@ u8 ui_layout_horizontal_add_at_end (HorizontalLayout *horizontal, UIElement *ui_
     }
 
     return retval;
+
+}
+
+// returns the ui element that is at the required position in the layout
+UIElement *ui_layout_horizontal_get_element_at (HorizontalLayout *horizontal, unsigned int pos) {
+
+    return horizontal ? (UIElement *) dlist_get_at (horizontal->ui_elements, pos) : NULL;
 
 }
 

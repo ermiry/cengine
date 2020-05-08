@@ -523,6 +523,18 @@ u8 ui_layout_grid_add_element_at_end (GridLayout *grid, UIElement *ui_element) {
 
 }
 
+// returns the ui element that is at the required position in the layout
+UIElement *ui_layout_grid_get_element_at (GridLayout *grid, unsigned int pos) {
+
+    if (grid) {
+        void *found = dlist_get_at (grid->elements, pos);
+        return found ? ((GridElement *) found)->ui_element : NULL;
+    }
+
+    return NULL;
+
+}
+
 // removes an element from the grid
 void ui_layout_grid_remove_element (GridLayout *grid, UIElement *ui_element) {
 

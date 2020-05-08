@@ -70,6 +70,9 @@ extern u8 ui_layout_horizontal_add_at_pos (HorizontalLayout *horizontal, UIEleme
 // returns 0 on success, 1 on error
 extern u8 ui_layout_horizontal_add_at_end (HorizontalLayout *horizontal, UIElement *ui_element);
 
+// returns the ui element that is at the required position in the layout
+extern UIElement *ui_layout_horizontal_get_element_at (HorizontalLayout *horizontal, unsigned int pos);
+
 // removes an element from the horizontal layout group
 extern void ui_layout_horizontal_remove (HorizontalLayout *horizontal, UIElement *ui_element);
 
