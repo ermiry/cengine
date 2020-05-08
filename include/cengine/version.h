@@ -8,12 +8,12 @@
 #define VERSION_AUTHOR			"Erick Salas"
 
 // print full cengine version information 
-extern void version_print_full (void);
+extern void cengine_version_print_full (void);
 
 // print the version id
-extern void version_print_version_id (void);
+extern void cengine_version_print_version_id (void);
 
 // print the version name
-extern void version_print_version_name (void);
+extern void cengine_version_print_version_name (void);
 
 #endif

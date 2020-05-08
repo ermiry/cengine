@@ -142,7 +142,7 @@ static State *app_state_new (void) {
 
 int main (void) {
 
-	version_print_full ();
+	cengine_version_print_full ();
 
 	// first we init everything related with our own application
 	if (!app_init ()) {
