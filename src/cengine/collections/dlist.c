@@ -127,9 +127,31 @@ void dlist_delete (void *dlist_ptr) {
 
 }
 
+// only deletes the list if its empty (size == 0)
+void dlist_delete_if_empty (void *dlist_ptr) {
+
+	if (dlist_ptr) {
+		if (((DoubleList *) dlist_ptr)->size == 0) dlist_delete (dlist_ptr);
+	}
+
+}
+
+// only deletes the list if its NOT empty (size > 0)
+void dlist_delete_if_not_empty (void *dlist_ptr) {
+
+	if (dlist_ptr) {
+		if (((DoubleList *) dlist_ptr)->size > 0) dlist_delete (dlist_ptr);
+	}
+
+}
+
 void dlist_set_compare (DoubleList *dlist, int (*compare)(const void *one, const void *two)) { if (dlist) dlist->compare = compare; }
 
 void dlist_set_destroy (DoubleList *dlist, void (*destroy)(void *data)) { if (dlist) dlist->destroy = destroy; }
+
+bool dlist_is_empty (DoubleList *dlist) { return dlist ? (dlist->size == 0) : false; }
+
+bool dlist_is_not_empty (DoubleList *dlist) { return dlist ? (dlist->size > 0) : false; }
 
 DoubleList *dlist_init (void (*destroy)(void *data), int (*compare)(const void *one, const void *two)) {
 
@@ -172,9 +194,11 @@ void dlist_reset (DoubleList *dlist) {
 
 // only gets rid of the list elements, but the data is kept
 // this is usefull if another dlist or structure points to the same data
-void dlist_clean (DoubleList *dlist) {
+void dlist_clear (void *dlist_ptr) {
 
-	if (dlist) {
+	if (dlist_ptr) {
+		DoubleList *dlist = (DoubleList *) dlist_ptr;
+
 		pthread_mutex_lock (dlist->mutex);
 
 		void *data = NULL;
@@ -182,6 +206,28 @@ void dlist_clean (DoubleList *dlist) {
 			data = dlist_internal_remove_element (dlist, NULL);
 
 		pthread_mutex_unlock (dlist->mutex);
+	}
+
+}
+
+// clears the dlist - only gets rid of the list elements, but the data is kept
+// and then deletes the dlist
+void dlist_clear_and_delete (void *dlist_ptr) {
+
+	if (dlist_ptr) {
+		dlist_clear (dlist_ptr);
+		dlist_delete (dlist_ptr);
+	}
+
+}
+
+// clears the dlist if it is NOT empty
+// deletes the dlist if it is EMPTY
+void dlist_clear_or_delete (void *dlist_ptr) {
+
+	if (dlist_ptr) {
+		if (((DoubleList *) dlist_ptr)->size > 0) dlist_clear (dlist_ptr);
+		else dlist_delete (dlist_ptr);
 	}
 
 }
@@ -582,18 +628,144 @@ int dlist_sort (DoubleList *dlist, int (*compare)(const void *one, const void *t
 	int retval = 1;
 
 	if (dlist && dlist->compare) {
-		int (*comp)(const void *one, const void *two) = compare ? compare : dlist->compare;
+		if (dlist->size > 1) {
+			int (*comp)(const void *one, const void *two) = compare ? compare : dlist->compare;
 
-		if (comp) {
+			if (comp) {
+				pthread_mutex_lock (dlist->mutex);
+
+				dlist->start = dlist_merge_sort (dlist->start, comp);
+				retval = 0;
+
+				pthread_mutex_unlock (dlist->mutex);
+			}
+		}
+
+		else {
+			retval = 0;
+		}
+	}
+
+	return retval;
+
+}
+
+/*** Other ***/
+
+// returns a newly allocated array with the list elements inside it
+// data will not be copied, only the pointers, so the list will keep the original elements
+void **dlist_to_array (DoubleList *dlist, size_t *count) {
+
+	void **array = NULL;
+
+	if (dlist) {
+		array = (void **) calloc (dlist->size, sizeof (void *));
+		if (array) {
+			unsigned int idx = 0;
+			ListElement *ptr = dlist_start (dlist);
+			while (ptr != NULL) {
+				array[idx] = ptr->data;
+
+				ptr = ptr->next;
+				idx++;
+			}
+
+			if (count) *count = dlist->size;
+		}
+	}
+
+	return array;
+
+}
+
+// returns a exact copy of the dlist
+// creates the dlist's elements using the same data pointers as in the original dlist
+// be carefull which dlist you delete first, as the other should use dlist_clear first before delete
+// the new dlist's delete and comparator methods are set from the original
+DoubleList *dlist_copy (DoubleList *dlist) {
+
+	DoubleList *copy = NULL;
+
+	if (dlist) {
+		copy = dlist_init (dlist->destroy, dlist->compare);
+
+		for (ListElement *le = dlist_start (dlist); le; le = le->next) {
+			dlist_insert_after (
+				copy,
+				dlist_end (copy),
+				le->data
+			);
+		}
+	}
+
+	return copy;
+
+}
+
+// returns a exact clone of the dlist
+// the element's data are created using your clone method
+	// which takes as the original each element's data of the dlist
+	// and should return the same structure type as the original method that can be safely deleted
+	// with the dlist's delete method
+// the new dlist's delete and comparator methods are set from the original
+DoubleList *dlist_clone (DoubleList *dlist, void *(*clone) (const void *original)) {
+
+	DoubleList *dlist_clone = NULL;
+
+	if (dlist && clone) {
+		dlist_clone = dlist_init (dlist->destroy, dlist->compare);
+
+		for (ListElement *le = dlist_start (dlist); le; le = le->next) {
+			dlist_insert_after (
+				dlist_clone,
+				dlist_end (dlist_clone),
+				clone (le->data)
+			);
+		}
+	}
+
+	return dlist_clone;
+
+}
+
+// splits the original dlist into two halfs
+// if dlist->size is odd, extra element will be left in the first half (dlist)
+// both lists can be safely deleted
+// the new dlist's delete and comparator methods are set from the original
+DoubleList *dlist_split_half (DoubleList *dlist) {
+
+	DoubleList *half = NULL;
+
+	if (dlist) {
+		if (dlist->size > 1) {
+			half = dlist_init (dlist->destroy, dlist->compare);
+
 			pthread_mutex_lock (dlist->mutex);
 
-			dlist->start = dlist_merge_sort (dlist->start, comp);
-			retval = 0;
+			size_t carry = dlist->size % 2;
+			size_t half_count = dlist->size / 2;
+			half_count += carry;
+			size_t count = 0;
+			for (ListElement *le = dlist_start (dlist); le; le = le->next) {
+				if (count == half_count) {
+					dlist->end = le->prev;
+					le->prev->next = NULL;
+					le->prev = NULL;
+
+					half->start = le;
+
+					half->size = dlist->size - half_count;
+					dlist->size = half_count;
+					break;
+				}
+
+				count++;
+			}
 
 			pthread_mutex_unlock (dlist->mutex);
 		}
 	}
 
-	return retval;
+	return half;
 
 }
