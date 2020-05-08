@@ -37,15 +37,19 @@ In addition, you will also find the assets folder, whith some **cengine** defaul
 
 Finally there is the examples directory, where you will find some examples to get you started.
 
-We will focus on compiling the welcome example (welcome.c). To do this, in the **cengine** code that you downloaded, copy the welcome.c file form the examples directory into the src directory. Now you can compile it using the included Makefile.
+We will focus on compiling the welcome example (welcome.c). To do this, first we need to compile the cengine library into a shared object (.so). The are three basic commands for the Makefile:
 
 The are three basic commands for the Makefile:
 
 | Command        | Description   |
 | -------------  |:-------------:|
-| make           | Compile your source code and tell you if there are some errors   |
-| make run       | Run the compilled binary                                         |
+| make           | Compile cengine's source code into a shared object (.so)          |
+| make examples  | Compile the examples using the newly created cengine.so           |
 | make clean     | Clean created objects (.o files) and binaries                    |
+
+Run the example, after the compiling cengine, like this:
+
+`LD_LIBRARY_PATH=bin/ ./examples/bin/welcome`
 
 You should see that a window like this gets created:
 
