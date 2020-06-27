@@ -8,14 +8,16 @@
 #include <ctype.h>
 #include <stdarg.h>
 
+#include "cerver/utils/utils.h"
+
 /*** misc ***/
 
 bool system_is_little_endian (void) {
 
-    unsigned int x = 0x76543210;
-    char *c = (char *) &x;
-    if (*c == 0x10) return true;
-    else return false;
+	unsigned int x = 0x76543210;
+	char *c = (char *) &x;
+	if (*c == 0x10) return true;
+	else return false;
 
 }
 
@@ -23,8 +25,8 @@ bool system_is_little_endian (void) {
 
 int clamp_int (int val, int min, int max) {
 
-    const int t = val < min ? min : val;
-    return t > max ? max : t;
+	const int t = val < min ? min : val;
+	return t > max ? max : t;
 
 }
 
@@ -39,19 +41,25 @@ void random_set_seed (unsigned int seed) { srand (seed); }
 
 int random_int_in_range (int min, int max) {
 
-    int low = 0, high = 0;
+	int low = 0, high = 0;
 
-    if (min < max) {
-        low = min;
-        high = max + 1;
-    }
+	if (min < max) {
+		low = min;
+		high = max + 1;
+	}
 
-    else {
-        low = max + 1;
-        high = min;
-    }
+	else {
+		low = max + 1;
+		high = min;
+	}
 
-    return (rand () % (high - low)) + low;
+	return (rand () % (high - low)) + low;
+
+}
+
+float random_float (float abs) {
+
+	return ((float) rand () / (float)(RAND_MAX)) * abs;
 
 }
 
@@ -60,45 +68,45 @@ int random_int_in_range (int min, int max) {
 // convert a string representing a hex to a string
 int xtoi (char *hexString) {
 
-    int i = 0;
+	int i = 0;
 
-    if ((*hexString == '0') && (*(hexString + 1) == 'x')) hexString += 2;
+	if ((*hexString == '0') && (*(hexString + 1) == 'x')) hexString += 2;
 
-    while (*hexString) {
-        char c = toupper (*hexString++);
-        if ((c < '0') || (c > 'F') || ((c > '9') && (c < 'A'))) break;
-        c -= '0';
-        if (c > 9) c-= 7;
-        i = (i << 4) + c;
-    }
+	while (*hexString) {
+		char c = toupper (*hexString++);
+		if ((c < '0') || (c > 'F') || ((c > '9') && (c < 'A'))) break;
+		c -= '0';
+		if (c > 9) c-= 7;
+		i = (i << 4) + c;
+	}
 
-    return i;
+	return i;
 
 }
 
 char *itoa (int i, char *b) {
 
-    char const digit[] = "0123456789";
-    char *p = b;
+	char const digit[] = "0123456789";
+	char *p = b;
 
-    if (i < 0) {
-        *p++ = '-';
-        i *= -1;
-    }
+	if (i < 0) {
+		*p++ = '-';
+		i *= -1;
+	}
 
-    int shifter = i;
-    do { //Move to where representation ends
-        ++p;
-        shifter = shifter / 10;
-    } while (shifter);
+	int shifter = i;
+	do { //Move to where representation ends
+		++p;
+		shifter = shifter / 10;
+	} while (shifter);
 
-    *p = '\0';
-    do { //Move back, inserting digits as u go
-        *--p = digit [i % 10];
-        i = i / 10;
-    } while (i);
+	*p = '\0';
+	do { //Move back, inserting digits as u go
+		*--p = digit [i % 10];
+		i = i / 10;
+	} while (i);
 
-    return b;
+	return b;
 
 }
 
@@ -114,128 +122,129 @@ uint32_t convert_rgba_to_hex (uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
     return retval;
 }
 
+
 /*** c strings ***/
 
 // creates a new c string with the desired format, as in printf
 char *c_string_create (const char *format, ...) {
 
-    char *fmt;
+	char *fmt;
 
-    if (format != NULL) fmt = strdup (format);
-    else fmt = strdup ("");
+	if (format != NULL) fmt = strdup (format);
+	else fmt = strdup ("");
 
-    va_list argp;
-    va_start (argp, format);
-    char oneChar[1];
-    int len = vsnprintf (oneChar, 1, fmt, argp);
-    if (len < 1) return NULL;
-    va_end (argp);
+	va_list argp;
+	va_start (argp, format);
+	char oneChar[1];
+	int len = vsnprintf (oneChar, 1, fmt, argp);
+	if (len < 1) return NULL;
+	va_end (argp);
 
-    char *str = (char *) calloc (len + 1, sizeof (char));
-    if (!str) return NULL;
+	char *str = (char *) calloc (len + 1, sizeof (char));
+	if (!str) return NULL;
 
-    va_start (argp, format);
-    vsnprintf (str, len + 1, fmt, argp);
-    va_end (argp);
+	va_start (argp, format);
+	vsnprintf (str, len + 1, fmt, argp);
+	va_end (argp);
 
-    free (fmt);
+	free (fmt);
 
-    return str;
+	return str;
 
 }
 
 // splits a c string into tokens based on a delimiter
 char **c_string_split (char *string, const char delim, int *n_tokens) {
 
-    char **result = 0;
-    size_t count = 0;
-    char *temp = string;
-    char *last = 0;
-    char dlm[2];
-    dlm[0] = delim;
-    dlm[1] = 0;
+	char **result = 0;
+	size_t count = 0;
+	char *temp = string;
+	char *last = 0;
+	char dlm[2];
+	dlm[0] = delim;
+	dlm[1] = 0;
 
-    // count how many elements will be extracted
-    while (*temp) {
-        if (delim == *temp) {
-            count++;
-            last = temp;
-        }
+	// count how many elements will be extracted
+	while (*temp) {
+		if (delim == *temp) {
+			count++;
+			last = temp;
+		}
 
-        temp++;
-    }
+		temp++;
+	}
 
-    count += last < (string + strlen (string) - 1);
+	count += last < (string + strlen (string) - 1);
 
-    count++;
+	count++;
 
-    result = (char **) calloc (count, sizeof (char *));
-    if (n_tokens) *n_tokens = count;
+	result = (char **) calloc (count, sizeof (char *));
+	if (n_tokens) *n_tokens = count;
 
-    if (result) {
-        size_t idx = 0;
-        char *token = strtok (string, dlm);
+	if (result) {
+		size_t idx = 0;
+		char *token = strtok (string, dlm);
 
-        while (token) {
-            // assert (idx < count);
-            *(result + idx++) = strdup (token);
-            token = strtok (0, dlm);
-        }
+		while (token) {
+			// assert (idx < count);
+			*(result + idx++) = strdup (token);
+			token = strtok (0, dlm);
+		}
 
-        // assert (idx == count - 1);
-        *(result + idx) = 0;
-    }
+		// assert (idx == count - 1);
+		*(result + idx) = 0;
+	}
 
-    return result;
+	return result;
 
 }
 
 // copies a c string into another one previuosly allocated
 void c_string_copy (char *to, const char *from) {
 
-    if (to && from) {
-        while (*from) *to++ = *from++;
-        
-        *to = '\0';
-    }
+	if (to && from) {
+		while (*from) *to++ = *from++;
+		
+		*to = '\0';
+	}
 
 }
 
 // revers a c string
 char *c_string_reverse (char *str) {
 
-    if (str) {
-        char reverse[20];
-        int len = strlen (str);
-        short int end = len - 1;
-        short int begin = 0;
-        for ( ; begin < len; begin++) {
-            reverse[begin] = str[end];
-            end--;
-        }
+	if (str) {
+		char reverse[20];
+		int len = strlen (str);
+		short int end = len - 1;
+		short int begin = 0;
+		for ( ; begin < len; begin++) {
+			reverse[begin] = str[end];
+			end--;
+		}
 
-        reverse[begin] = '\0';
+		reverse[begin] = '\0';
 
-        char *retval = (char *) calloc (len + 1, sizeof (char));
-        if (retval) c_string_copy (retval, reverse);
+		char *retval = (char *) calloc (len + 1, sizeof (char));
+		if (retval) c_string_copy (retval, reverse);
 
-        return retval;
-    }
+		return retval;
+	}
 
-    return NULL;
+	return NULL;
 
 }
 
 // removes all ocurrances of a char from a string
 void c_string_remove_char (char *string, char garbage) {
 
-    char *src, *dst;
-    for (src = dst = string; *src != '\0'; src++) {
-        *dst = *src;
-        if (*dst != garbage) dst++;
-    }
-    
-    *dst = '\0';
+	char *src, *dst;
+	for (src = dst = string; *src != '\0'; src++) {
+		*dst = *src;
+		if (*dst != garbage) dst++;
+	}
+	
+	*dst = '\0';
 
 }
 
@@ -248,7 +257,7 @@ char *c_string_remove_sub (char *str, const char *sub) {
 	if (str && sub) {
 		char *start_sub = strstr (str, sub);
 		if (start_sub) {
-			size_t len_str = strlen (str);
+			ptrdiff_t len_str = strlen (str);
 			size_t len_sub = strlen (sub);
 
 			ptrdiff_t diff = start_sub - str;
@@ -256,7 +265,7 @@ char *c_string_remove_sub (char *str, const char *sub) {
 			retval = (char *) calloc (new_len + 1, sizeof (char));
 			if (retval) {
 				char *ptr = retval; 
-				int idx = 0;
+				ptrdiff_t idx = 0;
 
 				// copy the first part of the string
 				while (idx < diff) {
@@ -266,7 +275,7 @@ char *c_string_remove_sub (char *str, const char *sub) {
 				}
 
 				idx += len_sub;
-				char *end_sub = str + len_sub;
+				// char *end_sub = str + len_sub;
 				while (idx < len_str) {
 					*ptr = str[idx];
 					ptr++;
@@ -277,8 +286,8 @@ char *c_string_remove_sub (char *str, const char *sub) {
 			}
 		}
 	}
-    
-    return retval;
+	
+	return retval;
 
 }
 
@@ -315,34 +324,34 @@ char *c_string_create_with_ptrs (char *first, char *last) {
 // and option to retrieve the actual substring
 char *c_string_remove_sub_after_token (char *str, const char token, char **sub) {
 
-    char *retval = NULL;
+	char *retval = NULL;
 
-    if (str) {
-        char *ptr = str;
+	if (str) {
+		char *ptr = str;
 		while (*ptr) {
 			if (token == *ptr) {
-                break;
+				break;
 			}
 
 			ptr++;
 		}
 
-        size_t str_len = strlen (str);
-        size_t sub_len = strlen (ptr);
-        size_t diff_len = str_len - sub_len;
+		size_t str_len = strlen (str);
+		size_t sub_len = strlen (ptr);
+		size_t diff_len = str_len - sub_len;
 
 		if (sub) {
 			*sub = (char *) calloc (sub_len + 1, sizeof (char));
-            memcpy (*sub, ptr, sub_len);
-            // *sub[sub_len] = '\0';
+			memcpy (*sub, ptr, sub_len);
+			// *sub[sub_len] = '\0';
 		} 
 
-        retval = (char *) calloc (diff_len + 1, sizeof (char));
-        memcpy (retval, str, diff_len);
-        // retval[diff_len] = '\0';
-    }
+		retval = (char *) calloc (diff_len + 1, sizeof (char));
+		memcpy (retval, str, diff_len);
+		// retval[diff_len] = '\0';
+	}
 
-    return retval;
+	return retval;
 
 }
 
@@ -353,42 +362,42 @@ char *c_string_remove_sub_after_token (char *str, const char token, char **sub) 
 // example: /home/ermiry/Documents, token: '/', idx: -1, returns: Documents
 char *c_string_remove_sub_after_token_with_idx (char *str, const char token, char **sub, int idx) {
 
-    char *retval = NULL;
+	char *retval = NULL;
 
-    if (str) {
-        int count = 0;
-        char *ptr = str;
-        char *last_ptr = NULL;
-        int last_token_count = 0;
+	if (str) {
+		// int count = 0;
+		char *ptr = str;
+		char *last_ptr = NULL;
+		int last_token_count = 0;
 		while (*ptr) {
-            if (token == *ptr) {
-                last_token_count++;
+			if (token == *ptr) {
+				last_token_count++;
 
-                if (idx < 0) last_ptr = ptr;
-                else if (last_token_count == idx) last_ptr = ptr;
-            }
+				if (idx < 0) last_ptr = ptr;
+				else if (last_token_count == idx) last_ptr = ptr;
+			}
 
-            ptr++;
-        }
+			ptr++;
+		}
 
-        last_ptr++;
+		last_ptr++;
 
-        size_t str_len = strlen (str);
-        size_t sub_len = strlen (last_ptr);
-        size_t diff_len = str_len - sub_len;
+		size_t str_len = strlen (str);
+		size_t sub_len = strlen (last_ptr);
+		size_t diff_len = str_len - sub_len;
 
 		if (sub) {
 			*sub = (char *) calloc (sub_len + 1, sizeof (char));
-            memcpy (*sub, last_ptr, sub_len);
-            // *sub[sub_len] = '\0';
+			memcpy (*sub, last_ptr, sub_len);
+			// *sub[sub_len] = '\0';
 		} 
 
-        retval = (char *) calloc (diff_len + 1, sizeof (char));
-        memcpy (retval, str, diff_len);
-        // retval[diff_len] = '\0';
-    }
+		retval = (char *) calloc (diff_len + 1, sizeof (char));
+		memcpy (retval, str, diff_len);
+		// retval[diff_len] = '\0';
+	}
 
-    return retval;
+	return retval;
 
 }
 
@@ -441,15 +450,15 @@ char *c_string_remove_sub_simetric_token (char *str, const char token, char **su
 // example: test_20191118142101759__TEST__.png - token: '_' - idx (first: 1,  last: 3)
 // result: testTEST__.png
 // returns a newly allocated string, and a option to get the substring
-char *c_string_remove_sub_range_token (char *str, const char token, unsigned int first, int last,
+char *c_string_remove_sub_range_token (char *str, const char token, unsigned int first, unsigned int last,
 	char **sub) {
 
 	char *retval = NULL;
 
 	if (str) {
 		if (first != last) {
-			int first_token_count = 0;
-			int last_token_count = 0;
+			unsigned int first_token_count = 0;
+			unsigned int last_token_count = 0;
 			char *ptr = str;
 			char *first_ptr = NULL;
 			char *last_ptr = NULL;
@@ -498,6 +507,6 @@ char *c_string_remove_sub_different_token (char *str, const char token_one, cons
 
 	// TODO:
 
-    return NULL;
+	return NULL;
 
 }

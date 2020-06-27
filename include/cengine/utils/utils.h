@@ -12,7 +12,7 @@ extern bool system_is_little_endian (void);
 
 extern int clamp_int (int val, int min, int max);
 
-int abs_int (int value);
+extern int abs_int (int value);
 
 extern float lerp (float first, float second, float by);
 
@@ -22,6 +22,9 @@ extern float lerp (float first, float second, float by);
 extern void random_set_seed (unsigned int seed);
 
 extern int random_int_in_range (int min, int max);
+
+// abds = 5 for random float values between 0.0001 and 4.9999
+extern float random_float (float abs);
 
 /*** converters ***/
 
@@ -81,7 +84,7 @@ extern char *c_string_remove_sub_simetric_token (char *str, const char token, ch
 // example: test_20191118142101759__TEST__.png - token: '_' - idx (first: 1,  last: 3)
 // result: testTEST__.png
 // returns a newly allocated string, and a option to get the substring
-extern char *c_string_remove_sub_range_token (char *str, const char token, unsigned int first, int last,
+extern char *c_string_remove_sub_range_token (char *str, const char token, unsigned int first, unsigned int last,
 	char **sub);
 
 #endif
