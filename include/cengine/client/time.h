@@ -7,8 +7,8 @@
 
 #include <time.h>
 
-#include "client/types/types.h"
-#include "client/types/string.h"
+#include "cengine/types/types.h"
+#include "cengine/types/string.h"
 
 typedef struct timespec TimeSpec;
 

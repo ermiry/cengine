@@ -1,13 +1,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "client/types/types.h"
-#include "client/types/string.h"
+#include "cengine/types/types.h"
+#include "cengine/types/string.h"
 
-#include "client/errors.h"
-#include "client/packets.h"
+#include "cengine/client/errors.h"
+#include "cengine/client/packets.h"
 
-#include "client/utils/log.h"
+#include "cengine/utils/log.h"
 
 Error *error_new (const char *msg) {
 

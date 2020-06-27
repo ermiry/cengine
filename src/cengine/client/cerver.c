@@ -3,15 +3,15 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "client/types/types.h"
-#include "client/types/string.h"
+#include "cengine/types/types.h"
+#include "cengine/types/string.h"
 
-#include "client/cerver.h"
-#include "client/connection.h"
-#include "client/packets.h"
+#include "cengine/client/cerver.h"
+#include "cengine/client/connection.h"
+#include "cengine/client/packets.h"
 
-#include "client/utils/utils.h"
-#include "client/utils/log.h"
+#include "cengine/utils/utils.h"
+#include "cengine/utils/log.h"
 
 #pragma region cerver stats
 

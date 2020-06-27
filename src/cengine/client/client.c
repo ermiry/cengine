@@ -4,25 +4,25 @@
 
 #include <time.h>
 
-#include "client/types/types.h"
-#include "client/types/string.h"
+#include "cengine/types/types.h"
+#include "cengine/types/string.h"
 
-#include "client/collections/dlist.h"
+#include "cengine/collections/dlist.h"
 
-#include "client/network.h"
-#include "client/packets.h"
-#include "client/events.h"
-#include "client/errors.h"
-#include "client/client.h"
-#include "client/handler.h"
-#include "client/cerver.h"
-#include "client/connection.h"
-#include "client/game.h"
+#include "cengine/client/network.h"
+#include "cengine/client/packets.h"
+#include "cengine/client/events.h"
+#include "cengine/client/errors.h"
+#include "cengine/client/client.h"
+#include "cengine/client/handler.h"
+#include "cengine/client/cerver.h"
+#include "cengine/client/connection.h"
+#include "cengine/client/game.h"
 
-#include "client/threads/thread.h"
+#include "cengine/threads/thread.h"
 
-#include "client/utils/log.h"
-#include "client/utils/utils.h"
+#include "cengine/utils/log.h"
+#include "cengine/utils/utils.h"
 
 int client_disconnect (Client *client);
 int client_connection_end (Client *client, Connection *connection);

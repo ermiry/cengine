@@ -3,16 +3,16 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "client/types/types.h"
-#include "client/types/string.h"
+#include "cengine/types/types.h"
+#include "cengine/types/string.h"
 
-#include "client/collections/dlist.h"
+#include "cengine/collections/dlist.h"
 
-#include "client/packets.h"
-#include "client/events.h"
-#include "client/game.h"
+#include "cengine/client/packets.h"
+#include "cengine/client/events.h"
+#include "cengine/client/game.h"
 
-#include "client/utils/log.h"
+#include "cengine/utils/log.h"
 
 static GameSettings *game_settings_new (void) {
 

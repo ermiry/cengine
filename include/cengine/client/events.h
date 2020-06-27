@@ -3,9 +3,9 @@
 
 #include <stdbool.h>
 
-#include "client/types/types.h"
+#include "cengine/types/types.h"
 
-#include "client/client.h"
+#include "cengine/client/client.h"
 
 struct _Client;
 

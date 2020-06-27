@@ -1,7 +1,7 @@
 #ifndef _CLIENT_ADMIN_H_
 #define _CLIENT_ADMIN_H_
 
-#include "client/types/string.h"
+#include "cengine/types/string.h"
 
 // serialized admin credentials
 struct _SAdminCredentials {

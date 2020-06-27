@@ -2,20 +2,20 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "client/types/types.h"
-#include "client/types/string.h"
+#include "cengine/types/types.h"
+#include "cengine/types/string.h"
 
-#include "client/network.h"
-#include "client/cerver.h"
-#include "client/client.h"
-#include "client/connection.h"
-#include "client/handler.h"
-#include "client/packets.h"
+#include "cengine/client/network.h"
+#include "cengine/client/cerver.h"
+#include "cengine/client/client.h"
+#include "cengine/client/connection.h"
+#include "cengine/client/handler.h"
+#include "cengine/client/packets.h"
 
-#include "client/threads/thread.h"
+#include "cengine/threads/thread.h"
 
-#include "client/utils/utils.h"
-#include "client/utils/log.h"
+#include "cengine/utils/utils.h"
+#include "cengine/utils/log.h"
 
 void connection_remove_auth_data (Connection *connection);
 

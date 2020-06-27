@@ -1,9 +1,9 @@
 #ifndef _CLIENT_ERRORS_H_
 #define _CLIENT_ERRORS_H_
 
-#include "client/types/string.h"
+#include "cengine/types/string.h"
 
-#include "client/packets.h"
+#include "cengine/client/packets.h"
 
 struct _Packet;
 

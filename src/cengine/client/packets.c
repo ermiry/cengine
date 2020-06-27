@@ -6,16 +6,16 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#include "client/types/types.h"
-#include "client/types/string.h"
+#include "cengine/types/types.h"
+#include "cengine/types/string.h"
 
-#include "client/network.h"
-#include "client/packets.h"
-#include "client/cerver.h"
-#include "client/client.h"
+#include "cengine/client/network.h"
+#include "cengine/client/packets.h"
+#include "cengine/client/cerver.h"
+#include "cengine/client/client.h"
 
 #ifdef PACKETS_DEBUG
-#include "client/utils/log.h"
+#include "cengine/utils/log.h"
 #endif
 
 static ProtocolID protocol_id = 0;
