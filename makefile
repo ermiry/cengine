@@ -6,9 +6,10 @@ MATH 	:= -lm
 PTHREAD := -l pthread
 
 # development
-DEVELOPMENT = -D CENGINE_DEBUG
+DEVELOPMENT 	:= -D CENGINE_DEBUG
+CLIENT_DEBUG	:= -D CERVER_DEBUG -D CLIENT_DEBUG -D PACKETS_DEBUG
 
-DEFINES = $(DEVELOPMENT)
+DEFINES = $(DEVELOPMENT) $(CLIENT_DEBUG)
 
 CC          := gcc
 
@@ -43,8 +44,6 @@ uninstall:
 	rm /usr/local/lib/libcengine.so
 	rm -r /usr/local/include/cengine
 
-remake: clean all
-
 directories:
 	@mkdir -p $(TARGETDIR)
 	@mkdir -p $(BUILDDIR)
@@ -77,5 +76,4 @@ examples: ./examples/welcome.c
 	@mkdir -p ./examples/bin
 	$(CC) -I ./include -L ./bin ./examples/welcome.c -o ./examples/bin/welcome -l cengine
 
-# non-file Targets
-.PHONY: all remake clean examples
+.PHONY: all clean examples
