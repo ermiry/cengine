@@ -21,7 +21,7 @@ SRCEXT      := c
 DEPEXT      := d
 OBJEXT      := o
 
-CFLAGS      := -g $(DEFINES) -fPIC
+CFLAGS      := -g $(DEFINES) -Wall -Wno-unknown-pragmas -Wfatal-errors -fPIC
 LIB         := $(MATH) $(PTHREAD) $(SDL2)
 INC         := -I $(INCDIR) -I /usr/local/include
 INCDEP      := -I $(INCDIR)
