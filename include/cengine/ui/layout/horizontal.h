@@ -6,6 +6,7 @@
 #include "cengine/collections/dlist.h"
 
 #include "cengine/renderer.h"
+#include "cengine/events.h"
 
 #include "cengine/ui/ui.h"
 #include "cengine/ui/components/transform.h"
@@ -35,10 +36,15 @@ typedef struct HorizontalLayout {
 
     bool scrolling;             // enable / disable scrolling
     u32 scroll_sensitivity;     // how fast the elements move
+    EventAction *event_scroll_up;
+    EventAction *event_scroll_down;
 
 } HorizontalLayout;
 
 extern void ui_layout_horizontal_delete (void *horizontal_ptr);
+
+// get the amount of elements that are inside the horizontal layout
+extern size_t ui_layout_horizontal_get_elements_count (HorizontalLayout *horizontal);
 
 // sets a preffered width for your elements
 // if there are more elements than horizontal layout width / element width,
@@ -74,6 +80,6 @@ extern u8 ui_layout_horizontal_add_at_end (HorizontalLayout *horizontal, UIEleme
 extern UIElement *ui_layout_horizontal_get_element_at (HorizontalLayout *horizontal, unsigned int pos);
 
 // removes an element from the horizontal layout group
-extern void ui_layout_horizontal_remove (HorizontalLayout *horizontal, UIElement *ui_element);
+extern u8 ui_layout_horizontal_remove (HorizontalLayout *horizontal, UIElement *ui_element);
 
 #endif
