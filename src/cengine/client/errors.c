@@ -50,7 +50,7 @@ void error_packet_handler (Packet *packet) {
                 // FIXME:
                 case ERR_FAILED_AUTH: {
                     // #ifdef CLIENT_DEBUG
-                    // client_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, 
+                    // cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, 
                     //     c_string_create ("Failed to authenticate - %s", error->msg)); 
                     // #endif
                     // last_error.type = ERR_FAILED_AUTH;
@@ -63,7 +63,7 @@ void error_packet_handler (Packet *packet) {
                 break;
 
                 default: 
-                    client_log_msg (stderr, LOG_WARNING, LOG_NO_TYPE, "Unknown error recieved from server."); 
+                    cengine_log_msg (stderr, LOG_WARNING, LOG_NO_TYPE, "Unknown error recieved from server."); 
                     break;
             }
         }
