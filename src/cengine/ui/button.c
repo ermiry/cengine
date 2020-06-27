@@ -466,9 +466,9 @@ void ui_button_draw (Button *button, Renderer *renderer) {
                     memset (&real_position, 0, sizeof (UITransform));
 
                     // real_position.rect.x = button->ui_element->parent ? button->ui_element->parent->transform->rect.x + button->ui_element->transform->rect.x : button->ui_element->transform->rect.x;
-                    real_position.rect.x = button->ui_element->transform->rect.x;
+                    real_position.rect.x = button->ui_element->transform->rect.x + button->ui_element->abs_offset_x;
                     // real_position.rect.y = button->ui_element->parent ? button->ui_element->parent->transform->rect.y + button->ui_element->transform->rect.y : button->ui_element->transform->rect.y;
-                    real_position.rect.y = button->ui_element->transform->rect.y;
+                    real_position.rect.y = button->ui_element->transform->rect.y + button->ui_element->abs_offset_x;
                     if (button->ui_element->parent) parent_ui_element_get_position (button->ui_element->parent, &real_position.rect.x, &real_position.rect.y);
 
                     // check if the mouse is in the button

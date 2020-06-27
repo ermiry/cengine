@@ -58,8 +58,10 @@ void ui_image_delete (void *image_ptr) {
 
         image->ui_element = NULL;
 
-        if (image->texture && ! image->texture_reference) 
+        if (image->texture && !image->texture_reference) {
             SDL_DestroyTexture (image->texture);
+            // texture_destroy (renderer_get_by_name ("main"), image->texture);
+        }
 
         if (image->texture_src_rect) free (image->texture_src_rect);
 
@@ -578,8 +580,8 @@ void ui_image_draw (Image *image, Renderer *renderer) {
             if (image->active) {
                 if (renderer->window->mouse) {
                     // check if the mouse is in the image
-                    if (mousePos.x >= image->ui_element->transform->rect.x && mousePos.x <= (image->ui_element->transform->rect.x + image->ui_element->transform->rect.w) && 
-                        mousePos.y >= image->ui_element->transform->rect.y && mousePos.y <= (image->ui_element->transform->rect.y + image->ui_element->transform->rect.h)) {
+                    if (mousePos.x >= image->ui_element->transform->rect.x + image->ui_element->abs_offset_x && mousePos.x <= (image->ui_element->transform->rect.x + image->ui_element->transform->rect.w + image->ui_element->abs_offset_x) && 
+                        mousePos.y >= image->ui_element->transform->rect.y + image->ui_element->abs_offset_y && mousePos.y <= (image->ui_element->transform->rect.y + image->ui_element->transform->rect.h + image->ui_element->abs_offset_y)) {
                         renderer->ui->ui_element_hover = image->ui_element;
                             
                         if (image->overlay_texture && !image->selected) {
