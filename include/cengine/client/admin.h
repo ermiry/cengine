@@ -1,7 +1,7 @@
-#ifndef _CERVER_ADMIN_H_
-#define _CERVER_ADMIN_H_
+#ifndef _CLIENT_ADMIN_H_
+#define _CLIENT_ADMIN_H_
 
-#include "cengine/types/string.h"
+#include "client/types/string.h"
 
 // serialized admin credentials
 struct _SAdminCredentials {

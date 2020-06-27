@@ -5,11 +5,7 @@
 
 #include <fcntl.h>
 
-#include "cengine/cerver/network.h"
-
-/*** SOCKETS ***/  
-
-#pragma region SOCKETS
+#include "client/network.h"
 
 // enable/disable blocking on a socket
 // true on success, false if there was an eroror
@@ -82,5 +78,3 @@ in_port_t sock_ip_port (const struct sockaddr *address) {
 	}
 
 }
-
-#pragma endregion

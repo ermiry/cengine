@@ -1,9 +1,9 @@
-#ifndef _CERVER_CLIENT_HANDLER_H_
-#define _CERVER_CLIENT_HANDLER_H_
+#ifndef _CLIENT_HANDLER_H_
+#define _CLIENT_HANDLER_H_
 
-#include "cengine/cerver/client.h"
-#include "cengine/cerver/connection.h"
-#include "cengine/cerver/packets.h"
+#include "client/client.h"
+#include "client/connection.h"
+#include "client/packets.h"
 
 #define RECEIVE_PACKET_BUFFER_SIZE          8192
 

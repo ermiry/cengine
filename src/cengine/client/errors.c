@@ -1,13 +1,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "cengine/types/types.h"
-#include "cengine/types/string.h"
+#include "client/types/types.h"
+#include "client/types/string.h"
 
-#include "cengine/cerver/errors.h"
-#include "cengine/cerver/packets.h"
+#include "client/errors.h"
+#include "client/packets.h"
 
-#include "cengine/utils/log.h"
+#include "client/utils/log.h"
 
 Error *error_new (const char *msg) {
 
@@ -50,7 +50,7 @@ void error_packet_handler (Packet *packet) {
                 // FIXME:
                 case ERR_FAILED_AUTH: {
                     // #ifdef CLIENT_DEBUG
-                    // cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, 
+                    // client_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, 
                     //     c_string_create ("Failed to authenticate - %s", error->msg)); 
                     // #endif
                     // last_error.type = ERR_FAILED_AUTH;
@@ -63,7 +63,7 @@ void error_packet_handler (Packet *packet) {
                 break;
 
                 default: 
-                    cengine_log_msg (stderr, LOG_WARNING, LOG_NO_TYPE, "Unknown error recieved from server."); 
+                    client_log_msg (stderr, LOG_WARNING, LOG_NO_TYPE, "Unknown error recieved from server."); 
                     break;
             }
         }

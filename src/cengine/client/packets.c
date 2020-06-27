@@ -6,16 +6,16 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#include "cengine/types/types.h"
-#include "cengine/types/string.h"
+#include "client/types/types.h"
+#include "client/types/string.h"
 
-#include "cengine/cerver/network.h"
-#include "cengine/cerver/packets.h"
-#include "cengine/cerver/cerver.h"
-#include "cengine/cerver/client.h"
+#include "client/network.h"
+#include "client/packets.h"
+#include "client/cerver.h"
+#include "client/client.h"
 
-#ifdef CLIENT_DEBUG
-#include "cengine/utils/log.h"
+#ifdef PACKETS_DEBUG
+#include "client/utils/log.h"
 #endif
 
 static ProtocolID protocol_id = 0;
@@ -234,8 +234,8 @@ u8 packet_append_data (Packet *packet, void *data, size_t data_size) {
             }
 
             else {
-                #ifdef CLIENT_DEBUG
-                cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to realloc packet data!");
+                #ifdef PACKETS_DEBUG
+                client_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to realloc packet data!");
                 #endif
                 packet->data = NULL;
                 packet->data_size = 0;
@@ -256,8 +256,8 @@ u8 packet_append_data (Packet *packet, void *data, size_t data_size) {
             }
 
             else {
-                #ifdef CLIENT_DEBUG
-                cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to allocate packet data!");
+                #ifdef PACKETS_DEBUG
+                client_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to allocate packet data!");
                 #endif
                 packet->data = NULL;
                 packet->data_size = 0;
@@ -437,11 +437,13 @@ static u8 packet_send_tcp (const Packet *packet, int flags, size_t *total_sent, 
 
 }
 
-// FIXME: correctly send an udp packet!!
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+// TODO: correctly send an udp packet!!
 static u8 packet_send_udp (const void *packet, size_t packet_size) {
 
-    ssize_t sent;
-    const void *p = packet;
+    // ssize_t sent;
+    // const void *p = packet;
     // while (packet_size > 0) {
     //     sent = sendto (server->serverSock, begin, packetSize, 0, 
     //         (const struct sockaddr *) &address, sizeof (struct sockaddr_storage));
@@ -453,6 +455,7 @@ static u8 packet_send_udp (const void *packet, size_t packet_size) {
     return 0;
 
 }
+#pragma GCC diagnostic pop
 
 static void packet_send_update_stats (PacketType packet_type, size_t sent,
     Client *client, Connection *connection) {
@@ -466,6 +469,10 @@ static void packet_send_update_stats (PacketType packet_type, size_t sent,
     connection->stats->total_bytes_sent += sent; 
 
     switch (packet_type) {
+        case CERVER_PACKET: break;
+
+        case CLIENT_PACKET: break;
+
         case ERROR_PACKET: 
             if (client) client->stats->sent_packets->n_error_packets += 1;
             connection->stats->sent_packets->n_error_packets += 1;
@@ -505,6 +512,9 @@ static void packet_send_update_stats (PacketType packet_type, size_t sent,
             if (client) client->stats->sent_packets->n_test_packets += 1;
             connection->stats->sent_packets->n_test_packets += 1;
             break;
+
+        case DONT_CHECK_TYPE:
+        default: break;
     }
 
 }
@@ -547,32 +557,62 @@ u8 packet_send (const Packet *packet, int flags, size_t *total_sent, bool raw) {
 
 }
 
-// check if packet has a compatible protocol id and a version
+// sends a packet directly to the socket
+// raw flag to send a raw packet (only the data that was set to the packet, without any header)
 // returns 0 on success, 1 on error
-u8 packet_check (Packet *packet) {
+u8 packet_send_to_sock_fd (const Packet *packet, const i32 sock_fd, 
+    int flags, size_t *total_sent, bool raw) {
 
-    u8 errors = 0;
+    if (packet) {
+        ssize_t sent;
+        const char *p = raw ? (char *) packet->data : (char *) packet->packet;
+        size_t packet_size = raw ? packet->data_size : packet->packet_size;
+
+        while (packet_size > 0) {
+            sent = send (sock_fd, p, packet_size, flags);
+            if (sent < 0) return 1;
+            p += sent;
+            packet_size -= sent;
+        }
+
+        if (total_sent) *total_sent = sent;
+
+        return 0;
+    }
+
+    return 1;
+
+}
+
+// check if packet has a compatible protocol id and a version
+// returns false on a bad packet
+bool packet_check (Packet *packet) {
+
+    bool retval = false;
 
     if (packet) {
         PacketHeader *header = packet->header;
 
-        if (header->protocol_id != protocol_id) {
-            #ifdef CERVER_DEBUG
-            cerver_log_msg (stdout, LOG_WARNING, LOG_PACKET, "Packet with unknown protocol ID.");
-            #endif
-            errors |= 1;
+        if (header->protocol_id == protocol_id) {
+            if ((header->protocol_version.major > protocol_version.major)
+                || (header->protocol_version.minor > protocol_version.minor)) {
+                retval = true;
+            }
+
+            else {
+                #ifdef PACKETS_DEBUG
+                client_log_msg (stdout, LOG_WARNING, LOG_PACKET, "Packet with incompatible version.");
+                #endif
+            }
         }
 
-        if (header->protocol_version.major != protocol_version.major) {
-            #ifdef CERVER_DEBUG
-            cerver_log_msg (stdout, LOG_WARNING, LOG_PACKET, "Packet with incompatible version.");
+        else {
+            #ifdef PACKETS_DEBUG
+            client_log_msg (stdout, LOG_WARNING, LOG_PACKET, "Packet with unknown protocol ID.");
             #endif
-            errors |= 1;
         }
     }
 
-    else errors |= 1;
-
-    return errors;
+    return retval;
 
 }

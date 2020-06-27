@@ -3,16 +3,16 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "cengine/types/types.h"
-#include "cengine/types/string.h"
+#include "client/types/types.h"
+#include "client/types/string.h"
 
-#include "cengine/collections/dlist.h"
+#include "client/collections/dlist.h"
 
-#include "cengine/cerver/packets.h"
-#include "cengine/cerver/events.h"
-#include "cengine/cerver/game.h"
+#include "client/packets.h"
+#include "client/events.h"
+#include "client/game.h"
 
-#include "cengine/utils/log.h"
+#include "client/utils/log.h"
 
 static GameSettings *game_settings_new (void) {
 
@@ -111,7 +111,7 @@ static void client_game_lobby_create (Packet *packet) {
 
         else {
             // TODO: trigger error, bad packet
-            cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, 
+            client_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, 
                 "client_game_lobby_create () - packets to small to get a lobby!");
         }
     }
@@ -138,7 +138,7 @@ static void client_game_lobby_join (Packet *packet) {
 
         else {
             // TODO: trigger error, bad packet
-            cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, 
+            client_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, 
                 "client_game_lobby_join () - packets to small to get a lobby!");
         }
     }
@@ -185,7 +185,7 @@ void client_game_packet_handler (Packet *packet) {
                 case GAME_START: client_game_lobby_start (packet); break;
 
                 default:
-                    cengine_log_msg (stderr, LOG_WARNING, LOG_CLIENT,
+                    client_log_msg (stderr, LOG_WARNING, LOG_CLIENT,
                         "Got a game packet of unknown type!");
                     break;
             }

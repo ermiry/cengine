@@ -1,13 +1,13 @@
-#ifndef _CEVER_CLIENT_CONNECTION_H_
-#define _CEVER_CLIENT_CONNECTION_H_
+#ifndef _CLIENT_CONNECTION_H_
+#define _CLIENT_CONNECTION_H_
 
-#include "cengine/types/types.h"
-#include "cengine/types/string.h"
+#include "client/types/types.h"
+#include "client/types/string.h"
 
-#include "cengine/cerver/network.h"
-#include "cengine/cerver/cerver.h"
-#include "cengine/cerver/handler.h"
-#include "cengine/cerver/packets.h"
+#include "client/network.h"
+#include "client/cerver.h"
+#include "client/handler.h"
+#include "client/packets.h"
 
 // used for connection with exponential backoff (secs)
 #define DEFAULT_CONNECTION_MAX_SLEEP                60 
@@ -40,9 +40,9 @@ struct _Connection {
     String *name;
 
     i32 sock_fd;
-    bool use_ipv6;  
-    Protocol protocol;
     u16 port; 
+    Protocol protocol;
+    bool use_ipv6;  
 
     String *ip;                         // cerver's ip
     struct sockaddr_storage address;    // cerver's address
@@ -57,6 +57,9 @@ struct _Connection {
 
     u32 receive_packet_buffer_size;         // 01/01/2020 - read packets into a buffer of this size in client_receive ()
     struct _SockReceive *sock_receive;      // 01/01/2020 - used for inter-cerver communications
+
+    // 10/06/2020 - used for direct requests to cerver
+    bool full_packet;
 
     // 01/01/2020 - a place to safely store the request response, like when using client_connection_request_to_cerver ()
     void *received_data;                    
@@ -82,11 +85,16 @@ extern Connection *connection_new (void);
 
 extern void connection_delete (void *ptr);
 
+extern Connection *connection_create_empty (void);
+
 // compares two connections by their names
-extern int connection_comparator_by_name (void *one, void *two);
+extern int connection_comparator_by_name (const void *a, const void *b);
 
 // compare two connections by their socket fds
 extern int connection_comparator_by_sock_fd (const void *a, const void *b);
+
+// sets the connection's name, if it had a name before, it will be replaced
+extern void connection_set_name (Connection *connection, const char *name);
 
 // sets the connection max sleep (wait time) to try to connect to the cerver
 extern void connection_set_max_sleep (Connection *connection, u32 max_sleep);
@@ -115,8 +123,8 @@ extern void connection_remove_auth_data (Connection *connection);
 extern void connection_generate_auth_packet (Connection *connection);
 
 // creates a new connection that is ready to be started
-extern Connection *connection_create (const char *name,
-     const char *ip_address, u16 port, Protocol protocol, bool use_ipv6);
+// returns a newly allocated connection on success, NULL if any initial setup has failed
+extern Connection *connection_create (const char *ip_address, u16 port, Protocol protocol, bool use_ipv6);
 
 // starts a connection -> connects to the specified ip and port
 // returns 0 on success, 1 on error
@@ -132,9 +140,6 @@ typedef struct ConnectionCustomReceiveData {
 
 // starts listening and receiving data in the connection sock
 extern void connection_update (void *ptr);
-
-// ends a connection
-extern void connection_end (Connection *connection);
 
 // closes a connection directly
 extern void connection_close (Connection *connection);

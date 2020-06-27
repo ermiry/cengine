@@ -1,13 +1,13 @@
-#ifndef _CERVER_CLIENT_CERVER_H_
-#define _CERVER_CLIENT_CERVER_H_
+#ifndef _CLIENT_CERVER_H_
+#define _CLIENT_CERVER_H_
 
 #include <stdbool.h>
 
-#include "cengine/types/types.h"
-#include "cengine/types/string.h"
+#include "client/types/types.h"
+#include "client/types/string.h"
 
-#include "cengine/cerver/network.h"
-#include "cengine/cerver/packets.h"
+#include "client/network.h"
+#include "client/packets.h"
 
 struct _Cerver;
 struct _Packet;

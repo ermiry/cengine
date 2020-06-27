@@ -2,14 +2,14 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "cengine/types/types.h"
+#include "client/types/types.h"
 
-#include "cengine/cerver/client.h"
-#include "cengine/cerver/events.h"
+#include "client/collections/dlist.h"
 
-#include "cengine/threads/thread.h"
+#include "client/client.h"
+#include "client/events.h"
 
-#include "cengine/collections/dlist.h"
+#include "client/threads/thread.h"
 
 static ClientEventData *client_event_data_new (ClientEvent *event) {
 
@@ -189,8 +189,12 @@ void client_event_trigger (Client *client, ClientEventType event_type) {
             // trigger the action
             if (event->action) {
                 if (event->create_thread) {
-                    thread_create_detachable ((void *(*)(void *)) event->action, 
-                        client_event_data_new (event));
+                    pthread_t thread_id = 0;
+                    thread_create_detachable (
+                        &thread_id,
+                        (void *(*)(void *)) event->action, 
+                        client_event_data_new (event)
+                    );
                 }
 
                 else {
