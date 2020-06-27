@@ -25,7 +25,11 @@ Sprite *sprite_new (void) {
 void sprite_destroy (Sprite *sprite) {
 
     if (sprite) {
-        if (sprite->texture) SDL_DestroyTexture (sprite->texture);
+        if (sprite->texture) {
+            SDL_DestroyTexture (sprite->texture);
+            // texture_destroy (renderer_get_by_name ("main"), sprite->texture);
+        }
+
         image_data_delete (sprite->img_data);
 
         free (sprite);
