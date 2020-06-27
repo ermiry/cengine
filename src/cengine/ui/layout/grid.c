@@ -86,7 +86,7 @@ static int grid_element_comparator_by_ui_element (const void *a, const void *b) 
 static GridElement *grid_element_create (GridLayout *grid, 
     UIElement *ui_element, u32 ui_element_width, u32 ui_element_height) {
 
-    GridElement *grid_element = (GridElement *) malloc (sizeof (GridElement));
+    GridElement *grid_element = grid_element_new ();
     if (grid_element) {
         grid_element->transform = ui_transform_component_create (
             0, 0,                                       // pos
@@ -539,7 +539,7 @@ static void ui_layout_grid_update_element_size (GridLayout *grid, GridElement *g
 static void ui_layout_grid_update_all_elements_size (GridLayout *grid) {
 
     if (grid) {
-        GridElement *grid_element = NULL;
+        // GridElement *grid_element = NULL;
         for (ListElement *le = dlist_start (grid->elements); le; le = le->next) {
             ui_layout_grid_update_element_size (grid, (GridElement *) le->data);
         }
@@ -823,6 +823,8 @@ static void ui_layout_grid_scroll_up_actual (GridLayout *grid, int amount) {
                             case UI_TEXTBOX:
                                 ui_textbox_update_text_pos ((TextBox *) ui_element->element);
                                 break;
+
+                            default: break;
                         }
                     }
                 }
@@ -864,6 +866,8 @@ static void ui_layout_grid_scroll_down_actual (GridLayout *grid, int amount) {
                         case UI_TEXTBOX:
                             ui_textbox_update_text_pos ((TextBox *) ui_element->element);
                             break;
+
+                        default: break;
                     }
                 }
             }

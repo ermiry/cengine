@@ -179,8 +179,8 @@ void camera_update (Camera *cam) {
     #endif
 
     // camera movement
-    u32 x = cam->transform.position.x;
-    u32 y = cam->transform.position.y;
+    // u32 x = cam->transform.position.x;
+    // u32 y = cam->transform.position.y;
 
     // FIXME:
     // if (cam->isFollwing) {

@@ -1203,7 +1203,7 @@ int render_complex_rounded_box (Renderer *renderer,
             } while (cx <= cy);
 
             // inside
-            SDL_Rect inside_rect = { .x = x1, .y = y1 + rad + 1, x2, y2 - rad };
+            // SDL_Rect inside_rect = { .x = x1, .y = y1 + rad + 1, x2, y2 - rad };
             if (dx > 0 && dy > 0) result |= render_basic_box (renderer, x1, y1 + rad + 1, x2, y2 - rad, color);
 
             return result;
@@ -1436,7 +1436,7 @@ static void renderer_bg_load_textures (Renderer *renderer) {
                     // so changed to use create texture and for streaming image, we first destroy the texture
 
                     SDL_LockTexture (*st->texture, NULL, &st->surface->pixels, &st->surface->pitch);
-                    int retval = SDL_UpdateTexture (*st->texture, NULL, st->surface->pixels, st->surface->pitch);
+                    SDL_UpdateTexture (*st->texture, NULL, st->surface->pixels, st->surface->pitch);
                     // *st->texture = SDL_CreateTextureFromSurface (renderer->renderer, st->surface);
                     SDL_UnlockTexture (*st->texture);
                 }

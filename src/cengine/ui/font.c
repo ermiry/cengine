@@ -41,9 +41,12 @@ static inline const char *u8_next (const char *string) {
 
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+
 static int u8_charcpy (char *buffer, const char *source, int buffer_size) {
 
-    if(buffer == NULL || source == NULL || buffer_size < 1)
+    if (buffer == NULL || source == NULL || buffer_size < 1)
         return 0;
 
     int charsize = u8_charsize (source);
@@ -55,6 +58,8 @@ static int u8_charcpy (char *buffer, const char *source, int buffer_size) {
     return charsize;
 
 }
+
+#pragma GCC diagnostic pop
 
 u32 get_code_point_from_UTF8 (const char **c, u8 advancePtr) {
 
@@ -90,6 +95,9 @@ u32 get_code_point_from_UTF8 (const char **c, u8 advancePtr) {
 
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+
 static char *font_get_string_ASCII (void) {
 
     static char *buffer = NULL;
@@ -115,6 +123,8 @@ static char *font_get_string_ASCII (void) {
 
 }
 
+#pragma GCC diagnostic pop
+
 static inline SDL_Surface *font_create_surface (u32 width, u32 height) {
 
     #if SDL_BYTEORDER == SDL_BIG_ENDIAN
@@ -135,7 +145,7 @@ static FontSource *font_source_new (void) {
 
     FontSource *font_source = (FontSource *) malloc (sizeof (FontSource));
     if (font_source) {
-        memset (font_source, 0, sizeof (font_source));
+        memset (font_source, 0, sizeof (FontSource));
 
         font_source->ttf_source = NULL;
     }

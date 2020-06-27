@@ -22,8 +22,6 @@
 #include "cengine/utils/json.h"
 #include "cengine/utils/log.h"
 
-static bool anim_init = false;
-
 static AnimData *anim_data_new (void) {
 
     AnimData *anim_data = (AnimData *) malloc (sizeof (AnimData));
@@ -382,7 +380,8 @@ int animations_init (void) {
 
     animators = dlist_init (animator_destroy_ref, animator_comparator_by_id);
     if (animators) {
-        if (thread_create_detachable (animations_update, NULL)) {
+        pthread_t thread_id = 0;
+        if (thread_create_detachable (&thread_id, animations_update, NULL)) {
             cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to create animations thread!");
             errors = 1;
         }

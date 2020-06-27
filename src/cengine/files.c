@@ -8,6 +8,7 @@
 #include <dirent.h>
 
 #include <unistd.h>
+#include <fcntl.h>
 
 #include "cengine/types/types.h"
 #include "cengine/types/string.h"

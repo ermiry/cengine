@@ -36,10 +36,6 @@ int cengine_init (void) {
     srand ((unsigned) time (NULL));
 
     if (!SDL_Init (SDL_INIT_AUDIO | SDL_INIT_EVENTS | SDL_INIT_VIDEO)) {
-        retval = thread_hub_init_global ();
-        if (retval) cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to init cengine's threads!");
-        errors |= retval;
-
         retval = animations_init ();
         if (retval) cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to init cengine's animations!");
         errors |= retval;
@@ -110,8 +106,6 @@ int cengine_end (void) {
     
     errors |= animations_end ();
 
-    thread_hub_end_global ();
-
     SDL_Quit ();
 
     return errors;
@@ -144,8 +138,6 @@ void cengine_set_update_fps_text (TextBox *text) {
     update_fps_text = text;
 
 }
-
-static pthread_t update_thread;
 
 static void *cengine_update (void *args) {
 
@@ -257,7 +249,8 @@ int cengine_start (int fps) {
 
     fps_limit = fps > 0 ? fps : 30;
 
-    if (thread_create_detachable (cengine_update, NULL)) {
+    pthread_t thread_id = 0;
+    if (thread_create_detachable (&thread_id, cengine_update, NULL)) {
         cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to create update thread!");
         running = false;
     }

@@ -136,7 +136,7 @@ static Dropdown *ui_dropdown_new (void) {
 
     Dropdown *dropdown = (Dropdown *) malloc (sizeof (Dropdown));
     if (dropdown) {
-        memset (dropdown, 0, sizeof (dropdown));
+        memset (dropdown, 0, sizeof (Dropdown));
 
         dropdown->ui_element = NULL;
 
@@ -364,11 +364,11 @@ void ui_dropdown_option_add (Dropdown *dropdown, DropdownOption *option) {
         ui_layout_vertical_add_at_end (dropdown->vertical_layout, option->button->ui_element);
 
         // FIXME: move this to vertical layout
-        DropdownOption *op = NULL;
-        for (ListElement *le = dlist_start (dropdown->options); le; le = le->next) {
-            op = (DropdownOption *) le->data;
-            // ui_position_update (NULL, op->option->transform, &op->transform->rect, false);
-        }
+        // DropdownOption *op = NULL;
+        // for (ListElement *le = dlist_start (dropdown->options); le; le = le->next) {
+        //     op = (DropdownOption *) le->data;
+        //     // ui_position_update (NULL, op->option->transform, &op->transform->rect, false);
+        // }
     }
 
 }

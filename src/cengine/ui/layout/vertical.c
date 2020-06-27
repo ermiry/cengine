@@ -176,6 +176,8 @@ void ui_layout_vertical_update (VerticalLayout *vertical) {
                     case UI_TEXTBOX:
                         ui_textbox_update_text_pos ((TextBox *) ui_element->element);
                         break;
+
+                    default: break;
                 }
             }
         }
@@ -287,6 +289,8 @@ static void ui_layout_vertical_scroll_up (void *event_data) {
                                     case UI_TEXTBOX:
                                         ui_textbox_update_text_pos ((TextBox *) ui_element->element);
                                         break;
+
+                                    default: break;
                                 }
                             }
                         }
@@ -339,6 +343,8 @@ static void ui_layout_vertical_scroll_down (void *event_data) {
                                 case UI_TEXTBOX:
                                     ui_textbox_update_text_pos ((TextBox *) ui_element->element);
                                     break;
+
+                                default: break;
                             }
                         }
                     }

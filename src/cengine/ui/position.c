@@ -15,8 +15,8 @@ void ui_position_update (Renderer *renderer, void *transform_ptr, UIRect *ref_re
 
         SDL_Rect rect = { 0 };
 
-        i32 x_prev = transform->rect.x;
-        i32 y_prev = transform->rect.y;
+        // i32 x_prev = transform->rect.x;
+        // i32 y_prev = transform->rect.y;
 
         if (ref_rect) {
             rect.x = ref_rect->x;
