@@ -80,6 +80,9 @@ extern void ui_panel_set_ouline_scale (Panel *panel, float x_scale, float y_scal
 // removes the ouline form the panel
 extern void ui_panel_remove_outline (Panel *panel);
 
+// get the amount of elements that are inside the panel's layout
+extern size_t ui_panel_layout_get_elements_count (Panel *panel);
+
 // sets the layout for the panel
 extern void ui_panel_layout_set (Panel *panel, LayoutType type, struct _Renderer *renderer);
 
@@ -96,7 +99,7 @@ extern void ui_panel_layout_add_element_at_end (Panel *panel, UIElement *ui_elem
 extern UIElement *ui_panel_layout_get_element_at (Panel *panel, unsigned int pos);
 
 // removes a ui element form the panel layout
-extern void ui_panel_layout_remove_element (Panel *panel, UIElement *ui_element);
+extern u8 ui_panel_layout_remove_element (Panel *panel, UIElement *ui_element);
 
 // adds a new child to the panel
 extern void ui_panel_child_add (Panel *panel, UIElement *ui_element);

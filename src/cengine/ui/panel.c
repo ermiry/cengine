@@ -112,7 +112,7 @@ void ui_panel_child_update_pos (Panel *panel, UIElement *child) {
                     &panel->ui_element->transform->rect, 
                     child->transform->pos, 
                     NULL);
-            }
+            } break;
 
             case UI_INPUT: {
                 // FIXME: 04/02/2020 -- 18:03 -- update children's pos
@@ -143,7 +143,7 @@ void ui_panel_child_update_pos (Panel *panel, UIElement *child) {
                 //     textbox->ui_element->transform, false);
                 // ui_textbox_update_text_pos (textbox);
                 // printf ("%d - %d\n", textbox->ui_element->transform->rect.x, textbox->ui_element->transform->rect.y);
-            }
+            } break;
 
             default: break;
         }
@@ -224,6 +224,33 @@ void ui_panel_remove_outline (Panel *panel) {
 
 }
 
+// get the amount of elements that are inside the panel's layout
+size_t ui_panel_layout_get_elements_count (Panel *panel) {
+
+    size_t retval = 0;
+
+    if (panel) {
+        if (panel->layout) {
+            switch (panel->layout_type) {
+                case LAYOUT_TYPE_HORIZONTAL: 
+                    retval = ui_layout_horizontal_get_elements_count ((HorizontalLayout *) panel->layout);
+                    break;
+                case LAYOUT_TYPE_VERTICAL:
+                    retval = ui_layout_vertical_get_elements_count ((VerticalLayout *) panel->layout);
+                    break;
+                case LAYOUT_TYPE_GRID: 
+                    retval = ui_layout_grid_get_elements_count ((GridLayout *) panel->layout);
+                    break;
+
+                default: break;
+            }
+        }
+    }
+
+    return retval;
+
+}
+
 // sets the layout for the panel
 void ui_panel_layout_set (Panel *panel, LayoutType type, Renderer *renderer) {
 
@@ -280,6 +307,9 @@ void ui_panel_layout_add_element_at_pos (Panel *panel, UIElement *ui_element, u3
 
     if (panel && ui_element) {
         if (panel->layout) {
+            // add the element to the panel's children
+            ui_panel_child_add (panel, ui_element);
+
             switch (panel->layout_type) {
                 case LAYOUT_TYPE_HORIZONTAL: 
                     ui_layout_horizontal_add_at_pos ((HorizontalLayout *) panel->layout, ui_element, pos);
@@ -335,7 +365,8 @@ void ui_panel_layout_add_element_at_end (Panel *panel, UIElement *ui_element) {
     }
 
 }
- // returns the ui element that is at the required position in the panel's layout
+
+// returns the ui element that is at the required position in the panel's layout
 UIElement *ui_panel_layout_get_element_at (Panel *panel, unsigned int pos) {
 
     UIElement *retval = NULL;
@@ -363,19 +394,21 @@ UIElement *ui_panel_layout_get_element_at (Panel *panel, unsigned int pos) {
 }
 
 // removes a ui element form the panel layout
-void ui_panel_layout_remove_element (Panel *panel, UIElement *ui_element) {
+u8 ui_panel_layout_remove_element (Panel *panel, UIElement *ui_element) {
+
+    u8 retval = 1;
 
     if (panel && ui_element) {
         if (panel->layout) {
             switch (panel->layout_type) {
                 case LAYOUT_TYPE_HORIZONTAL: 
-                    ui_layout_horizontal_remove ((HorizontalLayout *) panel->layout, ui_element);
+                    retval = ui_layout_horizontal_remove ((HorizontalLayout *) panel->layout, ui_element);
                     break;
                 case LAYOUT_TYPE_VERTICAL: 
-                    ui_layout_vertical_remove ((VerticalLayout *) panel->layout, ui_element);
+                    retval = ui_layout_vertical_remove ((VerticalLayout *) panel->layout, ui_element);
                     break;
                 case LAYOUT_TYPE_GRID: 
-                    ui_layout_grid_remove_element ((GridLayout *) panel->layout, ui_element); 
+                    retval = ui_layout_grid_remove_element ((GridLayout *) panel->layout, ui_element); 
                     break;
 
                 default: break;
@@ -386,11 +419,13 @@ void ui_panel_layout_remove_element (Panel *panel, UIElement *ui_element) {
         }
     }
 
+    return retval;
+
 }
 
 // adds a new child to the panel
-// the element's position will be manage by the panel
-// when the panel gets destroyed, all of their children get destroyed as well 
+// the element's position will be managed by the panel
+// when the panel gets destroyed, all of its children get destroyed as well 
 void ui_panel_child_add (Panel *panel, UIElement *ui_element) {
 
     if (panel && ui_element) {
@@ -405,6 +440,9 @@ void ui_panel_child_add (Panel *panel, UIElement *ui_element) {
         dlist_insert_after (panel->children, dlist_end (panel->children), ui_element);
 
         ui_panel_child_update_pos (panel, ui_element);
+
+        ui_element->abs_offset_x = panel->ui_element->transform->rect.x;
+        ui_element->abs_offset_y = panel->ui_element->transform->rect.y;
 
         ui_element->parent = panel->ui_element;
     }
