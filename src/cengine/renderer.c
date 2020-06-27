@@ -95,11 +95,11 @@ void renderer_delete (void *ptr) {
         str_delete (renderer->name);
         if (renderer->renderer) SDL_DestroyRenderer (renderer->renderer);
 
-        if (renderer->load_textures_queue) 
-            queue_destroy_complete (renderer->load_textures_queue, surface_texture_delete);
+        if (renderer->load_textures_queue)
+            queue_delete (renderer->load_textures_queue);
 
         if (renderer->destroy_textures_queue)
-            queue_destroy_complete (renderer->destroy_textures_queue, texture_destroy_wrapper);
+            queue_delete (renderer->destroy_textures_queue);
 
         ui_delete (renderer->ui);
 
@@ -154,10 +154,10 @@ Renderer *renderer_create_empty (const char *name, int display_idx) {
         renderer->name = name ? str_new (name) : NULL;
         // renderer->display_index = display_idx;
 
-        renderer->load_textures_queue = queue_create ();
+        renderer->load_textures_queue = queue_create (surface_texture_delete);
         renderer->bg_loading_factor = DEFAULT_BG_LOADING_FACTOR;
 
-        renderer->destroy_textures_queue = queue_create ();
+        renderer->destroy_textures_queue = queue_create (texture_destroy_wrapper);
         renderer->bg_destroying_factor = DEFAULT_BG_DESTROYING_FACTOR;
 
         renderer->ui = ui_create ();
@@ -240,7 +240,7 @@ void renderer_load_queue_push (Renderer *renderer, SurfaceTexture *st) {
 
     if (renderer) {
         if (renderer->load_textures_queue) {
-            queue_put (renderer->load_textures_queue, st);
+            queue_push (renderer->load_textures_queue, st);
         }
     }
 
@@ -250,7 +250,7 @@ void renderer_destroy_queue_push (Renderer *renderer, SDL_Texture *texture) {
 
     if (renderer) {
         if (renderer->destroy_textures_queue) {
-            queue_put (renderer->destroy_textures_queue, texture);
+            queue_push (renderer->destroy_textures_queue, texture);
         }
     }
 
@@ -1401,13 +1401,14 @@ int render_complex_circle (Renderer *renderer,
 static void renderer_bg_destroy_textures (Renderer *renderer) {
 
     if (renderer) {
-        u32 max_count = renderer->destroy_textures_queue->num_els > renderer->bg_destroying_factor ? 
-            renderer->bg_destroying_factor : renderer->destroy_textures_queue->num_els;
+        size_t current_count = queue_size (renderer->destroy_textures_queue);
+
+        size_t max_count = current_count > renderer->bg_destroying_factor ? 
+            renderer->bg_destroying_factor : current_count;
             
-        u32 count = 0;
+        size_t count = 0;
         while (count < max_count) {
-            SDL_Texture *texture = NULL;
-            queue_get (renderer->destroy_textures_queue, (void **) &texture);
+            SDL_Texture *texture = queue_pop (renderer->destroy_textures_queue);
             if (texture) {
                 SDL_DestroyTexture (texture);
             } 
@@ -1421,13 +1422,14 @@ static void renderer_bg_destroy_textures (Renderer *renderer) {
 static void renderer_bg_load_textures (Renderer *renderer) {
 
     if (renderer) {
-        u32 max_count = renderer->load_textures_queue->num_els > renderer->bg_loading_factor ? 
-            renderer->bg_loading_factor : renderer->load_textures_queue->num_els;
+        size_t current_count = queue_size (renderer->load_textures_queue);
 
-        u32 count = 0;
+        size_t max_count = current_count > renderer->bg_loading_factor ? 
+            renderer->bg_loading_factor : current_count;
+
+        size_t count = 0;
         while (count < max_count) {
-            SurfaceTexture *st = NULL;
-            queue_get (renderer->load_textures_queue, (void **) &st);
+            SurfaceTexture *st = (SurfaceTexture *) queue_pop (renderer->load_textures_queue);
             if (st) {
                 if (st->update) {
                     // TODO: 27/01/2020 -- 01:01 -- check if SDL_UpdateTexture () is thread safe, maybe that why we are not rendering correctly
@@ -1498,12 +1500,12 @@ void render (Renderer *renderer) {
         renderer->render_count = 0;
 
         // destroy any texture in background queue
-        if (renderer->destroy_textures_queue->num_els > 0) {
+        if (queue_size (renderer->destroy_textures_queue) > 0) {
             renderer_bg_destroy_textures (renderer);
         }
 
         // load any texture in background queue
-        if (renderer->load_textures_queue->num_els > 0) {
+        if (queue_size (renderer->load_textures_queue) > 0) {
             renderer_bg_load_textures (renderer);
         }
 

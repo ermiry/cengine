@@ -56,10 +56,10 @@ struct _Renderer {
     Uint32 render_flags;
     u32 render_count;
 
-    queue_t *load_textures_queue;
+    Queue *load_textures_queue;
     u32 bg_loading_factor;
 
-    queue_t *destroy_textures_queue;
+    Queue *destroy_textures_queue;
     u32 bg_destroying_factor;
 
     SDL_Rect current_viewport;
