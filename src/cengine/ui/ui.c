@@ -23,6 +23,7 @@
 #include "cengine/ui/check.h"
 #include "cengine/ui/notification.h"
 #include "cengine/ui/dropdown.h"
+#include "cengine/ui/tooltip.h"
 #include "cengine/ui/components/transform.h"
 
 #include "cengine/utils/log.h"
@@ -45,6 +46,8 @@ static UIElement *ui_element_new (void) {
         ui_element->type = UI_NONE;
         ui_element->element = NULL;
         ui_element->transform = NULL;
+        ui_element->abs_offset_x = 0;
+        ui_element->abs_offset_y = 0;
 
         ui_element->parent = NULL;
     }
@@ -98,6 +101,7 @@ static void ui_element_delete_element (UIElement *ui_element) {
                 case UI_CHECK: ui_check_delete (ui_element->element); break;
                 case UI_NOTI_CENTER: ui_noti_center_delete (ui_element->element); break;
                 case UI_DROPDOWN: ui_dropdown_delete (ui_element->element); break;
+                case UI_TOOLTIP: ui_tooltip_delete (ui_element->element); break;
 
                 default: break;
             }
@@ -348,6 +352,7 @@ void ui_render_element (Renderer *renderer, UIElement *ui_element) {
                 case UI_CHECK: ui_check_draw ((Check *) ui_element->element, renderer); break;
                 case UI_NOTI_CENTER: ui_noti_center_draw ((NotiCenter *) ui_element->element, renderer); break;
                 case UI_DROPDOWN: ui_dropdown_render ((Dropdown *) ui_element->element, renderer); break;
+                case UI_TOOLTIP: ui_tooltip_draw ((Tooltip *) ui_element->element, renderer); break;
 
                 default: break;
             }

@@ -27,7 +27,8 @@ typedef enum UIElementType {
     UI_INPUT            = 5,
     UI_CHECK            = 6,
     UI_NOTI_CENTER      = 7,
-    UI_DROPDOWN         = 8
+    UI_DROPDOWN         = 8,
+    UI_TOOLTIP          = 9,
 
 } UIElementType;
 
@@ -46,6 +47,9 @@ struct _UIElement {
     UIElementType type;
     void *element;
     struct _UITransform *transform;
+
+    // 14/05/2020 - fixes mouse check pos when the element is a panel's child
+    int abs_offset_x, abs_offset_y;
 
     struct _UIElement *parent;
 
