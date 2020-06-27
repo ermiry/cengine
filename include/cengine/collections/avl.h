@@ -44,8 +44,9 @@ extern unsigned int avl_clear_tree (AVLTree *tree, void (*destroy)(void *data));
 // check if the tree is empty
 extern bool avl_is_empty (AVLTree *tree);
 
-// get the node data associated with that id
-extern void *avl_get_node_data (AVLTree *tree, void *id);
+// returns content of required node
+// option to pass a different comparator than the one that was originally set
+extern void *avl_get_node_data (AVLTree *tree, void *id, Comparator comparator);
 
 // inserts a new node in the tree
 extern void avl_insert_node (AVLTree *tree, void *data);
