@@ -6,6 +6,7 @@
 #include "cengine/collections/dlist.h"
 
 #include "cengine/renderer.h"
+#include "cengine/events.h"
 
 #include "cengine/ui/ui.h"
 #include "cengine/ui/components/transform.h"
@@ -13,13 +14,15 @@
 #define VERTICAL_LAYOUT_DEFAULT_SCROLL          5
 
 struct _Renderer;
+struct _UIElement;
+struct _UITransform;
 
 typedef struct VerticalLayout {
 
     // usefull reference to the window's renderer
     struct _Renderer *renderer;
 
-    UITransform *transform;
+    struct _UITransform *transform;
 
     DoubleList *ui_elements;
     u32 curr_element_height;
@@ -31,10 +34,15 @@ typedef struct VerticalLayout {
     // options
     bool scrolling;             // enable / disable scrolling
     u32 scroll_sensitivity;     // how fast the elements move
+    EventAction *event_scroll_up;
+    EventAction *event_scroll_down;
 
 } VerticalLayout;
 
 extern void ui_layout_vertical_delete (void *horizontal_ptr);
+
+// get the amount of elements that are inside the vertical layout
+extern size_t ui_layout_vertical_get_elements_count (VerticalLayout *vertical);
 
 // sets a preffered height for your elements
 // if there are more elements than vertical layout height / element height cna manage
@@ -62,17 +70,17 @@ extern void ui_layout_vertical_update (VerticalLayout *vertical);
 
 // adds a new elemenet in the specified pos of the vertical layout group
 // returns 0 on success, 1 on error
-extern u8 ui_layout_vertical_add_at_pos (VerticalLayout *vertical, UIElement *ui_element, u32 pos);
+extern u8 ui_layout_vertical_add_at_pos (VerticalLayout *vertical, struct _UIElement *ui_element, u32 pos);
 
 // adds a new element to the end of the vertical layout group
 // this method avoids updating all the other elements positions as well
 // returns 0 on success, 1 on error
-extern u8 ui_layout_vertical_add_at_end (VerticalLayout *vertical, UIElement *ui_element);
+extern u8 ui_layout_vertical_add_at_end (VerticalLayout *vertical, struct _UIElement *ui_element);
 
 // returns the ui element that is at the required position in the layout
-extern UIElement *ui_layout_vertical_get_element_at (VerticalLayout *vertical, unsigned int pos);
+extern struct _UIElement *ui_layout_vertical_get_element_at (VerticalLayout *vertical, unsigned int pos);
 
 // removes an element from the vertical layout group
-extern void ui_layout_vertical_remove (VerticalLayout *vertical, UIElement *ui_element);
+extern u8 ui_layout_vertical_remove (VerticalLayout *vertical, struct _UIElement *ui_element);
 
 #endif

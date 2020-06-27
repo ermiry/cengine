@@ -12,7 +12,6 @@
 #include "cengine/ui/components/transform.h"
 #include "cengine/ui/layout/vertical.h"
 
-// FIXME:!!!
 #include "cengine/ui/textbox.h"
 #include "cengine/ui/panel.h"
 
@@ -29,6 +28,9 @@ static VerticalLayout *ui_layout_vertical_new (void) {
 
         vertical->transform = NULL;
         vertical->ui_elements = NULL;
+
+        vertical->event_scroll_up = NULL;
+        vertical->event_scroll_down = NULL;
     }
 
     return vertical;
@@ -43,8 +45,23 @@ void ui_layout_vertical_delete (void *vertical_ptr) {
         ui_transform_component_delete (vertical->transform);
         dlist_delete (vertical->ui_elements);
 
+        if (vertical->event_scroll_up) {
+            cengine_event_unregister (vertical->event_scroll_up);
+        }
+
+        if (vertical->event_scroll_down) {
+            cengine_event_unregister (vertical->event_scroll_down);
+        }
+
         free (vertical);
     }
+
+}
+
+// get the amount of elements that are inside the vertical layout
+size_t ui_layout_vertical_get_elements_count (VerticalLayout *vertical) {
+
+    return vertical ? vertical->ui_elements->size : 0;
 
 }
 
@@ -75,8 +92,8 @@ void ui_layout_vertical_toggle_scrolling (VerticalLayout *vertical, bool enable)
 
     if (vertical) {
         // register this vertical layout to listen for the scroll event
-        cengine_event_register (CENGINE_EVENT_SCROLL_UP, ui_layout_vertical_scroll_up, vertical);
-        cengine_event_register (CENGINE_EVENT_SCROLL_DOWN, ui_layout_vertical_scroll_down, vertical);
+        vertical->event_scroll_up = cengine_event_register (CENGINE_EVENT_SCROLL_UP, ui_layout_vertical_scroll_up, vertical);
+        vertical->event_scroll_down = cengine_event_register (CENGINE_EVENT_SCROLL_DOWN, ui_layout_vertical_scroll_down, vertical);
 
         vertical->scroll_sensitivity = VERTICAL_LAYOUT_DEFAULT_SCROLL;
         vertical->scrolling = enable;
@@ -210,12 +227,18 @@ UIElement *ui_layout_vertical_get_element_at (VerticalLayout *vertical, unsigned
 }
 
 // removes an element from the vertical layout group
-void ui_layout_vertical_remove (VerticalLayout *vertical, UIElement *ui_element) {
+u8 ui_layout_vertical_remove (VerticalLayout *vertical, UIElement *ui_element) {
+
+    u8 retval = 1;
 
     if (vertical && ui_element) {
-        dlist_remove (vertical->ui_elements, ui_element, NULL);
-        ui_layout_vertical_update (vertical);
+        if (dlist_remove (vertical->ui_elements, ui_element, NULL)) {
+            ui_layout_vertical_update (vertical);
+            retval = 0;
+        }
     }
+
+    return retval;
 
 }
 
