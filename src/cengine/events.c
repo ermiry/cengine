@@ -27,6 +27,9 @@ static EventAction *event_action_new (void) {
 
 	EventAction *event_action = (EventAction *) malloc (sizeof (EventAction));
 	if (event_action) {
+		event_action->type = CENGINE_EVENT_NONE;
+		event_action->id = -1;
+
 		event_action->action = NULL;
 		event_action->args = NULL;
 	}
@@ -37,10 +40,29 @@ static EventAction *event_action_new (void) {
 
 static void event_action_delete (void *ptr) { if (ptr) free (ptr); }
 
-static EventAction *event_action_create (Action action, void *args) {
+static int event_action_comparator (const void *a, const void *b) {
+
+	if (a && b) {
+		EventAction *event_a = (EventAction *) a;
+		EventAction *event_b = (EventAction *) b;
+
+		if (event_a->id < event_b->id) return -1;
+		else if (event_a->id == event_b->id) return 0;
+		else return 1;
+	}
+
+	if (a && !b) return -1;
+	if (!a && b) return 1;
+	return 0;
+
+}
+
+static EventAction *event_action_create (CengineEventType type, Action action, void *args) {
 
 	EventAction *event_action = event_action_new ();
 	if (event_action) {
+		event_action->type = type;
+
 		event_action->action = action;
 		event_action->args = args;
 	}
@@ -80,7 +102,7 @@ static Event *event_create (CengineEventType type) {
 	Event *e = event_new ();
 	if (e) {
 		e->type = type;
-		e->event_actions = dlist_init (event_action_delete, NULL);
+		e->event_actions = dlist_init (event_action_delete, event_action_comparator);
 	}
 
 	return e;
@@ -88,13 +110,12 @@ static Event *event_create (CengineEventType type) {
 }
 
 // register a new action to be triggered when an event takes place
-// returns 0 on succes, 1 on error
-u8 cengine_event_register (CengineEventType type, Action action, void *args) {
+EventAction *cengine_event_register (CengineEventType type, Action action, void *args) {
 
-	u8 retval = 1;
+	EventAction * retval = NULL;
 
 	if (action) {
-		EventAction *event_action = event_action_create (action, args);
+		EventAction *event_action = event_action_create (type, action, args);
 
 		// register to the correct event
 		Event *e = NULL;
@@ -102,7 +123,47 @@ u8 cengine_event_register (CengineEventType type, Action action, void *args) {
 			e = (Event *) le->data;
 
 			if (e->type == type) {
-				retval = dlist_insert_after (e->event_actions, dlist_end (e->event_actions), event_action);
+				if (!dlist_insert_after (
+					e->event_actions, 
+					dlist_end (e->event_actions), 
+					event_action
+				)) {
+					event_action->id = e->event_actions->size - 1;
+					retval = event_action;
+				}
+
+				break;
+			}
+		}
+	}
+
+	return retval;
+
+}
+
+// unregister from an event, event action gets deleted
+// returns 0 on succes, 1 on error
+u8 cengine_event_unregister (EventAction *event_action) {
+
+	u8 retval = 1;
+
+	if (event_action) {
+		// remove from the correct event
+		Event *e = NULL;
+		for (ListElement *le = dlist_start (cengine_events); le; le = le->next) {
+			e = (Event *) le->data;
+
+			if (e->type == event_action->type) {
+				if (dlist_remove (
+					e->event_actions,
+					event_action,
+					NULL
+				)) {
+					event_action_delete (event_action);
+
+					retval = 0;
+				}
+
 				break;
 			}
 		}
@@ -151,6 +212,10 @@ u8 cengine_events_init (void) {
 
 	errors |= dlist_insert_after (cengine_events, dlist_end (cengine_events), event_create (CENGINE_EVENT_SCROLL_UP));
 	errors |= dlist_insert_after (cengine_events, dlist_end (cengine_events), event_create (CENGINE_EVENT_SCROLL_DOWN));
+
+	errors |= dlist_insert_after (cengine_events, dlist_end (cengine_events), event_create (CENGINE_EVENT_MOUSE_LEFT_UP));
+	errors |= dlist_insert_after (cengine_events, dlist_end (cengine_events), event_create (CENGINE_EVENT_MOUSE_MIDDLE_UP));
+	errors |= dlist_insert_after (cengine_events, dlist_end (cengine_events), event_create (CENGINE_EVENT_MOUSE_RIGHT_UP));
 
 	return errors;
 
