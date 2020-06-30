@@ -668,7 +668,7 @@ void ui_noti_center_draw (NotiCenter *noti_center, Renderer *renderer) {
                     noti = (Notification *) le->data;
                     
                     // check for available space in the notification center UI
-                    u32 new_height = noti_center->ui_element->transform->rect.y + noti_center->offset;
+                    int new_height = noti_center->ui_element->transform->rect.y + noti_center->offset;
                     bool ok = false;
                     if (noti_center->bottom) {
                         if ((new_height - noti->transform->rect.h) > (noti_center->ui_element->transform->rect.y))

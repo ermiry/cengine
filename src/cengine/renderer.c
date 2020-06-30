@@ -658,7 +658,7 @@ void render_basic_dot_line_horizontal (Renderer *renderer, int start, int end, i
         SDL_SetRenderDrawColor (renderer->renderer, color.r, color.g, color.b, color.a);
 
         int scale_offset = (offset * x_scale);
-        for (unsigned int i = start; i < end; i += scale_offset)
+        for (int i = start; i < end; i += scale_offset)
             SDL_RenderDrawPoint (renderer->renderer, i / x_scale, y / y_scale);
 
         SDL_RenderSetScale (renderer->renderer, original_scale_x, original_scale_y);
@@ -680,7 +680,7 @@ void render_basic_dot_line_vertical (Renderer *renderer, int start, int end, int
         SDL_SetRenderDrawColor (renderer->renderer, color.r, color.g, color.b, color.a);
 
         int scale_offset = (offset * x_scale);
-        for (unsigned int i = start; i < end; i += scale_offset)
+        for (int i = start; i < end; i += scale_offset)
             SDL_RenderDrawPoint (renderer->renderer, x / x_scale, i / y_scale);
 
         SDL_RenderSetScale (renderer->renderer, original_scale_x, original_scale_y);
@@ -1408,7 +1408,7 @@ static void renderer_bg_destroy_textures (Renderer *renderer) {
             
         size_t count = 0;
         while (count < max_count) {
-            SDL_Texture *texture = queue_pop (renderer->destroy_textures_queue);
+            SDL_Texture *texture = (SDL_Texture *) queue_pop (renderer->destroy_textures_queue);
             if (texture) {
                 SDL_DestroyTexture (texture);
             } 

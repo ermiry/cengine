@@ -89,8 +89,8 @@ Window *window_create (const char *title, WindowSize window_size, Uint32 window_
             window->display_index = display_idx;
 
             if (!video_get_display_mode (window->display_index, &window->display_mode)) {
-                u32 width = window_size.width;
-                u32 height = window_size.height;
+                int width = window_size.width;
+                int height = window_size.height;
 
                 // cap to maximum display size
                 if (width > window->display_mode.w) width = window->display_mode.w;
@@ -257,8 +257,8 @@ int window_resize (Window *window, u32 new_width, u32 new_height) {
 
     if (window) {
         // cap to maximum display size
-        u32 width = new_width;
-        u32 height = new_height;
+        int width = new_width;
+        int height = new_height;
 
         if (width > window->display_mode.w) width = window->display_mode.w;
         if (height > window->display_mode.h) height = window->display_mode.h;

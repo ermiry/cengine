@@ -259,7 +259,7 @@ static void ui_layout_horizontal_scroll_up (void *event_data) {
 
                 if (dlist_size (horizontal->ui_elements) > 0) {
                     // check if the elements fill all the panel to even allow scrolling
-                    u32 total_elements_width = horizontal->curr_element_width * dlist_size (horizontal->ui_elements);
+                    int total_elements_width = horizontal->curr_element_width * dlist_size (horizontal->ui_elements);
                     if (total_elements_width > horizontal->transform->rect.w) {
                         // check for the first element position
                         UIElement *first_element = (UIElement *) (dlist_start (horizontal->ui_elements)->data);
@@ -309,10 +309,10 @@ static void ui_layout_horizontal_scroll_down (void *event_data) {
                 if (dlist_size (horizontal->ui_elements) > 0) {
                     // check the pos of the last element
                     UIElement *last_element = (UIElement *) (dlist_end (horizontal->ui_elements)->data);
-                    u32 edge = (0 + horizontal->transform->rect.w) - horizontal->curr_element_width;
+                    int edge = (0 + horizontal->transform->rect.w) - horizontal->curr_element_width;
                     if (last_element->transform->rect.x > edge) {
                         u32 real_scroll = (*amount * horizontal->scroll_sensitivity);
-                        u32 new_last_element_pos = last_element->transform->rect.x + (*amount * horizontal->scroll_sensitivity);
+                        int new_last_element_pos = last_element->transform->rect.x + (*amount * horizontal->scroll_sensitivity);
                         if (new_last_element_pos < edge) real_scroll = edge - last_element->transform->rect.x;
 
                         UIElement *ui_element = NULL;

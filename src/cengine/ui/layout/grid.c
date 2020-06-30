@@ -797,7 +797,7 @@ static void ui_layout_grid_scroll_up_actual (GridLayout *grid, int amount) {
 
         if (dlist_size (grid->elements) > 0) {
             // check if the elements fill all the panel to even allow scrolling
-            u32 total_elements_height = grid->cell_height * dlist_size (grid->elements);
+            int total_elements_height = grid->cell_height * dlist_size (grid->elements);
             if (total_elements_height > grid->transform->rect.h) {
                 // check for the first element position
                 GridElement *first_element = (GridElement *) (dlist_start (grid->elements)->data);
@@ -843,7 +843,7 @@ static void ui_layout_grid_scroll_down_actual (GridLayout *grid, int amount) {
         if (dlist_size (grid->elements) > 0) {
             // check the pos of the last element
             GridElement *last_element = (GridElement *) (dlist_end (grid->elements)->data);
-            u32 edge = grid->transform->rect.h - grid->cell_height;
+            int edge = grid->transform->rect.h - grid->cell_height;
             if (last_element->ui_element->transform->rect.y > edge) {
                 UIElement *ui_element = NULL;
                 GridElement *grid_element = NULL;

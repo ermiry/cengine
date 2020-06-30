@@ -262,7 +262,7 @@ static void ui_layout_vertical_scroll_up (void *event_data) {
 
                 if (dlist_size (vertical->ui_elements) > 0) {
                     // check if the elements fill all the panel to even allow scrolling
-                    u32 total_elements_height = vertical->curr_element_height * dlist_size (vertical->ui_elements);
+                    int total_elements_height = vertical->curr_element_height * dlist_size (vertical->ui_elements);
                     if (total_elements_height > vertical->transform->rect.h) {
                         // check for the first element position
                         UIElement *first_element = (UIElement *) (dlist_start (vertical->ui_elements)->data);
@@ -319,7 +319,7 @@ static void ui_layout_vertical_scroll_down (void *event_data) {
                 if (dlist_size (vertical->ui_elements) > 0) {
                     // check the pos of the last element
                     UIElement *last_element = (UIElement *) (dlist_end (vertical->ui_elements)->data);
-                    u32 edge = vertical->transform->rect.h - vertical->curr_element_height;
+                    int edge = vertical->transform->rect.h - vertical->curr_element_height;
                     if (last_element->transform->rect.y > edge) {
                         // move all the elements upwards
                         UIElement *ui_element = NULL;
