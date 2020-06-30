@@ -11,7 +11,9 @@ typedef struct String {
 } String;
 
 extern String *str_new (const char *str);
+
 extern String *str_create (const char *format, ...);
+
 extern void str_delete (void *str_ptr);
 
 extern void str_copy (String *to, String *from);
@@ -30,9 +32,11 @@ extern void str_append_char (String *s, const char c);
 extern void str_append_c_string (String *s, const char *c_str);
 
 extern void str_to_upper (String *string);
+
 extern void str_to_lower (String *string);
 
 extern int str_compare (const String *s1, const String *s2);
+
 extern int str_comparator (const void *a, const void *b) ;
 
 extern char **str_split (String *string, const char delim, int *n_tokens);
