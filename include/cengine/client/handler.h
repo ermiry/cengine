@@ -1,9 +1,9 @@
 #ifndef _CLIENT_HANDLER_H_
 #define _CLIENT_HANDLER_H_
 
-#include "client/client.h"
-#include "client/connection.h"
-#include "client/packets.h"
+#include "cengine/client/client.h"
+#include "cengine/client/connection.h"
+#include "cengine/client/packets.h"
 
 #define RECEIVE_PACKET_BUFFER_SIZE          8192
 

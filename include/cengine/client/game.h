@@ -1,12 +1,12 @@
 #ifndef _CLIENT_GAME_H_
 #define _CLIENT_GAME_H_
 
-#include "client/types/types.h"
-#include "client/types/string.h"
+#include "cengine/types/types.h"
+#include "cengine/types/string.h"
 
-#include "client/collections/dlist.h"
+#include "cengine/collections/dlist.h"
 
-#include "client/packets.h"
+#include "cengine/client/packets.h"
 
 typedef struct GameSettings {
 
