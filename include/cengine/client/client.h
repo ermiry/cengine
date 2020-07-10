@@ -3,14 +3,16 @@
 
 #include <stdbool.h>
 
-#include "cengine/types/types.h"
-#include "cengine/collections/dlist.h"
+#include "client/types/types.h"
+#include "client/types/string.h"
 
-#include "cengine/client/network.h"
-#include "cengine/client/events.h"
-#include "cengine/client/errors.h"
-#include "cengine/client/connection.h"
-#include "cengine/client/packets.h"
+#include "client/collections/dlist.h"
+
+#include "client/network.h"
+#include "client/events.h"
+#include "client/errors.h"
+#include "client/connection.h"
+#include "client/packets.h"
 
 struct _Client;
 struct _Connection;
@@ -46,18 +48,20 @@ struct _Client {
 
     bool running;                   // any connection is active
 
-    // all the actions that have been registered to a client
-    DoubleList *registered_actions;
+    DoubleList *registered_events;
+    DoubleList *registered_errors;
 
     // custom packet handlers
     Action app_packet_handler;
     Action app_error_packet_handler;
     Action custom_packet_handler;
 
-    bool check_packets;                     // enable / disbale packet checking
+    bool check_packets;              // enable / disbale packet checking
 
     time_t time_started;
     u64 uptime;
+
+    String *session_id;
 
     ClientStats *stats;
 
@@ -82,6 +86,10 @@ extern void client_set_custom_handler (Client *client, Action custom_handler);
 // packets size must be cheked in individual methods (handlers)
 // by default, this option is turned off
 extern void client_set_check_packets (Client *client, bool check_packets);
+
+// sets the client's session id
+// returns 0 on succes, 1 on error
+extern u8 client_set_session_id (Client *client, const char *session_id);
 
 // creates a new client, whcih may be used to create connections
 extern Client *client_create (void);
@@ -252,15 +260,19 @@ extern ClientConnection *client_connection_aux_new (Client *client, struct _Conn
 
 extern void client_connection_aux_delete (void *ptr);
 
-/*** Serialization ***/
+#pragma region serialization
 
-// session id - token
-struct _Token {
+#define TOKEN_SIZE         64
 
-    char token[65];
+// serialized session id - token
+struct _SToken {
+
+    char token[TOKEN_SIZE];
 
 };
 
-typedef struct _Token Token;
+typedef struct _SToken SToken;
+
+#pragma endregion
 
 #endif

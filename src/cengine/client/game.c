@@ -3,16 +3,16 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "cengine/types/types.h"
-#include "cengine/types/string.h"
+#include "client/types/types.h"
+#include "client/types/string.h"
 
-#include "cengine/collections/dlist.h"
+#include "client/collections/dlist.h"
 
-#include "cengine/client/packets.h"
-#include "cengine/client/events.h"
-#include "cengine/client/game.h"
+#include "client/packets.h"
+#include "client/events.h"
+#include "client/game.h"
 
-#include "cengine/utils/log.h"
+#include "client/utils/log.h"
 
 static GameSettings *game_settings_new (void) {
 
@@ -104,14 +104,14 @@ static void client_game_lobby_create (Packet *packet) {
             Lobby *lobby = lobby_deserialize (slobby);
 
             // trigger the event
-            client_event_set_response (packet->client, EVENT_LOBBY_CREATE, 
+            client_event_set_response (packet->client, CLIENT_EVENT_LOBBY_CREATE, 
                 lobby, lobby_delete);
-            client_event_trigger (packet->client, EVENT_LOBBY_CREATE);
+            client_event_trigger (packet->client, packet->connection, CLIENT_EVENT_LOBBY_CREATE);
         }
 
         else {
             // TODO: trigger error, bad packet
-            cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, 
+            client_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, 
                 "client_game_lobby_create () - packets to small to get a lobby!");
         }
     }
@@ -131,14 +131,14 @@ static void client_game_lobby_join (Packet *packet) {
             Lobby *lobby = lobby_deserialize (slobby);
 
             // trigger the event
-            client_event_set_response (packet->client, EVENT_LOBBY_JOIN, 
+            client_event_set_response (packet->client, CLIENT_EVENT_LOBBY_JOIN, 
                 lobby, lobby_delete);
-            client_event_trigger (packet->client, EVENT_LOBBY_JOIN);
+            client_event_trigger (packet->client, packet->connection, CLIENT_EVENT_LOBBY_JOIN);
         }
 
         else {
             // TODO: trigger error, bad packet
-            cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, 
+            client_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, 
                 "client_game_lobby_join () - packets to small to get a lobby!");
         }
     }
@@ -153,7 +153,7 @@ static void client_game_lobby_leave (Packet *packet) {
             // get the lobby data from the cerver
 
             // trigger the event
-            client_event_trigger (packet->client, EVENT_LOBBY_JOIN);
+            client_event_trigger (packet->client, packet->connection, CLIENT_EVENT_LOBBY_JOIN);
         }
     }
 
@@ -163,7 +163,7 @@ static void client_game_lobby_start (Packet *packet) {
 
     if (packet) {
         // trigger the event
-        client_event_trigger (packet->client, EVENT_LOBBY_START);
+        client_event_trigger (packet->client, packet->connection, CLIENT_EVENT_LOBBY_START);
     }
 
 }
@@ -185,7 +185,7 @@ void client_game_packet_handler (Packet *packet) {
                 case GAME_START: client_game_lobby_start (packet); break;
 
                 default:
-                    cengine_log_msg (stderr, LOG_WARNING, LOG_CLIENT,
+                    client_log_msg (stderr, LOG_WARNING, LOG_CLIENT,
                         "Got a game packet of unknown type!");
                     break;
             }

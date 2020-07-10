@@ -4,12 +4,13 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include "cengine/types/types.h"
-#include "cengine/types/string.h"
+#include "client/types/types.h"
+#include "client/types/string.h"
 
-#include "cengine/client/network.h"
-#include "cengine/client/cerver.h"
-#include "cengine/client/client.h"
+#include "client/network.h"
+#include "client/socket.h"
+#include "client/cerver.h"
+#include "client/client.h"
 
 struct _Cerver;
 struct _Client;
@@ -101,7 +102,6 @@ struct _PacketHeader {
 
 };
 
-
 typedef struct _PacketHeader PacketHeader;
 
 // prints an already existing PacketHeader. Mostly used for debugging
@@ -118,50 +118,54 @@ typedef enum RequestType {
     
 } RequestType;
 
-typedef enum CerverPacket {
+typedef enum CerverPacketType {
 
-    CERVER_INFO                 = 0,
-    CERVER_TEARDOWN             = 1,
+	CERVER_INFO                 = 0,
+	CERVER_TEARDOWN             = 1,
 
-    CERVER_INFO_STATS           = 2,
-    CERVER_GAME_STATS           = 3
+	CERVER_INFO_STATS           = 2,
+	CERVER_GAME_STATS           = 3
 
-} CerverPacket;
+} CerverPacketType;
 
-typedef enum ClientPacket {
+typedef enum ClientPacketType {
 
 	CLIENT_CLOSE_CONNECTION     = 1,
 	CLIENT_DISCONNET            = 2,
 
-} ClientPacket;
+} ClientPacketType;
 
-typedef enum AuthPacket {
+typedef enum AuthPacketType {
 
-    REQ_AUTH_CLIENT             = 1,
+	AUTH_PACKET_TYPE_NONE			= 0,
 
-    CLIENT_AUTH_DATA            = 2,
-    SUCCESS_AUTH                = 3,
+	AUTH_PACKET_TYPE_REQUEST_AUTH	= 1,
 
-} AuthPacket;
+	AUTH_PACKET_TYPE_CLIENT_AUTH	= 2,
+	AUTH_PACKET_TYPE_ADMIN_AUTH		= 3,
 
-typedef enum GamePacket {
+	AUTH_PACKET_TYPE_SUCCESS		= 4
 
-    GAME_LOBBY_CREATE           = 0,
-    GAME_LOBBY_JOIN             = 1,
-    GAME_LOBBY_LEAVE            = 2,
-    GAME_LOBBY_UPDATE           = 3,
-    GAME_LOBBY_DESTROY          = 4,
+} AuthPacketType;
 
-    GAME_INIT                   = 5,   // prepares the game structures
-    GAME_START                  = 6,   // strat running the game
-    GAME_INPUT_UPDATE           = 7,
-    GAME_SEND_MSG               = 8,
+typedef enum GamePacketType {
 
-} GamePacket;
+	GAME_LOBBY_CREATE           = 0,
+	GAME_LOBBY_JOIN             = 1,
+	GAME_LOBBY_LEAVE            = 2,
+	GAME_LOBBY_UPDATE           = 3,
+	GAME_LOBBY_DESTROY          = 4,
+
+	GAME_INIT                   = 5,   // prepares the game structures
+	GAME_START                  = 6,   // strat running the game
+	GAME_INPUT_UPDATE           = 7,
+	GAME_SEND_MSG               = 8,
+
+} GamePacketType;
 
 struct _RequestData {
 
-    u32 type;
+	u32 type;
 
 };
 
@@ -254,10 +258,32 @@ extern Packet *packet_generate_request (PacketType packet_type, u32 req_type,
 // returns 0 on success, 1 on error
 extern u8 packet_send (const Packet *packet, int flags, size_t *total_sent, bool raw);
 
+// sends a packet to the specified destination
+// sets flags to 0
+// at least a packet & an active connection are required for this method to succeed
+// raw flag to send a raw packet (only the data that was set to the packet, without any header)
+// returns 0 on success, 1 on error
+extern u8 packet_send_to (const Packet *packet, size_t *total_sent, bool raw,
+    struct _Client *client, struct _Connection *connection);
+
+// sends a packet to the socket in two parts, first the header & then the data
+// this method can be useful when trying to forward a big received packet without the overhead of 
+// performing and additional copy to create a continuos data (packet) buffer
+// the socket's write mutex will be locked to ensure that the packet
+// is sent correctly and to avoid race conditions
+// returns 0 on success, 1 on error
+extern u8 packet_send_split (const Packet *packet, int flags, size_t *total_sent);
+
+// sends a packet to the socket in two parts, first the header & then the data
+// works just as packet_send_split () but with the flags set to 0
+// returns 0 on success, 1 on error
+extern u8 packet_send_to_split (const Packet *packet, size_t *total_sent,
+    struct _Client *client, struct _Connection *connection);
+
 // sends a packet directly to the socket
 // raw flag to send a raw packet (only the data that was set to the packet, without any header)
 // returns 0 on success, 1 on error
-extern u8 packet_send_to_sock_fd (const Packet *packet, const i32 sock_fd, 
+extern u8 packet_send_to_socket (const Packet *packet, struct _Socket *socket, 
     int flags, size_t *total_sent, bool raw);
 
 // check if packet has a compatible protocol id and a version

@@ -2,20 +2,21 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "cengine/types/types.h"
-#include "cengine/types/string.h"
+#include "client/types/types.h"
+#include "client/types/string.h"
 
-#include "cengine/client/network.h"
-#include "cengine/client/cerver.h"
-#include "cengine/client/client.h"
-#include "cengine/client/connection.h"
-#include "cengine/client/handler.h"
-#include "cengine/client/packets.h"
+#include "client/network.h"
+#include "client/socket.h"
+#include "client/cerver.h"
+#include "client/client.h"
+#include "client/connection.h"
+#include "client/handler.h"
+#include "client/packets.h"
 
-#include "cengine/threads/thread.h"
+#include "client/threads/thread.h"
 
-#include "cengine/utils/utils.h"
-#include "cengine/utils/log.h"
+#include "client/utils/utils.h"
+#include "client/utils/log.h"
 
 void connection_remove_auth_data (Connection *connection);
 
@@ -63,15 +64,17 @@ Connection *connection_new (void) {
 
     Connection *connection = (Connection *) malloc (sizeof (Connection));
     if (connection) {
-        memset (connection, 0, sizeof (Connection));
-
         connection->name = NULL;
 
-        connection->use_ipv6 = false;
+        connection->socket = NULL;
+        connection->port = 0;
         connection->protocol = DEFAULT_CONNECTION_PROTOCOL;
+        connection->use_ipv6 = false;
 
         connection->ip = NULL;
         memset (&connection->address, 0, sizeof (struct sockaddr_storage));
+
+        connection->connected_timestamp = 0;
 
         connection->max_sleep = DEFAULT_CONNECTION_MAX_SLEEP;
         connection->connected = false;
@@ -81,16 +84,22 @@ Connection *connection_new (void) {
         connection->receive_packet_buffer_size = RECEIVE_PACKET_BUFFER_SIZE;
         connection->sock_receive = NULL;
 
+        connection->update_thread_id = 0;
+        connection->update_sleep = DEFAULT_CONNECTION_UPDATE_SLEEP;
+
         connection->full_packet = false;
 
         connection->received_data = NULL;
+        connection->received_data_size = 0;
         connection->received_data_delete = NULL;
 
         connection->receive_packets = true;
         connection->custom_receive = NULL;
         connection->custom_receive_args = NULL;
 
+        connection->authenticated = false;
         connection->auth_data = NULL;
+        connection->auth_data_size = 0;
         connection->delete_auth_data = NULL;
         connection->auth_packet = NULL;
 
@@ -107,6 +116,8 @@ void connection_delete (void *connection_ptr) {
         Connection *connection = (Connection *) connection_ptr;
 
         str_delete (connection->name);
+
+        socket_delete (connection->socket);
 
         str_delete (connection->ip);
 
@@ -130,6 +141,9 @@ Connection *connection_create_empty (void) {
 
     Connection *connection = connection_new ();
     if (connection) {
+        connection->name = str_new ("no-name");
+
+        connection->socket = (Socket *) socket_create_empty ();
         connection->sock_receive = sock_receive_new ();
         connection->stats = connection_stats_create ();
     }
@@ -152,9 +166,11 @@ int connection_comparator_by_sock_fd (const void *a, const void *b) {
         Connection *con_a = (Connection *) a;
         Connection *con_b = (Connection *) b;
 
-        if (con_a->sock_fd < con_b->sock_fd) return -1;
-        else if (con_a->sock_fd == con_b->sock_fd) return 0;
-        else return 1; 
+        if (con_a->socket && con_b->socket) {
+            if (con_a->socket->sock_fd < con_b->socket->sock_fd) return -1;
+            else if (con_a->socket->sock_fd == con_b->socket->sock_fd) return 0;
+            else return 1; 
+        }
     }
 
     return 0;
@@ -186,6 +202,14 @@ void connection_set_receive_buffer_size (Connection *connection, u32 size) {
 
 }
 
+// sets the waiting time (sleep) in micro secs between each call to recv () in connection_update () thread
+// the dault value is 200000 (DEFAULT_CONNECTION_UPDATE_SLEEP)
+void connection_set_update_sleep (Connection *connection, u32 sleep) {
+
+    if (connection) connection->update_sleep = sleep;
+
+}
+
 // sets the connection received data
 // 01/01/2020 - a place to safely store the request response, like when using client_connection_request_to_cerver ()
 void connection_set_received_data (Connection *connection, void *data, size_t data_size, Action data_delete) {
@@ -210,47 +234,67 @@ void connection_set_custom_receive (Connection *connection, Action custom_receiv
 
 }
 
-// sets the connection auth data and a method to destroy it once the connection has ended
-void connection_set_auth_data (Connection *connection, void *auth_data, size_t auth_data_size, Action delete_auth_data) {
+// sets the connection auth data to send whenever the cerver requires authentication 
+// and a method to destroy it once the connection has ended,
+// if delete_auth_data is NULL, the auth data won't be deleted
+void connection_set_auth_data (Connection *connection, 
+    void *auth_data, size_t auth_data_size, Action delete_auth_data,
+    bool admin_auth) {
 
     if (connection && auth_data) {
         connection_remove_auth_data (connection);
 
         connection->auth_data = auth_data;
+        connection->auth_data_size = auth_data_size;
         connection->delete_auth_data = delete_auth_data;
+        connection->admin_auth = admin_auth;
     } 
 
 }
 
-// removes the connection auth data and its destroy method
+// removes the connection auth data using the connection's delete_auth_data method
+// if not such method, the data won't be deleted
+// the connection's auth data & delete method will be equal to NULL
 void connection_remove_auth_data (Connection *connection) {
 
     if (connection) {
-        if (connection->delete_auth_data) 
-            connection->delete_auth_data (connection->auth_data);
-        else free (connection->auth_data);
-
-        connection->delete_auth_data = NULL;
-        connection->auth_data = NULL;
+        if (connection->auth_data) {
+            if (connection->delete_auth_data) 
+                connection->delete_auth_data (connection->auth_data);
+        }
 
         if (connection->auth_packet) {
             packet_delete (connection->auth_packet);
             connection->auth_packet = NULL;
         }
+
+        connection->auth_data = NULL;
+        connection->auth_data_size = 0;
+        connection->delete_auth_data = NULL;
     }
 
 }
 
 // generates the connection auth packet to be send to the server
 // this is also generated automatically whenever the cerver ask for authentication
-void connection_generate_auth_packet (Connection *connection) {
+// returns 0 on success, 1 on error
+u8 connection_generate_auth_packet (Connection *connection) {
+
+    u8 retval = 1;
 
     if (connection) {
         if (connection->auth_data) {
-            connection->auth_packet = packet_generate_request (AUTH_PACKET, CLIENT_AUTH_DATA, 
-                connection->auth_data, connection->auth_data_size);
+            connection->auth_packet = packet_generate_request (
+                AUTH_PACKET, 
+                connection->admin_auth ? AUTH_PACKET_TYPE_ADMIN_AUTH : AUTH_PACKET_TYPE_CLIENT_AUTH, 
+                connection->auth_data, connection->auth_data_size
+            );
+
+            if (connection->auth_packet) retval = 0;
         }
     }
+
+    return retval;
 
 }
 
@@ -262,18 +306,18 @@ static u8 connection_init (Connection *connection) {
     if (connection) {
         switch (connection->protocol) {
             case IPPROTO_TCP: 
-                connection->sock_fd = socket ((connection->use_ipv6 == 1 ? AF_INET6 : AF_INET), SOCK_STREAM, 0);
+                connection->socket->sock_fd = socket ((connection->use_ipv6 == 1 ? AF_INET6 : AF_INET), SOCK_STREAM, 0);
                 break;
             case IPPROTO_UDP:
-                connection->sock_fd = socket ((connection->use_ipv6 == 1 ? AF_INET6 : AF_INET), SOCK_DGRAM, 0);
+                connection->socket->sock_fd = socket ((connection->use_ipv6 == 1 ? AF_INET6 : AF_INET), SOCK_DGRAM, 0);
                 break;
 
             default: 
-                cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Unkonw protocol type!"); 
+                client_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Unkonw protocol type!"); 
                 return 1;
         }
 
-        if (connection->sock_fd > 0) {
+        if (connection->socket->sock_fd > 0) {
             if (connection->use_ipv6) {
                 struct sockaddr_in6 *addr = (struct sockaddr_in6 *) &connection->address;
                 addr->sin6_family = AF_INET6;
@@ -292,7 +336,7 @@ static u8 connection_init (Connection *connection) {
         }
 
         else {
-            cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to create new socket!");
+            client_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to create new socket!");
         }
     }
 
@@ -320,7 +364,7 @@ Connection *connection_create (const char *ip_address, u16 port, Protocol protoc
             // set up the new connection to be ready to be started
             if (connection_init (connection)) {
                 #ifdef CLIENT_DEBUG
-                cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to init the new connection!");
+                client_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to init the new connection!");
                 #endif
                 connection_delete (connection);
                 connection = NULL;
@@ -336,7 +380,7 @@ Connection *connection_create (const char *ip_address, u16 port, Protocol protoc
 static u8 connection_try (Connection *connection, const struct sockaddr_storage address) {
 
     for (u32 numsec = 2; numsec <= connection->max_sleep; numsec <<= 1) {
-        if (!connect (connection->sock_fd, 
+        if (!connect (connection->socket->sock_fd, 
             (const struct sockaddr *) &address, 
             sizeof (struct sockaddr))) 
             return 0;
@@ -417,8 +461,8 @@ void connection_close (Connection *connection) {
 
     if (connection) {
         if (connection->connected) {
-            close (connection->sock_fd);
-            connection->sock_fd = -1;
+            close (connection->socket->sock_fd);
+            connection->socket->sock_fd = -1;
             connection->connected = false;
         }
     }
