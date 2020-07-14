@@ -8,8 +8,6 @@
 #include <ctype.h>
 #include <stdarg.h>
 
-#include "cengine/utils/utils.h"
-
 /*** misc ***/
 
 bool system_is_little_endian (void) {
@@ -122,8 +120,18 @@ uint32_t convert_rgba_to_hex (uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
     return retval;
 }
 
-
 /*** c strings ***/
+
+// copies a c string into another one previuosly allocated
+void c_string_copy (char *to, const char *from) {
+
+	if (to && from) {
+		while (*from) *to++ = *from++;
+		
+		*to = '\0';
+	}
+
+}
 
 // creates a new c string with the desired format, as in printf
 char *c_string_create (const char *format, ...) {
@@ -154,84 +162,82 @@ char *c_string_create (const char *format, ...) {
 }
 
 // splits a c string into tokens based on a delimiter
-char **c_string_split (char *string, const char delim, int *n_tokens) {
+char **c_string_split (char *original, const char delim, int *n_tokens) {
 
-	char **result = 0;
-	size_t count = 0;
-	char *temp = string;
-	char *last = 0;
-	char dlm[2];
-	dlm[0] = delim;
-	dlm[1] = 0;
+	char **result = NULL;
 
-	// count how many elements will be extracted
-	while (*temp) {
-		if (delim == *temp) {
+	if (original) {
+		char *string = (char *) calloc (strlen (original) + 1, sizeof (char));
+		if (string) {
+			c_string_copy (string, original);
+
+			size_t count = 0;
+			char *temp = string;
+			char *last = NULL;
+			char dlm[2];
+			dlm[0] = delim;
+			dlm[1] = 0;
+
+			// count how many elements will be extracted
+			while (*temp) {
+				if (delim == *temp) {
+					count++;
+					last = temp;
+				}
+
+				temp++;
+			}
+
+			count += last < (string + strlen (string) - 1);
+
 			count++;
-			last = temp;
+
+			result = (char **) calloc (count, sizeof (char *));
+			if (n_tokens) *n_tokens = count;
+
+			if (result) {
+				size_t idx = 0;
+				char *token = strtok (string, dlm);
+
+				while (token) {
+					// assert (idx < count);
+					*(result + idx++) = strdup (token);
+					token = strtok (0, dlm);
+				}
+
+				// assert (idx == count - 1);
+				*(result + idx) = 0;
+			}
+
+			free (string);
 		}
-
-		temp++;
-	}
-
-	count += last < (string + strlen (string) - 1);
-
-	count++;
-
-	result = (char **) calloc (count, sizeof (char *));
-	if (n_tokens) *n_tokens = count;
-
-	if (result) {
-		size_t idx = 0;
-		char *token = strtok (string, dlm);
-
-		while (token) {
-			// assert (idx < count);
-			*(result + idx++) = strdup (token);
-			token = strtok (0, dlm);
-		}
-
-		// assert (idx == count - 1);
-		*(result + idx) = 0;
 	}
 
 	return result;
 
 }
 
-// copies a c string into another one previuosly allocated
-void c_string_copy (char *to, const char *from) {
-
-	if (to && from) {
-		while (*from) *to++ = *from++;
-		
-		*to = '\0';
-	}
-
-}
-
 // revers a c string
+// returns a newly allocated c string
 char *c_string_reverse (char *str) {
 
+	char *reverse = NULL;
+
 	if (str) {
-		char reverse[20];
-		int len = strlen (str);
-		short int end = len - 1;
-		short int begin = 0;
+		size_t len = strlen (str);
+		reverse = (char *) calloc (len, sizeof (char));
+
+		size_t end = len - 1;
+		size_t begin = 0;
 		for ( ; begin < len; begin++) {
 			reverse[begin] = str[end];
 			end--;
 		}
 
 		reverse[begin] = '\0';
-
-		char *retval = (char *) calloc (len + 1, sizeof (char));
-		if (retval) c_string_copy (retval, reverse);
-
-		return retval;
 	}
 
-	return NULL;
+	return reverse;
 
 }
 
