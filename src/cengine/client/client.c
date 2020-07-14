@@ -4,25 +4,25 @@
 
 #include <time.h>
 
-#include "client/types/types.h"
-#include "client/types/string.h"
+#include "cengine/types/types.h"
+#include "cengine/types/string.h"
 
-#include "client/collections/dlist.h"
+#include "cengine/collections/dlist.h"
 
-#include "client/network.h"
-#include "client/packets.h"
-#include "client/events.h"
-#include "client/errors.h"
-#include "client/client.h"
-#include "client/handler.h"
-#include "client/cerver.h"
-#include "client/connection.h"
-#include "client/game.h"
+#include "cengine/client/network.h"
+#include "cengine/client/packets.h"
+#include "cengine/client/events.h"
+#include "cengine/client/errors.h"
+#include "cengine/client/client.h"
+#include "cengine/client/handler.h"
+#include "cengine/client/cerver.h"
+#include "cengine/client/connection.h"
+#include "cengine/client/game.h"
 
-#include "client/threads/thread.h"
+#include "cengine/threads/thread.h"
 
-#include "client/utils/log.h"
-#include "client/utils/utils.h"
+#include "cengine/utils/log.h"
+#include "cengine/utils/utils.h"
 
 int client_disconnect (Client *client);
 int client_connection_end (Client *client, Connection *connection);
@@ -77,13 +77,13 @@ void client_stats_print (Client *client) {
         }
 
         else {
-            client_log_msg (stderr, LOG_ERROR, LOG_CLIENT, 
+            cengine_log_msg (stderr, LOG_ERROR, LOG_CLIENT, 
                 "Client does not have a reference to a client stats!");
         }
     }
 
     else {
-        client_log_msg (stderr, LOG_WARNING, LOG_CLIENT, 
+        cengine_log_msg (stderr, LOG_WARNING, LOG_CLIENT, 
             "Can't get stats of a NULL client!");
     }
 
@@ -333,11 +333,11 @@ Connection *client_connection_create (Client *client,
                 dlist_insert_after (client->connections, dlist_end (client->connections), connection);
             }
 
-            else client_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to create new connection!");
+            else cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to create new connection!");
         }
 
         else {
-            client_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, 
+            cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, 
                 "Failed to create new connection, no ip provided!");
         }
     }
@@ -466,7 +466,7 @@ unsigned int client_connect_async (Client *client, Connection *connection) {
 
             else {
                 #ifdef CLIENT_DEBUG
-                client_log_error ("Failed to create client_connect_thread () detachable thread!");
+                cengine_log_error ("Failed to create client_connect_thread () detachable thread!");
                 #endif
             }
         }
@@ -510,7 +510,7 @@ unsigned int client_request_to_cerver (Client *client, Connection *connection, P
 
         else {
             #ifdef CLIENT_DEBUG
-            client_log_error ("client_request_to_cerver () - failed to send request packet!");
+            cengine_log_error ("client_request_to_cerver () - failed to send request packet!");
             #endif
         }
     }
@@ -560,7 +560,7 @@ unsigned int client_request_to_cerver_async (Client *client, Connection *connect
 
                 else {
                     #ifdef CLIENT_DEBUG
-                    client_log_error ("Failed to create client_request_to_cerver_thread () detachable thread!");
+                    cengine_log_error ("Failed to create client_request_to_cerver_thread () detachable thread!");
                     #endif
                 }
             }
@@ -568,7 +568,7 @@ unsigned int client_request_to_cerver_async (Client *client, Connection *connect
 
         else {
             #ifdef CLIENT_DEBUG
-            client_log_error ("client_request_to_cerver_async () - failed to send request packet!");
+            cengine_log_error ("client_request_to_cerver_async () - failed to send request packet!");
             #endif
         }
     }
@@ -605,7 +605,7 @@ int client_connection_start (Client *client, Connection *connection) {
                     char *s = c_string_create ("client_connection_start () - Failed to create update thread for client %s", 
                         client->name->str);
                     if (s) {
-                        client_log_error (s);
+                        cengine_log_error (s);
                         free (s);
                     }
                 }
@@ -615,7 +615,7 @@ int client_connection_start (Client *client, Connection *connection) {
                 char *s = c_string_create ("client_connection_start () - Failed to start client %s", 
                     client->name->str);
                 if (s) {
-                    client_log_error (s);
+                    cengine_log_error (s);
                     free (s);
                 }
             }
@@ -645,7 +645,7 @@ int client_connect_and_start (Client *client, Connection *connection) {
             char *s = c_string_create ("client_connect_and_start () - Client %s failed to connect", 
                 client->name->str);
             if (s) {
-                client_log_error (s);
+                cengine_log_error (s);
                 free (s);
             }
         }
@@ -694,7 +694,7 @@ static void client_connection_terminate (Client *client, Connection *connection)
                 if (packet) {
                     packet_set_network_values (packet, client, connection);
                     if (packet_send (packet, 0, NULL, false)) {
-                        client_log_error ("Failed to send CLIENT_CLOSE_CONNECTION!");
+                        cengine_log_error ("Failed to send CLIENT_CLOSE_CONNECTION!");
                     }
                     packet_delete (packet);
                 }
