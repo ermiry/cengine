@@ -4,17 +4,19 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include "cengine/types/types.h"
-#include "cengine/types/string.h"
+#include "client/types/types.h"
+#include "client/types/string.h"
 
-#include "cengine/client/network.h"
-#include "cengine/client/socket.h"
-#include "cengine/client/cerver.h"
-#include "cengine/client/client.h"
+#include "client/network.h"
+#include "client/socket.h"
+#include "client/cerver.h"
+#include "client/client.h"
 
 struct _Cerver;
 struct _Client;
 struct _Connection;
+
+#pragma region protocol
 
 typedef u32 ProtocolID;
 
@@ -42,6 +44,10 @@ extern ProtocolVersion packets_get_protocol_version (void);
 // If the versions of your packet don't match, it will be considered a bad packet
 // This value is only cheked if you enable packet checking for your client
 extern void packets_set_protocol_version (ProtocolVersion version);
+
+#pragma endregion
+
+#pragma region types
 
 // these indicate what type of packet we are sending/recieving
 typedef enum PacketType {
@@ -90,6 +96,10 @@ extern void packets_per_type_delete (void *ptr);
 
 extern void packets_per_type_print (PacketsPerType *packets_per_type);
 
+#pragma endregion
+
+#pragma region header
+
 struct _PacketHeader {
 
 	ProtocolID protocol_id;
@@ -104,12 +114,22 @@ struct _PacketHeader {
 
 typedef struct _PacketHeader PacketHeader;
 
+extern PacketHeader *packet_header_new (void);
+
+extern void packet_header_delete (PacketHeader *header);
+
+extern PacketHeader *packet_header_create (PacketType packet_type, size_t packet_size);
+
 // prints an already existing PacketHeader. Mostly used for debugging
 extern void packet_header_print (PacketHeader *header);
 
 // allocates space for the dest packet header and copies the data from source
 // returns 0 on success, 1 on error
 extern u8 packet_header_copy (PacketHeader **dest, PacketHeader *source);
+
+#pragma endregion
+
+#pragma region packets
 
 typedef enum RequestType {
 
@@ -289,5 +309,7 @@ extern u8 packet_send_to_socket (const Packet *packet, struct _Socket *socket,
 // check if packet has a compatible protocol id and a version
 // returns false on a bad packet
 extern bool packet_check (Packet *packet);
+
+#pragma endregion
 
 #endif

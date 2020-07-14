@@ -2,15 +2,15 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "cengine/types/types.h"
+#include "client/types/types.h"
 
-#include "cengine/collections/dlist.h"
+#include "client/collections/dlist.h"
 
-#include "cengine/client/client.h"
-#include "cengine/client/connection.h"
-#include "cengine/client/events.h"
+#include "client/client.h"
+#include "client/connection.h"
+#include "client/events.h"
 
-#include "cengine/threads/thread.h"
+#include "client/threads/thread.h"
 
 u8 client_event_unregister (Client *client, ClientEventType event_type);
 
@@ -40,7 +40,7 @@ void client_event_data_delete (ClientEventData *event_data) {
 
 }
 
-static ClientEventData *client_event_data_create (Client *client, Connection *connection, 
+static ClientEventData *client_event_data_create (const Client *client, const Connection *connection, 
     ClientEvent *event) {
 
     ClientEventData *event_data = client_event_data_new ();
@@ -105,7 +105,7 @@ static void client_event_delete (void *ptr) {
 
 }
 
-static ClientEvent *client_event_get (Client *client, ClientEventType event_type, 
+static ClientEvent *client_event_get (const Client *client, const ClientEventType event_type, 
     ListElement **le_ptr) {
 
     if (client) {
@@ -139,7 +139,7 @@ static void client_event_pop (DoubleList *list, ListElement *le) {
 // a newly allocated ClientEventData structure will be passed to your method 
 // that should be free using the client_event_data_delete () method
 // returns 0 on success, 1 on error
-u8 client_event_register (Client *client, ClientEventType event_type, 
+u8 client_event_register (Client *client, const ClientEventType event_type, 
     Action action, void *action_args, Action delete_action_args, 
     bool create_thread, bool drop_after_trigger) {
 
@@ -179,7 +179,7 @@ u8 client_event_register (Client *client, ClientEventType event_type,
 // unregister the action associated with an event
 // deletes the action args using the delete_action_args () if NOT NULL
 // returns 0 on success, 1 on error
-u8 client_event_unregister (Client *client, ClientEventType event_type) {
+u8 client_event_unregister (Client *client, const ClientEventType event_type) {
 
     u8 retval = 1;
 
@@ -202,7 +202,7 @@ u8 client_event_unregister (Client *client, ClientEventType event_type) {
 
 }
 
-void client_event_set_response (Client *client, ClientEventType event_type,
+void client_event_set_response (Client *client, const ClientEventType event_type,
     void *response_data, Action delete_response_data) {
 
     if (client) {
@@ -216,7 +216,8 @@ void client_event_set_response (Client *client, ClientEventType event_type,
 } 
 
 // triggers all the actions that are registred to an event
-void client_event_trigger (Client *client, Connection *connection, ClientEventType event_type) {
+void client_event_trigger (const ClientEventType event_type, 
+    const Client *client, const Connection *connection) {
 
     if (client) {
         ListElement *le = NULL;

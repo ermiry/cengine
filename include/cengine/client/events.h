@@ -3,9 +3,9 @@
 
 #include <stdbool.h>
 
-#include "cengine/types/types.h"
+#include "client/types/types.h"
 
-#include "cengine/client/client.h"
+#include "client/client.h"
 
 struct _Client;
 struct _Connection;
@@ -61,28 +61,29 @@ typedef struct ClientEvent {
 // a newly allocated ClientEventData structure will be passed to your method 
 // that should be free using the client_event_data_delete () method
 // returns 0 on success, 1 on error
-extern u8 client_event_register (struct _Client *client, ClientEventType event_type, 
+extern u8 client_event_register (struct _Client *client, const ClientEventType event_type, 
     Action action, void *action_args, Action delete_action_args, 
     bool create_thread, bool drop_after_trigger);
 
 // unregister the action associated with an event
 // deletes the action args using the delete_action_args () if NOT NULL
 // returns 0 on success, 1 on error
-extern u8 client_event_unregister (struct _Client *client, ClientEventType event_type);
+extern u8 client_event_unregister (struct _Client *client, const ClientEventType event_type);
 
-extern void client_event_set_response (struct _Client *client, ClientEventType event_type,
+extern void client_event_set_response (struct _Client *client, const ClientEventType event_type,
     void *response_data, Action delete_response_data);
 
 // triggers all the actions that are registred to an event
-extern void client_event_trigger (struct _Client *client, struct _Connection *connection, ClientEventType event_type);
+extern void client_event_trigger (const ClientEventType event_type,
+    const struct _Client *client, const struct _Connection *connection);
 
 #pragma region data
 
 // structure that is passed to the user registered method
 typedef struct ClientEventData {
 
-    struct _Client *client;
-    struct _Connection *connection;
+    const struct _Client *client;
+    const struct _Connection *connection;
 
     void *response_data;                // data that came with the response   
     Action delete_response_data;  

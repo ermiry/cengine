@@ -2,22 +2,22 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "cengine/types/types.h"
-#include "cengine/types/string.h"
+#include "client/types/types.h"
+#include "client/types/string.h"
 
-#include "cengine/collections/dlist.h"
+#include "client/collections/dlist.h"
 
-#include "cengine/client/client.h"
-#include "cengine/client/connection.h"
-#include "cengine/client/errors.h"
-#include "cengine/client/packets.h"
+#include "client/client.h"
+#include "client/connection.h"
+#include "client/errors.h"
+#include "client/packets.h"
 
-#include "cengine/threads/thread.h"
+#include "client/threads/thread.h"
 
-#include "cengine/utils/utils.h"
-#include "cengine/utils/log.h"
+#include "client/utils/utils.h"
+#include "client/utils/log.h"
 
-u8 client_error_unregister (Client *client, ClientErrorType error_type);
+u8 client_error_unregister (Client *client, const ClientErrorType error_type);
 
 #pragma region data
 
@@ -47,7 +47,9 @@ void client_error_data_delete (ClientErrorData *error_data) {
 
 }
 
-static ClientErrorData *client_error_data_create (Client *client, Connection *connection, void *args,
+static ClientErrorData *client_error_data_create (
+	const Client *client, const Connection *connection, 
+	void *args,
 	const char *error_message) {
 
 	ClientErrorData *error_data = client_error_data_new ();
@@ -72,7 +74,7 @@ static ClientError *client_error_new (void) {
 
 	ClientError *client_error = (ClientError *) malloc (sizeof (ClientError));
 	if (client_error) {
-		client_error->type = CLIENT_ERR_NONE;
+		client_error->type = CLIENT_ERROR_NONE;
 
 		client_error->create_thread = false;
 		client_error->drop_after_trigger = false;
@@ -101,7 +103,7 @@ static void client_error_delete (void *client_error_ptr) {
 
 }
 
-static ClientError *client_error_get (Client *client, ClientErrorType error_type, 
+static ClientError *client_error_get (const Client *client, const ClientErrorType error_type, 
     ListElement **le_ptr) {
 
     if (client) {
@@ -135,7 +137,7 @@ static void client_error_pop (DoubleList *list, ListElement *le) {
 // a newly allocated ClientErrorData structure will be passed to your method 
 // that should be free using the client_error_data_delete () method
 // returns 0 on success, 1 on error
-u8 client_error_register (Client *client, ClientErrorType error_type,
+u8 client_error_register (Client *client, const ClientErrorType error_type,
 	Action action, void *action_args, Action delete_action_args, 
     bool create_thread, bool drop_after_trigger) {
 
@@ -175,7 +177,7 @@ u8 client_error_register (Client *client, ClientErrorType error_type,
 // unregisters the action associated with the error types
 // deletes the action args using the delete_action_args () if NOT NULL
 // returns 0 on success, 1 on error
-u8 client_error_unregister (Client *client, ClientErrorType error_type) {
+u8 client_error_unregister (Client *client, const ClientErrorType error_type) {
 
 	u8 retval = 1;
 
@@ -200,8 +202,10 @@ u8 client_error_unregister (Client *client, ClientErrorType error_type) {
 
 // triggers all the actions that are registred to an error
 // returns 0 on success, 1 on error
-u8 client_error_trigger (ClientErrorType error_type, Client *client, Connection *connection, 
-	const char *error_message) {
+u8 client_error_trigger (const ClientErrorType error_type, 
+	const Client *client, const Connection *connection, 
+	const char *error_message
+) {
 
 	u8 retval = 1;
 
@@ -256,75 +260,75 @@ void error_packet_handler (Packet *packet) {
 			SError *s_error = (SError *) end;
 
 			switch (s_error->error_type) {
-				case CLIENT_ERR_CERVER_ERROR: 
+				case CLIENT_ERROR_CERVER_ERROR: 
 					client_error_trigger (
-						CLIENT_ERR_CERVER_ERROR,
+						CLIENT_ERROR_CERVER_ERROR,
 						packet->client, packet->connection,
 						s_error->msg
 					); 
 				break;
 
-				case CLIENT_ERR_FAILED_AUTH: {
+				case CLIENT_ERROR_FAILED_AUTH: {
 					if (client_error_trigger (
-						CLIENT_ERR_FAILED_AUTH,
+						CLIENT_ERROR_FAILED_AUTH,
 						packet->client, packet->connection,
 						s_error->msg
 					)) {
 						// not error action is registered to handle the error
 						char *status = c_string_create ("Failed to authenticate - %s", s_error->msg);
 						if (status) {
-							cengine_log_error (status);
+							client_log_error (status);
 							free (status);
 						}
 					}
 				} break;
 
-				case CLIENT_ERR_CREATE_LOBBY:
+				case CLIENT_ERROR_CREATE_LOBBY:
 					client_error_trigger (
-						CLIENT_ERR_CREATE_LOBBY,
+						CLIENT_ERROR_CREATE_LOBBY,
 						packet->client, packet->connection,
 						s_error->msg
 					); 
 					break;
-				case CLIENT_ERR_JOIN_LOBBY:
+				case CLIENT_ERROR_JOIN_LOBBY:
 					client_error_trigger (
-						CLIENT_ERR_JOIN_LOBBY,
+						CLIENT_ERROR_JOIN_LOBBY,
 						packet->client, packet->connection,
 						s_error->msg
 					); 
 					break;
-				case CLIENT_ERR_LEAVE_LOBBY: 
+				case CLIENT_ERROR_LEAVE_LOBBY: 
 					client_error_trigger (
-						CLIENT_ERR_LEAVE_LOBBY,
+						CLIENT_ERROR_LEAVE_LOBBY,
 						packet->client, packet->connection,
 						s_error->msg
 					); 
 					break;
-				case CLIENT_ERR_FIND_LOBBY: 
+				case CLIENT_ERROR_FIND_LOBBY: 
 					client_error_trigger (
-						CLIENT_ERR_FIND_LOBBY,
+						CLIENT_ERROR_FIND_LOBBY,
 						packet->client, packet->connection,
 						s_error->msg
 					); 
 					break;
 
-				case CLIENT_ERR_GAME_INIT: 
+				case CLIENT_ERROR_GAME_INIT: 
 					client_error_trigger (
-						CLIENT_ERR_GAME_INIT,
+						CLIENT_ERROR_GAME_INIT,
 						packet->client, packet->connection,
 						s_error->msg
 					); 
 					break;
-				case CLIENT_ERR_GAME_START: 
+				case CLIENT_ERROR_GAME_START: 
 					client_error_trigger (
-						CLIENT_ERR_GAME_START,
+						CLIENT_ERROR_GAME_START,
 						packet->client, packet->connection,
 						s_error->msg
 					); 
 					break;
 
 				default: 
-					cengine_log_msg (stderr, LOG_WARNING, LOG_NO_TYPE, "Unknown error received from cerver!"); 
+					client_log_msg (stderr, LOG_WARNING, LOG_NO_TYPE, "Unknown error received from cerver!"); 
 					break;
 			}
 		}
