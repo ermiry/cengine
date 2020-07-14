@@ -402,6 +402,10 @@ unsigned int client_connect (Client *client, Connection *connection) {
 
             retval = 0;     // success - connected to cerver
         }
+
+        else {
+            client_event_trigger (CLIENT_EVENT_CONNECTION_FAILED, client, connection);
+        }
     }
 
     return retval;
@@ -431,13 +435,7 @@ static void *client_connect_thread (void *client_connection_ptr) {
     if (client_connection_ptr) {
         ClientConnection *cc = (ClientConnection *) client_connection_ptr;
 
-        if (!connection_start (cc->connection)) {
-            client_event_trigger (CLIENT_EVENT_CONNECTED, cc->client, cc->connection);
-            cc->connection->connected = true;
-            time (&cc->connection->connected_timestamp);
-            
-            client_start (cc->client);
-        }
+        (void) client_connect (cc->client, cc->connection);
 
         client_connection_aux_delete (cc);
     }

@@ -152,7 +152,7 @@ static void cerver_check_info_handle_auth (Cerver *cerver, Connection *connectio
                         char *status = c_string_create ("cerver_check_info () - Generated connection %s auth packet!",
                             connection->name->str);
                         if (status) {
-                            client_log_success (status);
+                            cengine_log_success (status);
                             free (status);
                         }
                     }
@@ -174,7 +174,7 @@ static void cerver_check_info_handle_auth (Cerver *cerver, Connection *connectio
                         char *s = c_string_create ("cerver_check_info () - Sent connection %s auth packet!",
                             connection->name->str);
                         if (s) {
-                            client_log_success (s);
+                            cengine_log_success (s);
                             free (s);
                         }
                     }
