@@ -2,20 +2,20 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "client/types/types.h"
-#include "client/types/string.h"
+#include "cengine/types/types.h"
+#include "cengine/types/string.h"
 
-#include "client/collections/dlist.h"
+#include "cengine/collections/dlist.h"
 
-#include "client/client.h"
-#include "client/connection.h"
-#include "client/errors.h"
-#include "client/packets.h"
+#include "cengine/client/client.h"
+#include "cengine/client/connection.h"
+#include "cengine/client/errors.h"
+#include "cengine/client/packets.h"
 
-#include "client/threads/thread.h"
+#include "cengine/threads/thread.h"
 
-#include "client/utils/utils.h"
-#include "client/utils/log.h"
+#include "cengine/utils/utils.h"
+#include "cengine/utils/log.h"
 
 u8 client_error_unregister (Client *client, const ClientErrorType error_type);
 
@@ -277,7 +277,7 @@ void error_packet_handler (Packet *packet) {
 						// not error action is registered to handle the error
 						char *status = c_string_create ("Failed to authenticate - %s", s_error->msg);
 						if (status) {
-							client_log_error (status);
+							cengine_log_error (status);
 							free (status);
 						}
 					}
@@ -328,7 +328,7 @@ void error_packet_handler (Packet *packet) {
 					break;
 
 				default: 
-					client_log_msg (stderr, LOG_WARNING, LOG_NO_TYPE, "Unknown error received from cerver!"); 
+					cengine_log_msg (stderr, LOG_WARNING, LOG_NO_TYPE, "Unknown error received from cerver!"); 
 					break;
 			}
 		}

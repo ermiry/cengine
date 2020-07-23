@@ -2,21 +2,21 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "client/types/types.h"
-#include "client/types/string.h"
+#include "cengine/types/types.h"
+#include "cengine/types/string.h"
 
-#include "client/network.h"
-#include "client/socket.h"
-#include "client/cerver.h"
-#include "client/client.h"
-#include "client/connection.h"
-#include "client/handler.h"
-#include "client/packets.h"
+#include "cengine/client/network.h"
+#include "cengine/client/socket.h"
+#include "cengine/client/cerver.h"
+#include "cengine/client/client.h"
+#include "cengine/client/connection.h"
+#include "cengine/client/handler.h"
+#include "cengine/client/packets.h"
 
-#include "client/threads/thread.h"
+#include "cengine/threads/thread.h"
 
-#include "client/utils/utils.h"
-#include "client/utils/log.h"
+#include "cengine/utils/utils.h"
+#include "cengine/utils/log.h"
 
 void connection_remove_auth_data (Connection *connection);
 
@@ -313,7 +313,7 @@ static u8 connection_init (Connection *connection) {
                 break;
 
             default: 
-                client_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Unkonw protocol type!"); 
+                cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Unkonw protocol type!"); 
                 return 1;
         }
 
@@ -336,7 +336,7 @@ static u8 connection_init (Connection *connection) {
         }
 
         else {
-            client_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to create new socket!");
+            cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to create new socket!");
         }
     }
 
@@ -364,7 +364,7 @@ Connection *connection_create (const char *ip_address, u16 port, Protocol protoc
             // set up the new connection to be ready to be started
             if (connection_init (connection)) {
                 #ifdef CLIENT_DEBUG
-                client_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to init the new connection!");
+                cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to init the new connection!");
                 #endif
                 connection_delete (connection);
                 connection = NULL;

@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "client/version.h"
+#include "cengine/client/version.h"
 
 // print full version information 
 void cerver_client_version_print_full (void) {
