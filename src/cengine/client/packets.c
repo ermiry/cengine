@@ -8,16 +8,16 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#include "cengine/types/types.h"
-#include "cengine/types/string.h"
+#include "client/types/types.h"
+#include "client/types/string.h"
 
-#include "cengine/client/network.h"
-#include "cengine/client/packets.h"
-#include "cengine/client/cerver.h"
-#include "cengine/client/client.h"
+#include "client/network.h"
+#include "client/packets.h"
+#include "client/cerver.h"
+#include "client/client.h"
 
 #ifdef PACKETS_DEBUG
-#include "cengine/utils/log.h"
+#include "client/utils/log.h"
 #endif
 
 #pragma region protocol
@@ -32,6 +32,45 @@ void packets_set_protocol_id (ProtocolID proto_id) { protocol_id = proto_id; }
 ProtocolVersion packets_get_protocol_version (void) { return protocol_version; }
 
 void packets_set_protocol_version (ProtocolVersion version) { protocol_version = version; }
+
+#pragma endregion
+
+#pragma region version
+
+PacketVersion *packet_version_new (void) {
+
+    PacketVersion *version = (PacketVersion *) malloc (sizeof (PacketVersion));
+    if (version) {
+        version->protocol_id = 0;
+        version->protocol_version.minor = version->protocol_version.major = 0;
+    }
+
+    return version;
+
+}
+
+void packet_version_delete (PacketVersion *version) { if (version) free (version); }
+
+PacketVersion *packet_version_create (void) {
+
+    PacketVersion *version = (PacketVersion *) malloc (sizeof (PacketVersion));
+    if (version) {
+        version->protocol_id = protocol_id;
+        version->protocol_version = protocol_version;
+    }
+
+    return version;
+
+}
+
+void packet_version_print (PacketVersion *version) {
+
+    if (version) {
+        printf ("Protocol id: %d\n", version->protocol_id);
+        printf ("Protocol version: { %d - %d }\n", version->protocol_version.major, version->protocol_version.minor);        
+    }
+
+}
 
 #pragma endregion
 
@@ -82,15 +121,16 @@ PacketHeader *packet_header_new (void) {
 
 void packet_header_delete (PacketHeader *header) { if (header) free (header); }
 
-PacketHeader *packet_header_create (PacketType packet_type, size_t packet_size) {
+PacketHeader *packet_header_create (PacketType packet_type, size_t packet_size, u32 req_type) {
 
     PacketHeader *header = (PacketHeader *) malloc (sizeof (PacketHeader));
     if (header) {
-        memset (header, 0, sizeof (PacketHeader));
-        header->protocol_id = protocol_id;
-        header->protocol_version = protocol_version;
         header->packet_type = packet_type;
         header->packet_size = packet_size;
+
+        header->handler_id = 0;
+
+        header->request_type = req_type;
     }
 
     return header;
@@ -100,10 +140,10 @@ PacketHeader *packet_header_create (PacketType packet_type, size_t packet_size) 
 void packet_header_print (PacketHeader *header) {
 
     if (header) {
-        printf ("protocol id: %d\n", header->protocol_id);
-        printf ("protocol version: { %d - %d }\n", header->protocol_version.major, header->protocol_version.minor);
-        printf ("packet type: %d\n", header->packet_type);
-        printf ("packet size: %ld\n", header->packet_size);
+        printf ("Packet type: %d\n", header->packet_type);
+        printf ("Packet size: %ld\n", header->packet_size);
+        printf ("Handler id: %d\n", header->handler_id);
+        printf ("Request type: %d\n", header->request_type);
     }
 
 }
@@ -136,18 +176,22 @@ Packet *packet_new (void) {
 
     Packet *packet = (Packet *) malloc (sizeof (Packet));
     if (packet) {
-        memset (packet, 0, sizeof (Packet));
         packet->cerver = NULL;
         packet->client = NULL;
         packet->connection = NULL;
 
-        packet->custom_type = NULL;
+        packet->packet_type = DONT_CHECK_TYPE;
+        packet->req_type = 0;
 
+        packet->data_size = 0;
         packet->data = NULL;
+        packet->data_ptr = NULL;
         packet->data_end = NULL;
         packet->data_ref = false;
 
-        packet->header = NULL;  
+        packet->header = NULL;
+        packet->version = NULL;
+        packet->packet_size = 0;
         packet->packet = NULL;
         packet->packet_ref = false;
     }
@@ -179,13 +223,13 @@ void packet_delete (void *ptr) {
         packet->client = NULL;
         packet->connection = NULL;
 
-        str_delete (packet->custom_type);
-        
         if (!packet->data_ref) {
             if (packet->data) free (packet->data);
         }
 
         packet_header_delete (packet->header);
+        packet_version_delete (packet->version);
+
         if (!packet->packet_ref) {
             if (packet->packet) free (packet->packet);
         }
@@ -225,6 +269,9 @@ u8 packet_set_data (Packet *packet, void *data, size_t data_size) {
             packet->data_end = (char *) packet->data;
             packet->data_end += packet->data_size;
 
+            // point to the start of the data
+            packet->data_ptr = (char *) packet->data;
+
             retval = 0;
         }
     }
@@ -257,12 +304,15 @@ u8 packet_append_data (Packet *packet, void *data, size_t data_size) {
                 packet->data = new_data;
                 packet->data_size = new_size;
 
+                // point to the start of the data
+                packet->data_ptr = (char *) packet->data;
+
                 retval = 0;
             }
 
             else {
                 #ifdef PACKETS_DEBUG
-                cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to realloc packet data!");
+                client_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to realloc packet data!");
                 #endif
                 packet->data = NULL;
                 packet->data_size = 0;
@@ -279,12 +329,15 @@ u8 packet_append_data (Packet *packet, void *data, size_t data_size) {
                 packet->data_end = (char *) packet->data;
                 packet->data_end += packet->data_size;
 
+                // point to the start of the data
+                packet->data_ptr = (char *) packet->data;
+
                 retval = 0;
             }
 
             else {
                 #ifdef PACKETS_DEBUG
-                cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to allocate packet data!");
+                client_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to allocate packet data!");
                 #endif
                 packet->data = NULL;
                 packet->data_size = 0;
@@ -383,7 +436,7 @@ u8 packet_generate (Packet *packet) {
         }   
 
         packet->packet_size = sizeof (PacketHeader) + packet->data_size;
-        packet->header = packet_header_create (packet->packet_type, packet->packet_size);
+        packet->header = packet_header_create (packet->packet_type, packet->packet_size, packet->req_type);
 
         // create the packet buffer to be sent
         packet->packet = malloc (packet->packet_size);
@@ -409,14 +462,7 @@ Packet *packet_generate_request (PacketType packet_type, u32 req_type,
     Packet *packet = packet_new ();
     if (packet) {
         packet->packet_type = packet_type;
-
-        // generate the request
-        packet->data = malloc (sizeof (RequestData));
-        ((RequestData *) packet->data)->type = req_type;
-
-        packet->data_size = sizeof (RequestData);
-        packet->data_end = (char *) packet->data;
-        packet->data_end += sizeof (RequestData);
+        packet->req_type = req_type;
 
         // if there is data, append it to the packet data buffer
         if (data) {
@@ -594,8 +640,12 @@ static void packet_send_update_stats (PacketType packet_type, size_t sent,
             connection->stats->sent_packets->n_test_packets += 1;
             break;
 
-        case DONT_CHECK_TYPE:
-        default: break;
+        case DONT_CHECK_TYPE: break;
+
+        default: 
+            if (client) client->stats->sent_packets->n_unknown_packets += 1;
+            connection->stats->sent_packets->n_unknown_packets += 1;
+            break;
     }
 
 }
@@ -707,6 +757,85 @@ u8 packet_send_to_split (const Packet *packet, size_t *total_sent,
 
 }
 
+static u8 packet_send_pieces_actual (
+    Socket *socket, 
+    char *data, size_t data_size, 
+    int flags, 
+    size_t *actual_sent
+) {
+
+    u8 retval = 0;
+
+    ssize_t sent = 0;
+    char *p = data;
+    while (data_size > 0) {
+        sent = send (socket->sock_fd, p, data_size, flags);
+        if (sent < 0) {
+            retval = 1;
+            break;
+        }
+
+        p += sent;
+        *actual_sent += (size_t) sent;
+        data_size -= (size_t) sent;
+    }
+
+    return retval;
+
+}
+
+// sends a packet in pieces, taking the header from the packet's field
+// sends each buffer as they are with they respective sizes
+// socket mutex will be locked for the entire operation
+// returns 0 on success, 1 on error
+u8 packet_send_pieces (
+    const Packet *packet, 
+    void **pieces, size_t *sizes, u32 n_pieces, 
+    int flags, 
+    size_t *total_sent
+) {
+
+    u8 retval = 1;
+
+    if (packet && pieces && sizes) {
+        pthread_mutex_lock (packet->connection->socket->write_mutex);
+
+        size_t actual_sent = 0;
+
+        // first send the header
+        if (!packet_send_pieces_actual (
+            packet->connection->socket,
+            (char *) packet->header, sizeof (PacketHeader),
+            flags,
+            &actual_sent
+        )) {
+            // send the pieces of data
+            for (u32 i = 0; i < n_pieces; i++) {
+                (void) packet_send_pieces_actual (
+                    packet->connection->socket,
+                    (char *) pieces[i], sizes[i],
+                    flags,
+                    &actual_sent
+                );
+            }
+
+            retval = 0;
+        }
+
+        packet_send_update_stats (
+            packet->packet_type, actual_sent,
+            packet->client, packet->connection
+        );
+
+        if (total_sent) *total_sent = actual_sent;
+
+        pthread_mutex_unlock (packet->connection->socket->write_mutex);
+    }
+
+    return retval;
+
+}
+
 // sends a packet directly to the socket
 // raw flag to send a raw packet (only the data that was set to the packet, without any header)
 // returns 0 on success, 1 on error
@@ -749,25 +878,25 @@ bool packet_check (Packet *packet) {
     bool retval = false;
 
     if (packet) {
-        PacketHeader *header = packet->header;
+        if (packet->version) {
+            if (packet->version->protocol_id == protocol_id) {
+                if ((packet->version->protocol_version.major <= protocol_version.major)
+                    && (packet->version->protocol_version.minor >= protocol_version.minor)) {
+                    retval = true;
+                }
 
-        if (header->protocol_id == protocol_id) {
-            if ((header->protocol_version.major <= protocol_version.major)
-                && (header->protocol_version.minor >= protocol_version.minor)) {
-                retval = true;
+                else {
+                    #ifdef PACKETS_DEBUG
+                    client_log_msg (stdout, LOG_WARNING, LOG_PACKET, "Packet with incompatible version.");
+                    #endif
+                }
             }
 
             else {
                 #ifdef PACKETS_DEBUG
-                cengine_log_msg (stdout, LOG_WARNING, LOG_PACKET, "Packet with incompatible version.");
+                client_log_msg (stdout, LOG_WARNING, LOG_PACKET, "Packet with unknown protocol ID.");
                 #endif
             }
-        }
-
-        else {
-            #ifdef PACKETS_DEBUG
-            cengine_log_msg (stdout, LOG_WARNING, LOG_PACKET, "Packet with unknown protocol ID.");
-            #endif
         }
     }
 

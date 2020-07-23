@@ -3,16 +3,16 @@
 
 #include <stdbool.h>
 
-#include "cengine/types/types.h"
-#include "cengine/types/string.h"
+#include "client/types/types.h"
+#include "client/types/string.h"
 
-#include "cengine/collections/dlist.h"
+#include "client/collections/dlist.h"
 
-#include "cengine/client/network.h"
-#include "cengine/client/events.h"
-#include "cengine/client/errors.h"
-#include "cengine/client/connection.h"
-#include "cengine/client/packets.h"
+#include "client/network.h"
+#include "client/events.h"
+#include "client/errors.h"
+#include "client/connection.h"
+#include "client/packets.h"
 
 struct _Client;
 struct _Connection;
@@ -120,6 +120,9 @@ extern int client_connection_register (Client *client, struct _Connection *conne
 // unregister an exitsing connection from the client
 // returns 0 on success, 1 on error or if the connection does not belong to the client
 extern int client_connection_unregister (Client *client, struct _Connection *connection);
+
+// performs a receive in the connection's socket to get a complete packet & handle it
+extern void client_connection_get_next_packet (Client *client, struct _Connection *connection);
 
 #pragma endregion
 

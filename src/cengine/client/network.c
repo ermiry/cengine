@@ -5,7 +5,7 @@
 
 #include <fcntl.h>
 
-#include "cengine/client/network.h"
+#include "client/network.h"
 
 // enable/disable blocking on a socket
 // true on success, false if there was an eroror

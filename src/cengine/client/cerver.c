@@ -3,15 +3,15 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "cengine/types/types.h"
-#include "cengine/types/string.h"
+#include "client/types/types.h"
+#include "client/types/string.h"
 
-#include "cengine/client/cerver.h"
-#include "cengine/client/connection.h"
-#include "cengine/client/packets.h"
+#include "client/cerver.h"
+#include "client/connection.h"
+#include "client/packets.h"
 
-#include "cengine/utils/utils.h"
-#include "cengine/utils/log.h"
+#include "client/utils/utils.h"
+#include "client/utils/log.h"
 
 static Cerver *cerver_deserialize (SCerver *scerver);
 
@@ -87,14 +87,14 @@ void cerver_stats_print (Cerver *cerver) {
             char *status = c_string_create ("Cerver %s does not have a reference to cerver stats!",
                 cerver->name->str);
             if (status) {
-                cengine_log_msg (stderr, LOG_ERROR, LOG_CERVER, status);
+                client_log_msg (stderr, LOG_ERROR, LOG_CERVER, status);
                 free (status);
             }
         }
     }
 
     else {
-        cengine_log_msg (stderr, LOG_WARNING, LOG_CERVER, 
+        client_log_msg (stderr, LOG_WARNING, LOG_CERVER, 
             "Cant print stats of a NULL cerver!");
     }
 
@@ -135,16 +135,16 @@ void cerver_delete (void *ptr) {
 
 }
 
-static void cerver_check_info_handle_auth (Cerver *cerver, Connection *connection) {
+static void cerver_check_info_handle_auth (Cerver *cerver, Client *client, Connection *connection) {
 
     if (cerver && connection) {
         if (cerver->auth_required) {
             // #ifdef CLIENT_DEBUG
-            cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Cerver requires authentication.");
+            client_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Cerver requires authentication.");
             // #endif
             if (connection->auth_data) {
                 #ifdef CLIENT_DEBUG
-                cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Sending auth data to cerver...");
+                client_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Sending auth data to cerver...");
                 #endif
 
                 if (!connection->auth_packet) {
@@ -152,7 +152,7 @@ static void cerver_check_info_handle_auth (Cerver *cerver, Connection *connectio
                         char *status = c_string_create ("cerver_check_info () - Generated connection %s auth packet!",
                             connection->name->str);
                         if (status) {
-                            cengine_log_success (status);
+                            client_log_success (status);
                             free (status);
                         }
                     }
@@ -161,7 +161,7 @@ static void cerver_check_info_handle_auth (Cerver *cerver, Connection *connectio
                         char *status = c_string_create ("cerver_check_info () - Failed to generate connection %s auth packet!",
                             connection->name->str);
                         if (status) {
-                            cengine_log_error (status);
+                            client_log_error (status);
                             free (status);
                         }
                     }
@@ -174,23 +174,25 @@ static void cerver_check_info_handle_auth (Cerver *cerver, Connection *connectio
                         char *s = c_string_create ("cerver_check_info () - Sent connection %s auth packet!",
                             connection->name->str);
                         if (s) {
-                            cengine_log_success (s);
+                            client_log_success (s);
                             free (s);
                         }
+
+                        client_event_trigger (CLIENT_EVENT_AUTH_SENT, client, connection);
                     }
 
                     else {
                         char *s = c_string_create ("cerver_check_info () - Failed to send connection %s auth packet!",
                             connection->name->str);
                         if (s) {
-                            cengine_log_error (s);
+                            client_log_error (s);
                             free (s);
                         }
                     }
                 }
 
                 if (cerver->uses_sessions) {
-                    cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Cerver supports sessions.");
+                    client_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Cerver supports sessions.");
                 }
             }
 
@@ -198,7 +200,7 @@ static void cerver_check_info_handle_auth (Cerver *cerver, Connection *connectio
                 char *s = c_string_create ("Connection %s does NOT have an auth packet!",
                     connection->name->str);
                 if (s) {
-                    cengine_log_error (s);
+                    client_log_error (s);
                     free (s);
                 }
             }
@@ -206,7 +208,7 @@ static void cerver_check_info_handle_auth (Cerver *cerver, Connection *connectio
 
         else {
             #ifdef CLIENT_DEBUG
-            cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Cerver does NOT require authentication.");
+            client_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Cerver does NOT require authentication.");
             #endif
         }
     }
@@ -215,7 +217,7 @@ static void cerver_check_info_handle_auth (Cerver *cerver, Connection *connectio
 
 // compare the info the server sent us with the one we expected 
 // and ajust our connection values if necessary
-static u8 cerver_check_info (Cerver *cerver, Connection *connection) {
+static u8 cerver_check_info (Cerver *cerver, Client *client, Connection *connection) {
 
     u8 retval = 1;
 
@@ -225,7 +227,7 @@ static u8 cerver_check_info (Cerver *cerver, Connection *connection) {
         #ifdef CLIENT_DEBUG
         char *s = c_string_create ("Connected to cerver %s.", cerver->name->str);
         if (s) {
-            cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, s);
+            client_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, s);
             free (s);
         }
 
@@ -235,46 +237,46 @@ static u8 cerver_check_info (Cerver *cerver, Connection *connection) {
         
         switch (cerver->protocol) {
             case PROTOCOL_TCP: 
-                cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Cerver using TCP protocol."); 
+                client_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Cerver using TCP protocol."); 
                 break;
             case PROTOCOL_UDP: 
-                cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Cerver using UDP protocol.");
+                client_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Cerver using UDP protocol.");
                 break;
 
             default: 
-                cengine_log_msg (stdout, LOG_WARNING, LOG_NO_TYPE, "Cerver using unknown protocol."); 
+                client_log_msg (stdout, LOG_WARNING, LOG_NO_TYPE, "Cerver using unknown protocol."); 
                 break;
         }
         #endif
 
         if (cerver->use_ipv6) {
             #ifdef CLIENT_DEBUG
-            cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Cerver is configured to use ipv6");
+            client_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Cerver is configured to use ipv6");
             #endif
         }
 
         #ifdef CLIENT_DEBUG
         switch (cerver->type) {
             case CUSTOM_CERVER:
-                cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Cerver type: CUSTOM");
+                client_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Cerver type: CUSTOM");
                 break;
             case FILE_CERVER:
-                cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Cerver type: FILE");
+                client_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Cerver type: FILE");
                 break;
             case WEB_CERVER:
-                cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Cerver type: WEB");
+                client_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Cerver type: WEB");
                 break;
             case GAME_CERVER:
-                cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Cerver type: GAME");
+                client_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Cerver type: GAME");
                 break;
 
             default: 
-                cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Cerver type: UNKNOWN"); 
+                client_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Cerver type: UNKNOWN"); 
                 break;
         }
         #endif
 
-        cerver_check_info_handle_auth (cerver, connection);
+        cerver_check_info_handle_auth (cerver, client, connection);
 
         retval = 0;
     }
@@ -287,28 +289,35 @@ static u8 cerver_check_info (Cerver *cerver, Connection *connection) {
 
 #pragma region handler
 
+static void cerver_packet_handle_info (Packet *packet) {
+
+    if (packet->data && (packet->data_size > 0)) {
+        char *end = (char *) packet->data;
+
+        #ifdef CLIENT_DEBUG
+        client_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Received a cerver info packet.");
+        #endif
+        Cerver *cerver = cerver_deserialize ((SCerver *) end);
+        if (cerver_check_info (cerver, packet->client, packet->connection))
+            client_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to correctly check cerver info!");
+    }
+
+}
+
 // handles cerver type packets
 void cerver_packet_handler (Packet *packet) {
 
     if (packet) {
-        if (packet->data_size >= sizeof (RequestData)) {
-            char *end = (char *) packet->data;
-            RequestData *req = (RequestData *) (end);
-
-            switch (req->type) {
+        if (packet->header) {
+            switch (packet->header->request_type) {
                 case CERVER_INFO: {
-                    #ifdef CLIENT_DEBUG
-                    cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Received a cerver info packet.");
-                    #endif
-                    Cerver *cerver = cerver_deserialize ((SCerver *) (end += sizeof (RequestData)));
-                    if (cerver_check_info (cerver, packet->connection))
-                        cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, "Failed to correctly check cerver info!");
+                   cerver_packet_handle_info (packet);
                 } break;
 
                 // the cerves is going to be teardown, we have to disconnect
                 case CERVER_TEARDOWN:
                     #ifdef CLIENT_DEBUG
-                    cengine_log_msg (stdout, LOG_WARNING, LOG_NO_TYPE, "---> Server teardown! <---");
+                    client_log_msg (stdout, LOG_WARNING, LOG_NO_TYPE, "---> Server teardown! <---");
                     #endif
                     client_got_disconnected (packet->client);
                     client_event_trigger (CLIENT_EVENT_DISCONNECTED, packet->client, NULL);
@@ -316,18 +325,18 @@ void cerver_packet_handler (Packet *packet) {
 
                 case CERVER_INFO_STATS:
                     // #ifdef CLIENT_DEBUG
-                    // cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Received a cerver stats packet.");
+                    // client_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Received a cerver stats packet.");
                     // #endif
                     break;
 
                 case CERVER_GAME_STATS:
                     // #ifdef CLIENT_DEBUG
-                    // cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Received a cerver game stats packet.");
+                    // client_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, "Received a cerver game stats packet.");
                     // #endif
                     break;
 
                 default: 
-                    cengine_log_msg (stderr, LOG_WARNING, LOG_NO_TYPE, "Unknown cerver type packet."); 
+                    client_log_msg (stderr, LOG_WARNING, LOG_NO_TYPE, "Unknown cerver type packet."); 
                     break;
             }
         }

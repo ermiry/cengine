@@ -2,15 +2,15 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "cengine/types/types.h"
+#include "client/types/types.h"
 
-#include "cengine/collections/dlist.h"
+#include "client/collections/dlist.h"
 
-#include "cengine/client/client.h"
-#include "cengine/client/connection.h"
-#include "cengine/client/events.h"
+#include "client/client.h"
+#include "client/connection.h"
+#include "client/events.h"
 
-#include "cengine/threads/thread.h"
+#include "client/threads/thread.h"
 
 u8 client_event_unregister (Client *client, ClientEventType event_type);
 
