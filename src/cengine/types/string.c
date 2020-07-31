@@ -106,12 +106,12 @@ void str_copy (String *to, String *from) {
 
 void str_replace (String *old, const char *str) {
 
-    if (old && str) {
-        if (old->str) free (old->str);
-        old->len = strlen (str);
-        old->str = (char *) calloc (old->len + 1, sizeof (char));
+	if (old && str) {
+		if (old->str) free (old->str);
+		old->len = strlen (str);
+		old->str = (char *) calloc (old->len + 1, sizeof (char));
 		if (old->str) char_copy (old->str, (char *) str);
-    }
+	}
 
 }
 
@@ -142,16 +142,16 @@ String *str_concat (String *s1, String *s2) {
 // reallocates the same string
 void str_append_char (String *s, const char c) {
 
-    if (s) {
-        unsigned int new_len = s->len + 1;   
+	if (s) {
+		unsigned int new_len = s->len + 1;   
 
-        s->str = (char *) realloc (s->str, new_len);
-        if (s->str) {
-            char *des = s->str + (s->len);
-            *des = c;
-            s->len = new_len;
-        }
-    }
+		s->str = (char *) realloc (s->str, new_len);
+		if (s->str) {
+			char *des = s->str + (s->len);
+			*des = c;
+			s->len = new_len;
+		}
+	}
 
 }
 
@@ -159,16 +159,16 @@ void str_append_char (String *s, const char c) {
 // reallocates the same string
 void str_append_c_string (String *s, const char *c_str) {
 
-    if (s && c_str) {
-        unsigned int new_len = s->len + strlen (c_str);
+	if (s && c_str) {
+		unsigned int new_len = s->len + strlen (c_str);
 
-        s->str = (char *) realloc (s->str, new_len);
-        if (s->str) {
-            char *des = s->str + (s->len);
-            char_copy (des, (char *) c_str);
-            s->len = new_len;
-        }
-    }
+		s->str = (char *) realloc (s->str, new_len);
+		if (s->str) {
+			char *des = s->str + (s->len);
+			char_copy (des, (char *) c_str);
+			s->len = new_len;
+		}
+	}
 
 }
 
@@ -187,42 +187,46 @@ void str_to_lower (String *str) {
 char **str_split (String *str, const char delim, int *n_tokens) {
 
 	char **result = NULL;
-	size_t count = 0;
-	char *temp = str->str;
-	char *last = NULL;
-	char dlm[2] = { 0 };
-	dlm[0] = delim;
-	dlm[1] = 0;
 
-	// count how many elements will be extracted
-	while (*temp) {
-		if (delim == *temp) {
-			count++;
-			last = temp;
+	if (str) {
+		char *string = strdup (str->str);
+		if (string) {
+			// count tokens
+			size_t count = 0;
+			char *temp = (char *) str->str;
+			char last = '\0';
+
+			while (*temp) {
+				if (delim == *temp) {
+					if (last != delim) count++;
+				}
+
+				last = *temp;
+				temp++;
+			}
+
+			if (last == delim) count--;
+
+			result = (char **) calloc (count, sizeof (char *));
+			if (result) {
+				if (n_tokens) *n_tokens = count;
+
+				size_t idx = 0;
+
+				char dlm[2];
+				dlm[0] = delim;
+				dlm[1] = '\0';
+
+				char *token = NULL;
+				char *rest = string;
+				while ((token = __strtok_r (rest, dlm, &rest))) {
+					result[idx] = strdup (token);
+					idx++;
+				}
+			}
+
+			free (string);
 		}
-
-		temp++;
-	}
-
-	count += last < (str->str + strlen (str->str) - 1);
-
-	count++;
-
-	result = (char **) calloc (count, sizeof (char *));
-	*n_tokens = count;
-
-	if (result) {
-		size_t idx = 0;
-		char *token = strtok (str->str, dlm);
-
-		while (token) {
-			// assert (idx < count);
-			*(result + idx++) = strdup (token);
-			token = strtok (0, dlm);
-		}
-
-		// assert (idx == count - 1);
-		*(result + idx) = 0;
 	}
 
 	return result;
@@ -243,17 +247,17 @@ void str_remove_char (String *str, char garbage) {
 // removes the last char from a string
 void str_remove_last_char (String *s) {
 
-    if (s) {
-        if (s->len > 0) {
-            unsigned int new_len = s->len - 1;
+	if (s) {
+		if (s->len > 0) {
+			unsigned int new_len = s->len - 1;
 
-            s->str = (char *) realloc (s->str, s->len);
-            if (s->str) {
-                s->str[s->len - 1] = '\0';
-                s->len = new_len;
-            }
-        }
-    }
+			s->str = (char *) realloc (s->str, s->len);
+			if (s->str) {
+				s->str[s->len - 1] = '\0';
+				s->len = new_len;
+			}
+		}
+	}
 
 }
 
