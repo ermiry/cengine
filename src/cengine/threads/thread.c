@@ -7,6 +7,9 @@
 #include <sys/prctl.h>
 
 #include "cengine/types/types.h"
+
+#include "cengine/threads/thread.h"
+
 #include "cengine/utils/log.h"
 
 // creates a custom detachable thread (will go away on its own upon completion)
