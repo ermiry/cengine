@@ -1,10 +1,6 @@
 #ifndef _CENGINE_TYPES_H_
 #define _CENGINE_TYPES_H_
 
-#define EXIT_FAILURE    1
-
-#define THREAD_OK       0
-
 #include <stdint.h>
 
 typedef uint8_t u8;
@@ -17,12 +13,15 @@ typedef int16_t i16;
 typedef int32_t i32;
 typedef int64_t i64;
 
-typedef unsigned char asciiChar;
+typedef unsigned char ascii_char;
+typedef unsigned char uchar;
 
 // takes no argument and returns a value (int)
 typedef u8 (*Func)(void);
+
 // takes an argument and does not return a value
 typedef void (*Action)(void *);
+
 // takes an argument and returns a value (int)
 typedef u8 (*delegate)(void *);
 
