@@ -5,6 +5,6 @@
 #define CLIENT_PRIVATE			extern	// to be used by internal client methods
 #define CLIENT_PUBLIC 			extern	// used by private methods but can be used by the application
 
-#define DEPRECATED(func) func __attribute__ ((deprecated))
+// #define DEPRECATED(func) func __attribute__ ((deprecated))
 
 #endif

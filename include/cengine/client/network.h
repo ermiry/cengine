@@ -10,7 +10,7 @@
 #include <fcntl.h>
 #include <arpa/inet.h>
 
-#include "client/config.h"
+#include "cengine/client/config.h"
 
 #define IP_TO_STR_LEN       16
 #define IPV6_TO_STR_LEN     46

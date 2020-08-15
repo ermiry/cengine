@@ -3,11 +3,11 @@
 
 #include <stdbool.h>
 
-#include "client/types/types.h"
-#include "client/types/string.h"
+#include "cengine/types/types.h"
+#include "cengine/types/string.h"
 
-#include "client/config.h"
-#include "client/packets.h"
+#include "cengine/client/config.h"
+#include "cengine/client/packets.h"
 
 struct _Client;
 struct _Connection;

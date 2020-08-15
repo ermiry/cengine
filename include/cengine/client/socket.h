@@ -3,7 +3,7 @@
 
 #include <pthread.h>
 
-#include "client/config.h"
+#include "cengine/client/config.h"
 
 struct _Socket {
 

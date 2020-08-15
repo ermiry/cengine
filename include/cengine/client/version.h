@@ -1,7 +1,7 @@
 #ifndef _CLIENT_VERSION_H_
 #define _CLIENT_VERSION_H_
 
-#include "client/config.h"
+#include "cengine/client/config.h"
 
 #define CLIENT_VERSION                      "1.3rc-8"
 #define CLIENT_VERSION_NAME                 "Release 1.3rc-8"

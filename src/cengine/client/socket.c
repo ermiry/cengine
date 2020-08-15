@@ -2,7 +2,7 @@
 
 #include <pthread.h>
 
-#include "client/socket.h"
+#include "cengine/client/socket.h"
 
 static Socket *socket_new (void) {
 

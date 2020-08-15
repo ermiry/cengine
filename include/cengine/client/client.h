@@ -3,17 +3,17 @@
 
 #include <stdbool.h>
 
-#include "client/types/types.h"
-#include "client/types/string.h"
+#include "cengine/types/types.h"
+#include "cengine/types/string.h"
 
-#include "client/collections/dlist.h"
+#include "cengine/collections/dlist.h"
 
-#include "client/config.h"
-#include "client/network.h"
-#include "client/events.h"
-#include "client/errors.h"
-#include "client/connection.h"
-#include "client/packets.h"
+#include "cengine/client/config.h"
+#include "cengine/client/network.h"
+#include "cengine/client/events.h"
+#include "cengine/client/errors.h"
+#include "cengine/client/connection.h"
+#include "cengine/client/packets.h"
 
 struct _Client;
 struct _Connection;

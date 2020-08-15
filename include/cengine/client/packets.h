@@ -4,14 +4,14 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include "client/types/types.h"
-#include "client/types/string.h"
+#include "cengine/types/types.h"
+#include "cengine/types/string.h"
 
-#include "client/config.h"
-#include "client/network.h"
-#include "client/socket.h"
-#include "client/cerver.h"
-#include "client/client.h"
+#include "cengine/client/config.h"
+#include "cengine/client/network.h"
+#include "cengine/client/socket.h"
+#include "cengine/client/cerver.h"
+#include "cengine/client/client.h"
 
 struct _Cerver;
 struct _Client;

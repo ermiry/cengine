@@ -4,24 +4,24 @@
 
 #include <errno.h>
 
-#include "client/types/types.h"
+#include "cengine/types/types.h"
 
-#include "client/collections/dlist.h"
+#include "cengine/collections/dlist.h"
 
-#include "client/network.h"
-#include "client/packets.h"
-#include "client/events.h"
-#include "client/errors.h"
-#include "client/client.h"
-#include "client/cerver.h"
-#include "client/connection.h"
-#include "client/handler.h"
-#include "client/game.h"
+#include "cengine/client/network.h"
+#include "cengine/client/packets.h"
+#include "cengine/client/events.h"
+#include "cengine/client/errors.h"
+#include "cengine/client/client.h"
+#include "cengine/client/cerver.h"
+#include "cengine/client/connection.h"
+#include "cengine/client/handler.h"
+#include "cengine/client/game.h"
 
-#include "client/threads/thread.h"
+#include "cengine/threads/thread.h"
 
-#include "client/utils/log.h"
-#include "client/utils/utils.h"
+#include "cengine/utils/log.h"
+#include "cengine/utils/utils.h"
 
 #pragma region auxiliary
 
@@ -73,7 +73,7 @@ static void client_client_packet_handler (Packet *packet) {
                     break;
 
                 default: 
-                    client_log_msg (stderr, LOG_WARNING, LOG_NO_TYPE, "Unknown client packet type.");
+                    cengine_log_msg (stderr, LOG_WARNING, LOG_NO_TYPE, "Unknown client packet type.");
                     break;
             }
         }
@@ -116,7 +116,7 @@ static void client_auth_success_handler (Packet *packet) {
                     char *status = c_string_create ("Got client's <%s> session id <%s>",
                         packet->client->name->str, packet->client->session_id->str);
                     if (status) {
-                        client_log_debug (status);
+                        cengine_log_debug (status);
                         free (status);
                     }
                     #endif
@@ -148,7 +148,7 @@ static void client_auth_packet_handler (Packet *packet) {
                     break;
 
                 default: 
-                    client_log_msg (stderr, LOG_WARNING, LOG_NO_TYPE, "Unknown auth packet type.");
+                    cengine_log_msg (stderr, LOG_WARNING, LOG_NO_TYPE, "Unknown auth packet type.");
                     break;
             }
         }
@@ -163,7 +163,7 @@ static void client_request_packet_handler (Packet *packet) {
         if (packet->header) {
             switch (packet->header->request_type) {
                 default: 
-                    client_log_msg (stderr, LOG_WARNING, LOG_NO_TYPE, "Unknown request from cerver");
+                    cengine_log_msg (stderr, LOG_WARNING, LOG_NO_TYPE, "Unknown request from cerver");
                     break;
             }
         }
@@ -188,7 +188,7 @@ static void client_packet_handler (void *data) {
             }
 
             else {
-                client_log_error ("client_packet_handler () - No packet version to check!");
+                cengine_log_error ("client_packet_handler () - No packet version to check!");
                 good = false;
             }
         }
@@ -263,14 +263,14 @@ static void client_packet_handler (void *data) {
                 case TEST_PACKET: 
                     packet->client->stats->received_packets->n_test_packets += 1;
                     packet->connection->stats->received_packets->n_test_packets += 1;
-                    client_log_msg (stdout, LOG_TEST, LOG_NO_TYPE, "Got a test packet from cerver.");
+                    cengine_log_msg (stdout, LOG_TEST, LOG_NO_TYPE, "Got a test packet from cerver.");
                     break;
 
                 default:
                     packet->client->stats->received_packets->n_bad_packets += 1;
                     packet->connection->stats->received_packets->n_bad_packets += 1;
                     #ifdef CLIENT_DEBUG
-                    client_log_msg (stdout, LOG_WARNING, LOG_NO_TYPE, "Got a packet of unknown type.");
+                    cengine_log_msg (stdout, LOG_WARNING, LOG_NO_TYPE, "Got a packet of unknown type.");
                     #endif
                     break;
             }
@@ -444,7 +444,7 @@ static void client_receive_handle_buffer (Client *client, Connection *connection
                     }
 
                     else {
-                        client_log_msg (stderr, LOG_ERROR, LOG_CLIENT, 
+                        cengine_log_msg (stderr, LOG_ERROR, LOG_CLIENT, 
                             "Failed to create a new packet in cerver_handle_receive_buffer ()");
                     }
                 }
@@ -452,7 +452,7 @@ static void client_receive_handle_buffer (Client *client, Connection *connection
                 else {
                     char *status = c_string_create ("Got a packet of invalid size: %ld", packet_size);
                     if (status) {
-                        client_log_msg (stderr, LOG_WARNING, LOG_CLIENT, status); 
+                        cengine_log_msg (stderr, LOG_WARNING, LOG_CLIENT, status); 
                         free (status);
                     }
                     
@@ -466,7 +466,7 @@ static void client_receive_handle_buffer (Client *client, Connection *connection
                 else {
                     // handle part of a new header
                     // #ifdef CERVER_DEBUG
-                    // client_log_debug ("Handle part of a new header...");
+                    // cengine_log_debug ("Handle part of a new header...");
                     // #endif
 
                     // printf ("buffer size: %ld\n", buffer_size);
@@ -523,7 +523,7 @@ void client_receive (Client *client, Connection *connection) {
                         #ifdef CLIENT_DEBUG 
                         char *s = c_string_create ("client_receive () - rc < 0 - sock fd: %d", connection->socket->sock_fd);
                         if (s) {
-                            client_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, s);
+                            cengine_log_msg (stderr, LOG_ERROR, LOG_NO_TYPE, s);
                             free (s);
                         }
                         perror ("Error");
@@ -540,7 +540,7 @@ void client_receive (Client *client, Connection *connection) {
                     char *s = c_string_create ("client_receive () - rc == 0 - sock fd: %d",
                         connection->socket->sock_fd);
                     if (s) {
-                        client_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, s);
+                        cengine_log_msg (stdout, LOG_DEBUG, LOG_NO_TYPE, s);
                         free (s);
                     }
                     // perror ("Error");
@@ -553,7 +553,7 @@ void client_receive (Client *client, Connection *connection) {
                     // char *s = c_string_create ("Connection %s rc: %ld",
                     //     connection->name->str, rc);
                     // if (s) {
-                    //     client_log_msg (stdout, LOG_DEBUG, LOG_CLIENT, s);
+                    //     cengine_log_msg (stdout, LOG_DEBUG, LOG_CLIENT, s);
                     //     free (s);
                     // }
 
@@ -578,7 +578,7 @@ void client_receive (Client *client, Connection *connection) {
 
         else {
             #ifdef CLIENT_DEBUG
-            client_log_msg (stderr, LOG_ERROR, LOG_CLIENT, 
+            cengine_log_msg (stderr, LOG_ERROR, LOG_CLIENT, 
                 "Failed to allocate a new packet buffer!");
             #endif
         }

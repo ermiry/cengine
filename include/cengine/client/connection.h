@@ -3,15 +3,15 @@
 
 #include <stdbool.h>
 
-#include "client/types/types.h"
-#include "client/types/string.h"
+#include "cengine/types/types.h"
+#include "cengine/types/string.h"
 
-#include "client/config.h"
-#include "client/network.h"
-#include "client/socket.h"
-#include "client/cerver.h"
-#include "client/handler.h"
-#include "client/packets.h"
+#include "cengine/client/config.h"
+#include "cengine/client/network.h"
+#include "cengine/client/socket.h"
+#include "cengine/client/cerver.h"
+#include "cengine/client/handler.h"
+#include "cengine/client/packets.h"
 
 // used for connection with exponential backoff (secs)
 #define DEFAULT_CONNECTION_MAX_SLEEP                60 

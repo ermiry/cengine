@@ -1,7 +1,7 @@
 #ifndef _CLIENT_INPUT_H_
 #define _CLIENT_INPUT_H_
 
-#include "client/config.h"
+#include "cengine/client/config.h"
 
 CLIENT_PUBLIC void input_clean_stdin (void);
 
