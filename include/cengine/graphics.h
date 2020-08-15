@@ -6,18 +6,20 @@
 #include "cengine/types/types.h"
 #include "cengine/types/string.h"
 
+#include "cengine/config.h"
+
 /*** RGBA Colors ***/
 
 typedef SDL_Color RGBA_Color;
 
-extern RGBA_Color RGBA_NO_COLOR;
-extern RGBA_Color RGBA_WHITE;
-extern RGBA_Color RGBA_BLACK;
-extern RGBA_Color RGBA_RED;
-extern RGBA_Color RGBA_GREEN;
-extern RGBA_Color RGBA_BLUE;
+CENGINE_PUBLIC RGBA_Color RGBA_NO_COLOR;
+CENGINE_PUBLIC RGBA_Color RGBA_WHITE;
+CENGINE_PUBLIC RGBA_Color RGBA_BLACK;
+CENGINE_PUBLIC RGBA_Color RGBA_RED;
+CENGINE_PUBLIC RGBA_Color RGBA_GREEN;
+CENGINE_PUBLIC RGBA_Color RGBA_BLUE;
 
-extern RGBA_Color rgba_color_create (u8 r, u8 g, u8 b, u8 a);
+CENGINE_PUBLIC RGBA_Color rgba_color_create (u8 r, u8 g, u8 b, u8 a);
 
 /*** Common HEX colors ***/
 
@@ -51,8 +53,8 @@ struct _ImageData {
 
 typedef struct _ImageData ImageData;
 
-extern ImageData *image_data_new (u32 w, u32 h, String *filename);
+CENGINE_PUBLIC ImageData *image_data_new (u32 w, u32 h, String *filename);
 
-extern void image_data_delete (void *img_data_ptr);
+CENGINE_PUBLIC void image_data_delete (void *img_data_ptr);
 
 #endif

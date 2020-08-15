@@ -4,19 +4,21 @@
 #include "cengine/types/types.h"
 #include "cengine/types/string.h"
 
-extern const String *cengine_assets_path;
+#include "cengine/config.h"
+
+CENGINE_EXPORT const String *cengine_assets_path;
 
 // sets the path for the assets folder
-extern void cengine_assets_set_path (const char *pathname);
+CENGINE_EXPORT void cengine_assets_set_path (const char *pathname);
 
-extern const String *ui_default_assets_path;
+CENGINE_EXPORT const String *ui_default_assets_path;
 
 // sets the location of cengine's default ui assets
-extern void cengine_default_assets_set_path (const char *pathname);
+CENGINE_EXPORT void cengine_default_assets_set_path (const char *pathname);
 
 // loads cengine's default ui assets
-extern u8 ui_default_assets_load (void);
+CENGINE_PUBLIC u8 ui_default_assets_load (void);
 
-extern u8 assets_end (void);
+CENGINE_PRIVATE u8 assets_end (void);
 
 #endif

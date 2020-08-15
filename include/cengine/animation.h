@@ -5,8 +5,10 @@
 
 #include "cengine/types/types.h"
 #include "cengine/types/string.h"
+
 #include "cengine/collections/dlist.h"
 
+#include "cengine/config.h"
 #include "cengine/timer.h"
 #include "cengine/sprites.h"
 
@@ -20,10 +22,10 @@ typedef struct AnimData {
 
 } AnimData;
 
-extern void anim_data_delete (AnimData *data);
+CENGINE_PUBLIC void anim_data_delete (AnimData *data);
 
 // parses an animation json file into a list of animations
-extern AnimData *animation_file_parse (const char *filename);
+CENGINE_EXPORT AnimData *animation_file_parse (const char *filename);
 
 typedef struct Animation {
 
@@ -34,15 +36,18 @@ typedef struct Animation {
 
 } Animation;
 
-extern Animation *animation_new (u8 n_frames, ...);
+CENGINE_EXPORT Animation *animation_new (u8 n_frames, ...);
+
 // create an animation with the requested values
-extern Animation *animation_create (const char *name, u8 n_frames, DoubleList *anim_points, unsigned int speed);
-extern void animation_delete (void *ptr);
+CENGINE_EXPORT Animation *animation_create (const char *name, u8 n_frames, DoubleList *anim_points, unsigned int speed);
 
-extern void animation_set_name (Animation *animation, const char *name);
-extern void animation_set_speed (Animation *animation, u32 speed);
+CENGINE_EXPORT void animation_delete (void *ptr);
 
-extern Animation *animation_get_by_name (DoubleList *animations, const char *name);
+CENGINE_EXPORT void animation_set_name (Animation *animation, const char *name);
+
+CENGINE_EXPORT void animation_set_speed (Animation *animation, u32 speed);
+
+CENGINE_EXPORT Animation *animation_get_by_name (DoubleList *animations, const char *name);
 
 typedef struct Animator {
 
@@ -61,17 +66,20 @@ typedef struct Animator {
 
 } Animator;
 
-extern Animator *animator_new (u32 objectID);
-extern void animator_destroy (Animator *animator);
+CENGINE_PUBLIC Animator *animator_new (u32 objectID);
 
-extern void animator_set_default_animation (Animator *animator, Animation *animation);
-extern void animator_set_current_animation (Animator *animator, Animation *animation);
-extern void animator_play_animation (Animator *animator, Animation *animation);
+CENGINE_PUBLIC void animator_destroy (Animator *animator);
+
+CENGINE_EXPORT void animator_set_default_animation (Animator *animator, Animation *animation);
+
+CENGINE_EXPORT void animator_set_current_animation (Animator *animator, Animation *animation);
+
+CENGINE_EXPORT void animator_play_animation (Animator *animator, Animation *animation);
 
 /*** ANIM THREAD ***/
 
-extern int animations_init (void);
+CENGINE_PRIVATE int animations_init (void);
 
-extern u8 animations_end (void);
+CENGINE_PRIVATE u8 animations_end (void);
 
 #endif
