@@ -3,10 +3,11 @@
 
 #include <stdbool.h>
 
-#include "cengine/types/types.h"
-#include "cengine/types/string.h"
+#include "client/types/types.h"
+#include "client/types/string.h"
 
-#include "cengine/client/packets.h"
+#include "client/config.h"
+#include "client/packets.h"
 
 struct _Client;
 struct _Connection;
@@ -47,18 +48,18 @@ typedef struct ClientError {
 // a newly allocated ClientErrorData structure will be passed to your method 
 // that should be free using the client_error_data_delete () method
 // returns 0 on success, 1 on error
-extern u8 client_error_register (struct _Client *client, const ClientErrorType error_type,
+CLIENT_EXPORT u8 client_error_register (struct _Client *client, const ClientErrorType error_type,
 	Action action, void *action_args, Action delete_action_args, 
     bool create_thread, bool drop_after_trigger);
 
 // unregisters the action associated with the error types
 // deletes the action args using the delete_action_args () if NOT NULL
 // returns 0 on success, 1 on error
-extern u8 client_error_unregister (struct _Client *client, const ClientErrorType error_type);
+CLIENT_EXPORT u8 client_error_unregister (struct _Client *client, const ClientErrorType error_type);
 
 // triggers all the actions that are registred to an error
 // returns 0 on success, 1 on error
-extern u8 client_error_trigger (const ClientErrorType error_type, 
+CLIENT_PRIVATE u8 client_error_trigger (const ClientErrorType error_type, 
 	const struct _Client *client, const struct _Connection *connection, 
 	const char *error_message
 );
@@ -77,22 +78,22 @@ typedef struct ClientErrorData {
 
 } ClientErrorData;
 
-extern void client_error_data_delete (ClientErrorData *error_data);
+CLIENT_PUBLIC void client_error_data_delete (ClientErrorData *error_data);
 
 #pragma endregion
 
 #pragma region handler
 
 // handles error packets
-extern void error_packet_handler (struct _Packet *packet);
+CLIENT_PRIVATE void error_packet_handler (struct _Packet *packet);
 
 #pragma endregion
 
 #pragma region main
 
-extern u8 client_errors_init (struct _Client *client);
+CLIENT_PRIVATE u8 client_errors_init (struct _Client *client);
 
-extern void client_errors_end (struct _Client *client);
+CLIENT_PRIVATE void client_errors_end (struct _Client *client);
 
 #pragma endregion
 

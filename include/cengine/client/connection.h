@@ -3,14 +3,15 @@
 
 #include <stdbool.h>
 
-#include "cengine/types/types.h"
-#include "cengine/types/string.h"
+#include "client/types/types.h"
+#include "client/types/string.h"
 
-#include "cengine/client/network.h"
-#include "cengine/client/socket.h"
-#include "cengine/client/cerver.h"
-#include "cengine/client/handler.h"
-#include "cengine/client/packets.h"
+#include "client/config.h"
+#include "client/network.h"
+#include "client/socket.h"
+#include "client/cerver.h"
+#include "client/handler.h"
+#include "client/packets.h"
 
 // used for connection with exponential backoff (secs)
 #define DEFAULT_CONNECTION_MAX_SLEEP                60 
@@ -92,64 +93,64 @@ struct _Connection {
 
 typedef struct _Connection Connection;
 
-extern Connection *connection_new (void);
+CLIENT_PUBLIC Connection *connection_new (void);
 
-extern void connection_delete (void *ptr);
+CLIENT_PUBLIC void connection_delete (void *ptr);
 
-extern Connection *connection_create_empty (void);
+CLIENT_PUBLIC Connection *connection_create_empty (void);
 
 // compares two connections by their names
-extern int connection_comparator_by_name (const void *a, const void *b);
+CLIENT_PUBLIC int connection_comparator_by_name (const void *a, const void *b);
 
 // compare two connections by their socket fds
-extern int connection_comparator_by_sock_fd (const void *a, const void *b);
+CLIENT_PUBLIC int connection_comparator_by_sock_fd (const void *a, const void *b);
 
 // sets the connection's name, if it had a name before, it will be replaced
-extern void connection_set_name (Connection *connection, const char *name);
+CLIENT_PUBLIC void connection_set_name (Connection *connection, const char *name);
 
 // sets the connection max sleep (wait time) to try to connect to the cerver
-extern void connection_set_max_sleep (Connection *connection, u32 max_sleep);
+CLIENT_PUBLIC void connection_set_max_sleep (Connection *connection, u32 max_sleep);
 
 // read packets into a buffer of this size in client_receive ()
 // by default the value RECEIVE_PACKET_BUFFER_SIZE is used
-extern void connection_set_receive_buffer_size (Connection *connection, u32 size);
+CLIENT_PUBLIC void connection_set_receive_buffer_size (Connection *connection, u32 size);
 
 // sets the waiting time (sleep) in micro secs between each call to recv () in connection_update () thread
 // the dault value is 200000 (DEFAULT_CONNECTION_UPDATE_SLEEP)
-extern void connection_set_update_sleep (Connection *connection, u32 sleep);
+CLIENT_PUBLIC void connection_set_update_sleep (Connection *connection, u32 sleep);
 
 // sets the connection received data
 // 01/01/2020 - a place to safely store the request response, like when using client_connection_request_to_cerver ()
-extern void connection_set_received_data (Connection *connection, void *data, size_t data_size, Action data_delete);
+CLIENT_PUBLIC void connection_set_received_data (Connection *connection, void *data, size_t data_size, Action data_delete);
 
 // sets a custom receive method to handle incomming packets in the connection
 // a reference to the client and connection will be passed to the action as ClientConnection structure
-extern void connection_set_custom_receive (Connection *connection, Action custom_receive, void *args);
+CLIENT_PUBLIC void connection_set_custom_receive (Connection *connection, Action custom_receive, void *args);
 
 // sets the connection auth data to send whenever the cerver requires authentication 
 // and a method to destroy it once the connection has ended,
 // if delete_auth_data is NULL, the auth data won't be deleted
-extern void connection_set_auth_data (Connection *connection, 
+CLIENT_PUBLIC void connection_set_auth_data (Connection *connection, 
     void *auth_data, size_t auth_data_size, Action delete_auth_data,
     bool admin_auth);
 
 // removes the connection auth data using the connection's delete_auth_data method
 // if not such method, the data won't be deleted
 // the connection's auth data & delete method will be equal to NULL
-extern void connection_remove_auth_data (Connection *connection);
+CLIENT_PUBLIC void connection_remove_auth_data (Connection *connection);
 
 // generates the connection auth packet to be send to the server
 // this is also generated automatically whenever the cerver ask for authentication
 // returns 0 on success, 1 on error
-extern u8 connection_generate_auth_packet (Connection *connection);
+CLIENT_PUBLIC u8 connection_generate_auth_packet (Connection *connection);
 
 // creates a new connection that is ready to be started
 // returns a newly allocated connection on success, NULL if any initial setup has failed
-extern Connection *connection_create (const char *ip_address, u16 port, Protocol protocol, bool use_ipv6);
+CLIENT_PUBLIC Connection *connection_create (const char *ip_address, u16 port, Protocol protocol, bool use_ipv6);
 
 // starts a connection -> connects to the specified ip and port
 // returns 0 on success, 1 on error
-extern int connection_start (Connection *connection);
+CLIENT_PUBLIC int connection_start (Connection *connection);
 
 typedef struct ConnectionCustomReceiveData {
 
@@ -160,9 +161,9 @@ typedef struct ConnectionCustomReceiveData {
 } ConnectionCustomReceiveData;
 
 // starts listening and receiving data in the connection sock
-extern void connection_update (void *ptr);
+CLIENT_PUBLIC void connection_update (void *ptr);
 
 // closes a connection directly
-extern void connection_close (Connection *connection);
+CLIENT_PUBLIC void connection_close (Connection *connection);
 
 #endif

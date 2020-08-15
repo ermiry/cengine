@@ -3,11 +3,12 @@
 
 #include <stdbool.h>
 
-#include "cengine/types/types.h"
-#include "cengine/types/string.h"
+#include "client/types/types.h"
+#include "client/types/string.h"
 
-#include "cengine/client/network.h"
-#include "cengine/client/packets.h"
+#include "client/config.h"
+#include "client/network.h"
+#include "client/packets.h"
 
 struct _Cerver;
 struct _Packet;
@@ -60,7 +61,7 @@ typedef struct _CerverStats CerverStats;
 
 #pragma endregion
 
-extern void cerver_stats_print (struct _Cerver *cerver);
+CLIENT_PUBLIC void cerver_stats_print (struct _Cerver *cerver);
 
 struct _Cerver {
     
@@ -82,14 +83,14 @@ struct _Cerver {
 
 typedef struct _Cerver Cerver;
 
-extern Cerver *cerver_new (void);
+CLIENT_PUBLIC Cerver *cerver_new (void);
 
-extern void cerver_delete (void *ptr);
+CLIENT_PUBLIC void cerver_delete (void *ptr);
 
 #pragma region handler
 
 // handles cerver type packets
-extern void cerver_packet_handler (struct _Packet *packet);
+CLIENT_PRIVATE void cerver_packet_handler (struct _Packet *packet);
 
 #pragma endregion
 

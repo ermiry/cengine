@@ -3,6 +3,8 @@
 
 #include <pthread.h>
 
+#include "client/config.h"
+
 struct _Socket {
 
     int sock_fd;
@@ -17,10 +19,10 @@ struct _Socket {
 
 typedef struct _Socket Socket;
 
-extern void socket_delete (void *socket_ptr);
+CLIENT_PRIVATE void socket_delete (void *socket_ptr);
 
-extern void *socket_create_empty (void);
+CLIENT_PRIVATE void *socket_create_empty (void);
 
-extern Socket *socket_create (int fd);
+CLIENT_PRIVATE Socket *socket_create (int fd);
 
 #endif

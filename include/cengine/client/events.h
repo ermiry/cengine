@@ -3,9 +3,10 @@
 
 #include <stdbool.h>
 
-#include "cengine/types/types.h"
+#include "client/types/types.h"
 
-#include "cengine/client/client.h"
+#include "client/config.h"
+#include "client/client.h"
 
 struct _Client;
 struct _Connection;
@@ -62,20 +63,20 @@ typedef struct ClientEvent {
 // a newly allocated ClientEventData structure will be passed to your method 
 // that should be free using the client_event_data_delete () method
 // returns 0 on success, 1 on error
-extern u8 client_event_register (struct _Client *client, const ClientEventType event_type, 
+CLIENT_EXPORT u8 client_event_register (struct _Client *client, const ClientEventType event_type, 
     Action action, void *action_args, Action delete_action_args, 
     bool create_thread, bool drop_after_trigger);
 
 // unregister the action associated with an event
 // deletes the action args using the delete_action_args () if NOT NULL
 // returns 0 on success, 1 on error
-extern u8 client_event_unregister (struct _Client *client, const ClientEventType event_type);
+CLIENT_EXPORT u8 client_event_unregister (struct _Client *client, const ClientEventType event_type);
 
-extern void client_event_set_response (struct _Client *client, const ClientEventType event_type,
+CLIENT_PRIVATE void client_event_set_response (struct _Client *client, const ClientEventType event_type,
     void *response_data, Action delete_response_data);
 
 // triggers all the actions that are registred to an event
-extern void client_event_trigger (const ClientEventType event_type,
+CLIENT_PRIVATE void client_event_trigger (const ClientEventType event_type,
     const struct _Client *client, const struct _Connection *connection);
 
 #pragma region data
@@ -94,15 +95,15 @@ typedef struct ClientEventData {
 
 } ClientEventData;
 
-extern void client_event_data_delete (ClientEventData *event_data);
+CLIENT_PUBLIC void client_event_data_delete (ClientEventData *event_data);
 
 #pragma endregion
 
 #pragma region main
 
-extern u8 client_events_init (struct _Client *client);
+CLIENT_PRIVATE u8 client_events_init (struct _Client *client);
 
-extern void client_events_end (struct _Client *client);
+CLIENT_PRIVATE void client_events_end (struct _Client *client);
 
 #pragma endregion
 
