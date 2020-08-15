@@ -8,6 +8,7 @@
 #include "cengine/types/types.h"
 #include "cengine/types/vector2d.h"
 
+#include "cengine/config.h"
 #include "cengine/events.h"
 
 #include "cengine/ui/inputfield.h"
@@ -32,14 +33,14 @@ struct _Input {
 
 typedef struct _Input Input;
 
-extern Input *input_new (void);
+CENGINE_PRIVATE Input *input_new (void);
 
-extern void input_delete (void *input_ptr);
+CENGINE_PRIVATE void input_delete (void *input_ptr);
 
-extern void input_set_active_text (Input *input, InputField *text);
+CENGINE_PUBLIC void input_set_active_text (Input *input, InputField *text);
 
 // sets the menu (tooltip) to be displayed in the current window
-extern void input_set_right_click_menu (Input *input, Tooltip *right_click_menu);
+CENGINE_PUBLIC void input_set_right_click_menu (Input *input, Tooltip *right_click_menu);
 
 /*** mouse ***/
 
@@ -53,48 +54,48 @@ typedef enum MouseButton {
 
 } MouseButton;
 
-extern Vector2D mousePos;
+CENGINE_PUBLIC Vector2D mousePos;
 
-extern void mouse_pos_get (int *x, int *y);
+CENGINE_PUBLIC void mouse_pos_get (int *x, int *y);
 
-extern bool input_get_mouse_button_state (MouseButton button);
+CENGINE_PUBLIC bool input_get_mouse_button_state (MouseButton button);
 
 // sets and action to be performed when the mouse scrolls up
 // wants a reference to a positive integer referencing the amount scrolled
-extern void input_set_on_mouse_wheel_scroll_up (Action action);
+CENGINE_EXPORT void input_set_on_mouse_wheel_scroll_up (Action action);
 
 // sets and action to be performed when the mouse scrolls down
 // wants a reference to a negative integer referencing the amount scrolled
-extern void input_set_on_mouse_wheel_scroll_down (Action action);
+CENGINE_EXPORT void input_set_on_mouse_wheel_scroll_down (Action action);
 
 // sets and action to be performed when the mouse scrolls right
 // wants a reference to a positive integer referencing the amount scrolled
-extern void input_set_on_mouse_wheel_scroll_right (Action action);
+CENGINE_EXPORT void input_set_on_mouse_wheel_scroll_right (Action action);
 
 // sets and action to be performed when the mouse scrolls left
 // wants a reference to a negative integer referencing the amount scrolled
-extern void input_set_on_mouse_wheel_scroll_left (Action action);
+CENGINE_EXPORT void input_set_on_mouse_wheel_scroll_left (Action action);
 
 /*** keyboard ***/
 
-extern bool input_is_key_down (const SDL_Scancode key);
+CENGINE_PUBLIC bool input_is_key_down (const SDL_Scancode key);
 
 // creates a new command with an action to be triggered by ctrl + key
-extern u8 input_command_register (SDL_Keycode key, Action action, void *args);
+CENGINE_EXPORT u8 input_command_register (SDL_Keycode key, Action action, void *args);
 
-extern void input_command_unregister (SDL_Keycode key);
+CENGINE_EXPORT void input_command_unregister (SDL_Keycode key);
 
 // registers an action to be triggered whenever a key is pressed
-extern void input_key_event_register (const SDL_Keycode key, Action action, void *args);
+CENGINE_EXPORT void input_key_event_register (const SDL_Keycode key, Action action, void *args);
 
-extern void input_key_event_unregister (const SDL_Keycode key);
+CENGINE_EXPORT void input_key_event_unregister (const SDL_Keycode key);
 
 /*** main ***/
 
-extern void input_init (void);
+CENGINE_PRIVATE void input_init (void);
 
-extern u8 input_end (void);
+CENGINE_PRIVATE u8 input_end (void);
 
-extern void input_handle (SDL_Event event);
+CENGINE_PRIVATE void input_handle (SDL_Event event);
 
 #endif
