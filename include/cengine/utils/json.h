@@ -49,10 +49,12 @@
 
    #include <string.h>
 
-   extern "C"
+   CENGINE_PUBLIC "C"
    {
 
 #endif
+
+#include "cengine/config.h"
 
 typedef struct {
 
@@ -88,7 +90,7 @@ typedef enum {
 
 } json_type;
 
-extern const struct _json_value json_value_none;
+CENGINE_PUBLIC const struct _json_value json_value_none;
        
 typedef struct _json_object_entry {
 
@@ -162,24 +164,24 @@ struct _json_value {
 
 typedef struct _json_value json_value;
        
-extern json_value *json_parse (const json_char * json, size_t length);
+CENGINE_PUBLIC json_value *json_parse (const json_char * json, size_t length);
 
 
-extern json_value *json_parse_ex (json_settings * settings,
+CENGINE_PUBLIC json_value *json_parse_ex (json_settings * settings,
    const json_char * json,
    size_t length,
    char * error);
 
-extern void json_value_free (json_value *);
+CENGINE_PUBLIC void json_value_free (json_value *);
 
 /* Not usually necessary, unless you used a custom mem_alloc and now want to
  * use a custom mem_free.
  */
-extern void json_value_free_ex (json_settings * settings, json_value *);
+CENGINE_PUBLIC void json_value_free_ex (json_settings * settings, json_value *);
 
 
 #ifdef __cplusplus
-   } /* extern "C" */
+   } /* CENGINE_PUBLIC "C" */
 #endif
 
 #endif

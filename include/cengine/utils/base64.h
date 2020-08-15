@@ -3,8 +3,10 @@
 
 #include <stddef.h>
 
-extern char *base64_encode (size_t* enclen, size_t len, unsigned char* data);
+#include "cengine/config.h"
 
-extern unsigned char *base64_decode (size_t* declen, size_t len, char* data);
+CENGINE_PUBLIC char *base64_encode (size_t *enclen, size_t len, unsigned char *data);
+
+CENGINE_PUBLIC unsigned char *base64_decode (size_t *declen, size_t len, char *data);
 
 #endif

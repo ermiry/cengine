@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 
+#include "cengine/config.h"
+
 #define LOG_COLOR_RED       "\x1b[31m"
 #define LOG_COLOR_GREEN     "\x1b[32m"
 #define LOG_COLOR_YELLOW    "\x1b[33m"
@@ -35,22 +37,22 @@ typedef enum LogType {
 
 } LogType;
 
-extern void cengine_log_msg (
+CENGINE_PUBLIC void cengine_log_msg (
 	FILE *__restrict __stream, 
 	LogType first_type, LogType second_type,
 	const char *msg
 );
 
 // prints a red error message to stderr
-extern void cengine_log_error (const char *msg);
+CENGINE_PUBLIC void cengine_log_error (const char *msg);
 
 // prints a yellow warning message to stderr
-extern void cengine_log_warning (const char *msg);
+CENGINE_PUBLIC void cengine_log_warning (const char *msg);
 
 // prints a green success message to stdout
-extern void cengine_log_success (const char *msg);
+CENGINE_PUBLIC void cengine_log_success (const char *msg);
 
 // prints a debug message to stdout
-extern void cengine_log_debug (const char *msg);
+CENGINE_PUBLIC void cengine_log_debug (const char *msg);
 
 #endif
