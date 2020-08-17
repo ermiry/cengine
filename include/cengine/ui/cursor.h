@@ -5,6 +5,7 @@
 
 #include "cengine/types/types.h"
 
+#include "cengine/config.h"
 #include "cengine/renderer.h"
 #include "cengine/sprites.h"
 
@@ -31,32 +32,30 @@ typedef struct Cursor {
 
 extern Cursor *main_cursor;
 
-extern Cursor *ui_cursor_new (void);
+CENGINE_PUBLIC Cursor *ui_cursor_new (void);
 
-extern void ui_cursor_delete (Cursor *cursor);
+CENGINE_PUBLIC void ui_cursor_delete (Cursor *cursor);
 
 // create a new ui cursor with a custom sprite or pass a spirtesheet to load different images
 // when performing different actions
-extern Cursor *ui_cursor_create (Renderer *renderer, const char *sprite, const char *sprite_sheet, 
+CENGINE_EXPORT Cursor *ui_cursor_create (Renderer *renderer, const char *sprite, const char *sprite_sheet, 
 	int w, int h, int hot_x, int hot_y);
 
-extern void ui_cursor_draw (Cursor *cursor, Renderer *renderer);
+CENGINE_PRIVATE void ui_cursor_draw (Cursor *cursor, Renderer *renderer);
 
 // update cursor with new values
-extern int ui_cursor_update (Cursor *c, int w, int h, int hot_x, int hot_y);
+CENGINE_PRIVATE int ui_cursor_update (Cursor *c, int w, int h, int hot_x, int hot_y);
 
-/*** Getters & Setters ***/
+CENGINE_PUBLIC int ui_cursor_get_width (Cursor *c);
 
-extern int ui_cursor_get_width (Cursor *c);
+CENGINE_PUBLIC int ui_cursor_set_width (Cursor *c, int new_width);
 
-extern int ui_cursor_set_width (Cursor *c, int new_width);
+CENGINE_PUBLIC int ui_cursor_get_height (Cursor *c);
 
-extern int ui_cursor_get_height (Cursor *c);
+CENGINE_PUBLIC int ui_cursor_set_height (Cursor *c, int new_height);
 
-extern int ui_cursor_set_height (Cursor *c, int new_height);
+CENGINE_PUBLIC int ui_cursor_get_hot_x (Cursor *c);
 
-extern int ui_cursor_get_hot_x (Cursor *c);
-
-extern int ui_cursor_get_hot_y (Cursor *c);
+CENGINE_PUBLIC int ui_cursor_get_hot_y (Cursor *c);
 
 #endif
