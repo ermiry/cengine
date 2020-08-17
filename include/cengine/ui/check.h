@@ -3,6 +3,7 @@
 
 #include "cengine/types/types.h"
 
+#include "cengine/config.h"
 #include "cengine/renderer.h"
 #include "cengine/sprites.h"
 
@@ -41,13 +42,13 @@ typedef struct Check {
 
 } Check;
 
-extern void ui_check_delete (void *check_ptr);
+CENGINE_PUBLIC void ui_check_delete (void *check_ptr);
 
 // creates a new check
 // x and y for position
-extern Check *ui_check_create (i32 x, i32 y, Renderer *renderer);
+CENGINE_EXPORT Check *ui_check_create (i32 x, i32 y, Renderer *renderer);
 
 // draws the check to the screen
-extern void ui_check_draw (Check *check, Renderer *renderer);
+CENGINE_PRIVATE void ui_check_draw (Check *check, Renderer *renderer);
 
 #endif
