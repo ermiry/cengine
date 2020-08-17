@@ -9,10 +9,11 @@
 #include "cengine/types/types.h"
 #include "cengine/types/string.h"
 
-#include "cengine/video.h"
+#include "cengine/config.h"
 #include "cengine/renderer.h"
 #include "cengine/sprites.h"
 #include "cengine/timer.h"
+#include "cengine/video.h"
 
 #include "cengine/ui/ui.h"
 #include "cengine/ui/font.h"
@@ -70,87 +71,87 @@ typedef struct Button {
 
 } Button;
 
-extern void ui_button_delete (void *button_ptr);
+CENGINE_PUBLIC void ui_button_delete (void *button_ptr);
 
 // sets the buttons's UI position
-extern void ui_button_set_pos (Button *button, UIRect *ref_rect, UIPosition pos, Renderer *renderer);
+CENGINE_EXPORT void ui_button_set_pos (Button *button, UIRect *ref_rect, UIPosition pos, Renderer *renderer);
 
 // sets the button's position offset
-extern void ui_button_set_pos_offset (Button *button, int x_offset, int y_offset);
+CENGINE_EXPORT void ui_button_set_pos_offset (Button *button, int x_offset, int y_offset);
 
 // sets the button's render dimensions
-extern void ui_button_set_dimensions (Button *button, unsigned int width, unsigned int height);
+CENGINE_EXPORT void ui_button_set_dimensions (Button *button, unsigned int width, unsigned int height);
 
 // sets the button's scale factor
-extern void ui_button_set_scale (Button *button, int x_scale, int y_scale);
+CENGINE_EXPORT void ui_button_set_scale (Button *button, int x_scale, int y_scale);
 
 // sets the button to be active depending on values
-extern void ui_button_set_active (Button *button, bool active);
+CENGINE_EXPORT void ui_button_set_active (Button *button, bool active);
 
 // toggles the button to be active or not
-extern void ui_button_toggle_active (Button *button);
+CENGINE_EXPORT void ui_button_toggle_active (Button *button);
 
 // sets the button text
-extern void ui_button_set_text (Button *button, Renderer *renderer, const char *text, 
+CENGINE_EXPORT void ui_button_set_text (Button *button, Renderer *renderer, const char *text, 
     Font *font, u32 size, RGBA_Color text_color);
 
 // updates the button's text
-extern void ui_button_update_text (Button *button, Renderer *renderer, const char *text);
+CENGINE_EXPORT void ui_button_update_text (Button *button, Renderer *renderer, const char *text);
 
 // sets the button's text position
-extern void ui_button_set_text_pos (Button *button, UIPosition pos);
+CENGINE_EXPORT void ui_button_set_text_pos (Button *button, UIPosition pos);
 
 // sets the button's text offset
-extern void ui_button_set_text_pos_offset (Button *button, int x_offset, int y_offset);
+CENGINE_EXPORT void ui_button_set_text_pos_offset (Button *button, int x_offset, int y_offset);
 
 // 16/03/2020 -- used when the parent component's position has been updated
 // NOTE: to work properly, a text pos needs to be set before calling this method
-extern void ui_button_update_text_pos (Button *button);
+CENGINE_EXPORT void ui_button_update_text_pos (Button *button);
 
 // sets the button font
-extern void ui_button_set_font (Button *button, Renderer *renderer, Font *font);
+CENGINE_EXPORT void ui_button_set_font (Button *button, Renderer *renderer, Font *font);
 
 // sets the button's text color
-extern void ui_button_set_text_color (Button *button, Renderer *renderer, RGBA_Color color);
+CENGINE_EXPORT void ui_button_set_text_color (Button *button, Renderer *renderer, RGBA_Color color);
 
 // sets the button's outline colour
-extern void ui_button_set_ouline_colour (Button *button, RGBA_Color colour);
+CENGINE_EXPORT void ui_button_set_ouline_colour (Button *button, RGBA_Color colour);
 
 // sets the button's outline scale
-extern void ui_button_set_ouline_scale (Button *button, float x_scale, float y_scale);
+CENGINE_EXPORT void ui_button_set_ouline_scale (Button *button, float x_scale, float y_scale);
 
 // removes the ouline form the button
-extern void ui_button_remove_outline (Button *button);
+CENGINE_EXPORT void ui_button_remove_outline (Button *button);
 
 // sets the background color of the button
-extern void ui_button_set_bg_color (Button *button, Renderer *renderer, RGBA_Color color);
+CENGINE_EXPORT void ui_button_set_bg_color (Button *button, Renderer *renderer, RGBA_Color color);
 
 // removes the background from the button
-extern void ui_button_remove_background (Button *button);
+CENGINE_EXPORT void ui_button_remove_background (Button *button);
 
 // sets an sprite for each button state
 // the sprite is loaded and deleted when the button gets deleted
-extern void ui_button_set_sprite (Button *button, Renderer *renderer, ButtonState state, const char *filename);
+CENGINE_EXPORT void ui_button_set_sprite (Button *button, Renderer *renderer, ButtonState state, const char *filename);
 
 // uses a refrence to the sprite and does not load or destroy it 
-extern void ui_button_ref_sprite (Button *button, ButtonState state, Sprite *sprite);
+CENGINE_EXPORT void ui_button_ref_sprite (Button *button, ButtonState state, Sprite *sprite);
 
 // sets an action to be triggered when the button is clicked
-extern void ui_button_set_action (Button *button, Action action, void *args);
+CENGINE_EXPORT void ui_button_set_action (Button *button, Action action, void *args);
 
 // sets an action to be executed if double click is detected
-extern void ui_button_set_double_click_action (Button *button, Action action, void *args);
+CENGINE_EXPORT void ui_button_set_double_click_action (Button *button, Action action, void *args);
 
 // sets the max delay between two clicks to count as a double click (in mili secs), the default value is 500
-extern void ui_button_set_double_click_delay (Button *button, u32 double_click_delay);
+CENGINE_EXPORT void ui_button_set_double_click_delay (Button *button, u32 double_click_delay);
 
 // creates a new button
-extern Button *ui_button_create (i32 x, i32 y, u32 w, u32 h, UIPosition pos, Renderer *renderer);
+CENGINE_EXPORT Button *ui_button_create (i32 x, i32 y, u32 w, u32 h, UIPosition pos, Renderer *renderer);
 
 // rezises the button based on window size
-extern void ui_button_resize (Button *button, WindowSize window_original_size, WindowSize window_new_size);
+CENGINE_PRIVATE void ui_button_resize (Button *button, WindowSize window_original_size, WindowSize window_new_size);
 
 // draws a button
-extern void ui_button_draw (Button *button, Renderer *renderer);
+CENGINE_PRIVATE void ui_button_draw (Button *button, Renderer *renderer);
 
 #endif
