@@ -10,6 +10,7 @@
 #include "cengine/types/types.h"
 #include "cengine/collections/dlist.h"
 
+#include "cengine/config.h"
 #include "cengine/graphics.h"
 #include "cengine/timer.h"
 
@@ -58,51 +59,51 @@ typedef struct Notification {
 
 } Notification;
 
-extern void ui_notification_delete (void *noti_ptr);
+CENGINE_PUBLIC void ui_notification_delete (void *noti_ptr);
 
 // sets the timestamp to be displayed in the notification
-extern void ui_notification_set_timestmap (Notification *noti, struct tm *timestamp);
+CENGINE_EXPORT void ui_notification_set_timestmap (Notification *noti, struct tm *timestamp);
 
 // sets the notification's timestamp display options
-extern void ui_notification_set_timestamp_options (Notification *noti, 
+CENGINE_EXPORT void ui_notification_set_timestamp_options (Notification *noti, 
     Font *font, u32 size, RGBA_Color color);
 
 // sets the color to be used in the notification's timestamp
-extern void ui_notification_set_timestamp_color (Notification *noti, RGBA_Color color);
+CENGINE_EXPORT void ui_notification_set_timestamp_color (Notification *noti, RGBA_Color color);
 
 // sets the font to be used in the notification's timestamp
-extern void ui_notification_set_timestamp_font (Notification *noti, Font *font);
+CENGINE_EXPORT void ui_notification_set_timestamp_font (Notification *noti, Font *font);
 
 // sets the title of the notification with some options
-extern void ui_notification_set_title (Notification *noti, const char *text, 
+CENGINE_EXPORT void ui_notification_set_title (Notification *noti, const char *text, 
     Font *font, u32 size, RGBA_Color color);
 
 // sets some options for the notification's title
-extern void ui_notification_set_title_options (Notification *noti, 
+CENGINE_EXPORT void ui_notification_set_title_options (Notification *noti, 
     Font *font, u32 size, RGBA_Color color);
 
 // sets the color of the notification's title
-extern void ui_notification_set_title_color (Notification *noti, RGBA_Color color);
+CENGINE_EXPORT void ui_notification_set_title_color (Notification *noti, RGBA_Color color);
 
 // sets the font to be used in the notification's title
-extern void ui_notification_set_title_font (Notification *noti, Font *font);
+CENGINE_EXPORT void ui_notification_set_title_font (Notification *noti, Font *font);
 
 // sets the msg of the notification with some options
-extern void ui_notification_set_msg (Notification *noti, const char *text, 
+CENGINE_EXPORT void ui_notification_set_msg (Notification *noti, const char *text, 
     Font *font, u32 size, RGBA_Color color);
 
 // sets some options for the notification's msg
-extern void ui_notification_set_msg_options (Notification *noti, 
+CENGINE_EXPORT void ui_notification_set_msg_options (Notification *noti, 
     Font *font, u32 size, RGBA_Color color);
 
 // sets the color of the notification's message
-extern void ui_notification_set_msg_color (Notification *noti, RGBA_Color color);
+CENGINE_EXPORT void ui_notification_set_msg_color (Notification *noti, RGBA_Color color);
 
 // sets the font to be used in the notification's msg
-extern void ui_notification_set_msg_font (Notification *noti, Font *font);
+CENGINE_EXPORT void ui_notification_set_msg_font (Notification *noti, Font *font);
 
 // sets a custom background color for the notification
-extern void ui_notification_set_bg_color (Notification *noti, RGBA_Color color);
+CENGINE_EXPORT void ui_notification_set_bg_color (Notification *noti, RGBA_Color color);
 
 // creates and display a notification
 // type: default types have already created designs, select custom to pass your own
@@ -111,16 +112,16 @@ extern void ui_notification_set_bg_color (Notification *noti, RGBA_Color color);
 // title: the title of the notification (NULL for empty)
 // msg: the message to be displayed (NULL for empty)
 // uses the first set font for the texts with default values for sizes
-extern Notification *ui_notification_create (NotificationType type, float lifetime, bool display_timestamp,
+CENGINE_EXPORT Notification *ui_notification_create (NotificationType type, float lifetime, bool display_timestamp,
     const char *title, const char *msg);
 
 // adds the notification to the notification center where you want to display it
 // and displays the notification for x seconds (lifetime)
-extern void ui_notification_display (struct _NotiCenter *noti_center, Notification *notification, Renderer *renderer);
+CENGINE_EXPORT void ui_notification_display (struct _NotiCenter *noti_center, Notification *notification, Renderer *renderer);
 
 // creates the notification with the passed values and default options by notification type
 // and then displays it in the notification center
-extern void ui_notification_create_and_display (struct _NotiCenter *noti_center, Renderer *renderer, NotificationType type, 
+CENGINE_EXPORT void ui_notification_create_and_display (struct _NotiCenter *noti_center, Renderer *renderer, NotificationType type, 
     float lifetime, bool display_timestamp,
     const char *title, const char *msg);
 
@@ -155,35 +156,35 @@ struct _NotiCenter {
 
 typedef struct _NotiCenter NotiCenter;
 
-extern void ui_noti_center_delete (void *noti_center_ptr);
+CENGINE_PUBLIC void ui_noti_center_delete (void *noti_center_ptr);
 
 // creates a new notification center
 // max_display: max number of notifications to display at once
 // position: where do you want the notification center to be
-extern NotiCenter *ui_noti_center_create (UI *ui, u8 max_display, UIPosition pos, Renderer *renderer);
+CENGINE_EXPORT NotiCenter *ui_noti_center_create (UI *ui, u8 max_display, UIPosition pos, Renderer *renderer);
 
 // sets the notification center position in the screen
-extern void ui_noti_center_set_position (NotiCenter *noti_center, UIPosition pos);
+CENGINE_EXPORT void ui_noti_center_set_position (NotiCenter *noti_center, UIPosition pos);
 
 // sets the notification center dimensions
-extern void ui_noti_center_set_dimensions (NotiCenter *noti_center, u32 width, u32 height);
+CENGINE_EXPORT void ui_noti_center_set_dimensions (NotiCenter *noti_center, u32 width, u32 height);
 
 // sets the noti center's outline colour
-extern void ui_noti_center_set_ouline_colour (NotiCenter *noti_center, RGBA_Color colour);
+CENGINE_EXPORT void ui_noti_center_set_ouline_colour (NotiCenter *noti_center, RGBA_Color colour);
 
 // sets the noti center's outline scale
-extern void ui_noti_center_set_ouline_scale (NotiCenter *noti_center, float x_scale, float y_scale);
+CENGINE_EXPORT void ui_noti_center_set_ouline_scale (NotiCenter *noti_center, float x_scale, float y_scale);
 
 // removes the ouline form the noti center
-extern void ui_noti_center_remove_outline (NotiCenter *noti_center);
+CENGINE_EXPORT void ui_noti_center_remove_outline (NotiCenter *noti_center);
 
 // sets the notification center background color
-extern void ui_noti_center_set_bg_color (NotiCenter *noti_center, Renderer *renderer, RGBA_Color color);
+CENGINE_EXPORT void ui_noti_center_set_bg_color (NotiCenter *noti_center, Renderer *renderer, RGBA_Color color);
 
 // removes the background from the noticenter
-extern void ui_noti_center_remove_background (NotiCenter *noti_center);
+CENGINE_EXPORT void ui_noti_center_remove_background (NotiCenter *noti_center);
 
  // draws the notification center
-extern void ui_noti_center_draw (NotiCenter *noti_center, Renderer *renderer);
+CENGINE_PRIVATE void ui_noti_center_draw (NotiCenter *noti_center, Renderer *renderer);
 
 #endif
