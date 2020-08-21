@@ -41,45 +41,45 @@ typedef struct HorizontalLayout {
 
 } HorizontalLayout;
 
-extern void ui_layout_horizontal_delete (void *horizontal_ptr);
+CENGINE_PRIVATE void ui_layout_horizontal_delete (void *horizontal_ptr);
 
 // get the amount of elements that are inside the horizontal layout
-extern size_t ui_layout_horizontal_get_elements_count (HorizontalLayout *horizontal);
+CENGINE_PUBLIC size_t ui_layout_horizontal_get_elements_count (HorizontalLayout *horizontal);
 
 // sets a preffered width for your elements
 // if there are more elements than horizontal layout width / element width,
 // scrolling needs to be set, otherwise, remaining elements wont be displayed
 // if this option is not set, the element width will be manage automatically
-extern void ui_layout_horizontal_set_element_width (HorizontalLayout *horizontal, u32 width);
+CENGINE_PUBLIC void ui_layout_horizontal_set_element_width (HorizontalLayout *horizontal, u32 width);
 
 // sets the x padding between the elements
 // the default padidng is 0, so no space between elements
-extern void ui_layout_horizontal_set_element_padding (HorizontalLayout *horizontal, u32 x_padding);
+CENGINE_PUBLIC void ui_layout_horizontal_set_element_padding (HorizontalLayout *horizontal, u32 x_padding);
 
 // enables / disbale scrolling in the horizontal layout
-extern void ui_layout_horizontal_toggle_scrolling (HorizontalLayout *horizontal, bool enable);
+CENGINE_PUBLIC void ui_layout_horizontal_toggle_scrolling (HorizontalLayout *horizontal, bool enable);
 
 // sets how fast the elements move when scrolling, the default is a value of 5
-extern void ui_layout_horizontal_set_scroll_sensitivity (HorizontalLayout *horizontal, u32 sensitivity);
+CENGINE_PUBLIC void ui_layout_horizontal_set_scroll_sensitivity (HorizontalLayout *horizontal, u32 sensitivity);
 
 // creates a new horizontal layout
 // x and y for position, w and h for dimensions
-extern HorizontalLayout *ui_layout_horizontal_create (i32 x, i32 y, u32 w, u32 h, 
+CENGINE_PUBLIC HorizontalLayout *ui_layout_horizontal_create (i32 x, i32 y, u32 w, u32 h, 
     struct _Renderer *renderer);
 
 // adds a new elemenet in the specified pos of the horizontal layout group
 // returns 0 on success, 1 on error
-extern u8 ui_layout_horizontal_add_at_pos (HorizontalLayout *horizontal, UIElement *ui_element, u32 pos);
+CENGINE_PUBLIC u8 ui_layout_horizontal_add_at_pos (HorizontalLayout *horizontal, UIElement *ui_element, u32 pos);
 
 // adds a new element to the end of the horizontal layout group
 // this method avoids updating all the other elements positions as well
 // returns 0 on success, 1 on error
-extern u8 ui_layout_horizontal_add_at_end (HorizontalLayout *horizontal, UIElement *ui_element);
+CENGINE_PUBLIC u8 ui_layout_horizontal_add_at_end (HorizontalLayout *horizontal, UIElement *ui_element);
 
 // returns the ui element that is at the required position in the layout
-extern UIElement *ui_layout_horizontal_get_element_at (HorizontalLayout *horizontal, unsigned int pos);
+CENGINE_PUBLIC UIElement *ui_layout_horizontal_get_element_at (HorizontalLayout *horizontal, unsigned int pos);
 
 // removes an element from the horizontal layout group
-extern u8 ui_layout_horizontal_remove (HorizontalLayout *horizontal, UIElement *ui_element);
+CENGINE_PUBLIC u8 ui_layout_horizontal_remove (HorizontalLayout *horizontal, UIElement *ui_element);
 
 #endif
