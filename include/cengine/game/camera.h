@@ -8,6 +8,7 @@
 #include "cengine/types/types.h"
 #include "cengine/types/vector2d.h"
 
+#include "cengine/config.h"
 #include "cengine/renderer.h"
 
 #include "cengine/game/go.h"
@@ -51,18 +52,20 @@ struct _Camera {
 
 typedef struct _Camera Camera;
 
-extern Camera *main_camera;
+CENGINE_PUBLIC Camera *main_camera;
 
-extern Camera *camera_new (Renderer *renderer);
-extern void camera_destroy (Camera *cam);
+CENGINE_PUBLIC Camera *camera_new (Renderer *renderer);
 
-extern void camera_update (Camera *cam);
+CENGINE_PUBLIC void camera_destroy (Camera *cam);
 
-extern void camera_set_center (Camera *cam, u32 x, u32 y);
-extern void camera_set_size (Camera *cam, u32 width, u32 height);
+CENGINE_PUBLIC void camera_update (Camera *cam);
 
-extern void camera_set_target (Camera *cam, Transform *target);
+CENGINE_PUBLIC void camera_set_center (Camera *cam, u32 x, u32 y);
 
-extern CamRect camera_world_to_screen (Camera *cam, const CamRect destRect);
+CENGINE_PUBLIC void camera_set_size (Camera *cam, u32 width, u32 height);
+
+CENGINE_PUBLIC void camera_set_target (Camera *cam, Transform *target);
+
+CENGINE_PUBLIC CamRect camera_world_to_screen (Camera *cam, const CamRect destRect);
 
 #endif
