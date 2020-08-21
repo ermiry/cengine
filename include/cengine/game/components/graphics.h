@@ -5,6 +5,7 @@
 
 #include "cengine/types/types.h"
 
+#include "cengine/config.h"
 #include "cengine/graphics.h"
 #include "cengine/renderer.h"
 #include "cengine/sprites.h"
@@ -28,16 +29,16 @@ typedef struct Graphics {
 
 } Graphics;
 
-extern Graphics *graphics_new (u32 objectID);
+CENGINE_PUBLIC Graphics *graphics_new (u32 objectID);
 
-extern void graphics_destroy (Graphics *graphics);
+CENGINE_PUBLIC void graphics_destroy (Graphics *graphics);
 
-extern void graphics_set_sprite (Graphics *graphics, Renderer *renderer, const char *filename);
+CENGINE_PUBLIC void graphics_set_sprite (Graphics *graphics, Renderer *renderer, const char *filename);
 
-extern void graphics_set_sprite_sheet (Graphics *graphics, Renderer *renderer, const char *filename);
+CENGINE_PUBLIC void graphics_set_sprite_sheet (Graphics *graphics, Renderer *renderer, const char *filename);
 
-extern void graphics_ref_sprite (Graphics *graphics, struct _Sprite *sprite);
+CENGINE_PUBLIC void graphics_ref_sprite (Graphics *graphics, struct _Sprite *sprite);
 
-extern void graphics_ref_sprite_sheet (Graphics *graphics, struct _SpriteSheet *spriteSheet);
+CENGINE_PUBLIC void graphics_ref_sprite_sheet (Graphics *graphics, struct _SpriteSheet *spriteSheet);
 
 #endif
