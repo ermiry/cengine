@@ -4,6 +4,8 @@
 #include "cengine/types/types.h"
 #include "cengine/types/vector2d.h"
 
+#include "cengine/config.h"
+
 typedef struct Transform {
 
     u32 go_id;
@@ -12,7 +14,8 @@ typedef struct Transform {
 
 } Transform;
 
-extern Transform *transform_new (u32 objectID);
-extern void transform_destroy (Transform *transform);
+CENGINE_PUBLIC Transform *transform_new (u32 objectID);
+
+CENGINE_PUBLIC void transform_destroy (Transform *transform);
 
 #endif
